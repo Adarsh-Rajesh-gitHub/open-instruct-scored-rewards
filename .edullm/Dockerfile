@@ -58,6 +58,50 @@ ENV CUDA_HOME=/usr/local/lib/python3.12/site-packages/nvidia/cu13
 RUN "${CUDA_HOME}/bin/nvcc" --version \
  && python -c "import deepspeed, torch, vllm; print('deepspeed', deepspeed.__version__, 'torch', torch.__version__, 'vllm', vllm.__version__)"
 
+# THE CHECKSUM A CHECKPOINT WRITE ASKS FOR IS NOT IN botocore, AND NOTHING HERE BROUGHT
+# IT IN. The eduLLM platform commits a run's output by putting the payload with
+# `ChecksumAlgorithm="CRC32C"` and then a `_SUCCESS` object carrying the digest S3
+# attested back; its reader compares the two and calls what it cannot verify corrupt.
+# That protocol is inlined into every command the platform submits, so it is not
+# something this repository opts into.
+#
+# botocore has no pure-Python CRC-32C. `botocore.httpchecksum` adds the algorithm to its
+# supported set only when `awscrt` imports, and it refuses before opening a socket when
+# it cannot. boto3 depends on botocore without extras, so an image gets the client and
+# not the checksum.
+#
+# THIS REPOSITORY IS THE ONE WHERE IT WOULD COST MOST, because open-instruct-scored-rewards
+# -train is the only workload profile outside pre-training that declares two attempts
+# against a checkpoint contract. The failure is deterministic and arrives after the
+# training loop, so both attempts reach the same line and neither keeps anything.
+# OLMo-core found it that way: run run_019fcf53 on 2026-08-05 trained twenty steps on a
+# T4, logged every one of them, and died on the first line after the loop with
+# `MissingDependencyException: Using CRC32C requires an additional dependency`.
+#
+# boto3 IS NAMED BESIDE IT RATHER THAN ASSUMED. requirements-cluster.txt does not pin
+# boto3 and nothing in it declares botocore, so whether either arrives at all is a
+# transitive accident of the vllm and ray trees. Both on one pip invocation, because one
+# resolution picks a botocore the two agree on where a later separate install can move
+# botocore under boto3's feet. Unpinned on purpose: a version here would be a second copy
+# of what the resolver already decided, free to go stale in silence, and awscrt changes
+# only how fast a fixed standard value is arrived at.
+#
+# TWO ASSERTIONS, BECAUSE THERE ARE TWO WAYS TO GET THIS WRONG. The install succeeding
+# proves a distribution is on disk; it does not prove botocore reached it. botocore
+# imports awscrt inside a try/except and sets HAS_CRT False on any failure -- an
+# incompatible version, a wheel built for another libc -- so an image can carry awscrt and
+# refuse CRC32C anyway, silently, until a run has already been paid for. The first
+# assertion is the exact call that died, answered by Stubber so it needs no network, no
+# credentials and no bucket, while botocore still resolves the checksum before the stub is
+# consulted. The second is awscrt's own answer to CRC-32C of b"123456789", which the
+# standard fixes at 0xE3069283.
+#
+# Above the COPY, like everything else here, so editing the probe or the prompts does not
+# reinstall it.
+RUN pip install --no-cache-dir boto3 "botocore[crt]" \
+ && python -c "import boto3; from botocore import UNSIGNED; from botocore.config import Config; from botocore.stub import Stubber; client = boto3.client('s3', region_name='us-east-1', config=Config(signature_version=UNSIGNED)); stub = Stubber(client); stub.add_response('put_object', {}); stub.activate(); client.put_object(Bucket='b', Key='k', Body=b'123456789', ChecksumAlgorithm='CRC32C')" \
+ && python -c "from awscrt.checksums import crc32c; assert crc32c(b'123456789') == 0xE3069283, 'awscrt computes something other than CRC-32C'"
+
 COPY . /opt/open-instruct
 
 # THE MODEL WEIGHTS ARE NOT BAKED IN. OLMo-2-7B-Instruct is about 15GB, which would take
