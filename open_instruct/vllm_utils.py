@@ -797,7 +797,33 @@ class LLMRayActor:
         while not self.inflight_updates and len(self.active_tasks) > 0:
             self.check_background_threads()
             time.sleep(DRAIN_ACTIVE_TASKS_SLEEP_S)
-        self._run_async(self.llm_engine.update_weights(WeightTransferUpdateRequest(**update_info)))
+        # THE THREE-CALL BRACKET IS REQUIRED FROM vLLM 0.21. update_weights on its own
+        # raises `start_weight_update must be called before update_weights`, which arrives
+        # as an engine-core error inside a Ray actor and reads like a transfer failure
+        # rather than a missing handshake. 0.19.1, which pyproject pins, had the single
+        # call; this repository runs 0.21 on any host whose glibc predates the 0.19.1
+        # wheel's manylinux tag.
+        #
+        # Once per sync rather than once per chunk, which is what makes bracketing here
+        # correct: broadcast_to_vllm builds one update_info carrying every name, dtype and
+        # shape and sends it to each engine exactly once, and the tensors themselves travel
+        # separately through the IPC or NCCL transfer engine.
+        #
+        # is_checkpoint_format is left at its default of True because the names in
+        # update_info are HuggingFace checkpoint names - that is what _build_vlm_name_mapper
+        # and the PEFT mapper produce - so vLLM has to run its layerwise reload to fold them
+        # into its own fused and sharded layout. finish_weight_update is what runs the
+        # second half of that, so skipping it would leave the model half-reloaded.
+        #
+        # try/finally because the failure mode of not finishing is worse than the original
+        # error: the engine keeps `_weight_update_active` set, and the next sync fails with
+        # `start_weight_update called while a weight update is already active`, which names
+        # the wrong step and buries whatever actually went wrong one sync earlier.
+        self._run_async(self.llm_engine.start_weight_update())
+        try:
+            self._run_async(self.llm_engine.update_weights(WeightTransferUpdateRequest(**update_info)))
+        finally:
+            self._run_async(self.llm_engine.finish_weight_update())
         if model_step is not None:
             self.current_model_step = model_step
 
@@ -1323,29 +1349,43 @@ def _get_fsdp2_submodules(model: torch.nn.Module) -> list[tuple[str, FSDPModule]
 
 
 def _prepare_params_for_sync(
-    params: list[tuple[str, torch.nn.Parameter]], name_mapper: Callable[[str], str] | None
+    params: list[tuple[str, torch.nn.Parameter]], name_mapper: Callable[[str], str | None] | None
 ) -> list[tuple[str, torch.Tensor]]:
     """Map parameter names and clone into contiguous tensors for NCCL send.
 
     DS3 gathered tensors may be non-contiguous or views into temporary buffers.
     Cloning ensures we send independent, contiguous tensors over NCCL.
+
+    A ``name_mapper`` returning None drops the parameter, which is how the LoRA
+    mapper keeps adapter tensors out of a send that vLLM would reject.
     """
-    return [(name_mapper(n) if name_mapper else n, p.data.contiguous().clone()) for n, p in params]
+    out = []
+    for name, param in params:
+        mapped = name_mapper(name) if name_mapper else name
+        if mapped is None:
+            continue
+        out.append((mapped, param.data.contiguous().clone()))
+    return out
 
 
 def _collect_weight_metadata(
-    model: torch.nn.Module, name_mapper: Callable[[str], str] | None
+    model: torch.nn.Module, name_mapper: Callable[[str], str | None] | None
 ) -> tuple[list[str], list[str], list[list[int]]]:
     """Collect weight metadata (names, dtypes, shapes) without full parameter gathering.
 
     For DeepSpeed stage 3, uses ds_shape. For FSDP2 DTensors, .shape returns global shape.
     For FSDP1, param.shape returns full shape when parameters are registered (not flat).
+
+    Skips whatever the mapper drops, so this stays in step with the tensors
+    _prepare_params_for_sync actually sends.
     """
     names: list[str] = []
     dtype_names: list[str] = []
     shapes: list[list[int]] = []
     for name, param in model.named_parameters():
         mapped_name = name_mapper(name) if name_mapper else name
+        if mapped_name is None:
+            continue
         names.append(mapped_name)
         dtype_names.append(str(param.dtype).split(".")[-1])
         shape = getattr(param, "ds_shape", param.shape)
@@ -1356,7 +1396,7 @@ def _collect_weight_metadata(
 def _broadcast_weights_ipc(
     model: torch.nn.Module,
     vllm_engines: list[ray.actor.ActorHandle],
-    name_mapper: Callable[[str], str] | None,
+    name_mapper: Callable[[str], str | None] | None,
     gather_whole_model: bool,
     model_step: int,
 ) -> list[ray.ObjectRef]:
@@ -1372,7 +1412,13 @@ def _broadcast_weights_ipc(
 
     with ctx:
         if is_rank_0:
-            mapped_params = [(name_mapper(n) if name_mapper else n, p.data) for n, p in params]
+            # No .clone() here, unlike the NCCL path: IPC hands vLLM a handle to this
+            # same GPU memory, and cloning would cost a second copy of the whole model.
+            mapped_params = [
+                (mapped, p.data)
+                for mapped, p in ((name_mapper(n) if name_mapper else n, p) for n, p in params)
+                if mapped is not None
+            ]
             for engine in vllm_engines:
                 trainer_args = IPCTrainerSendWeightsArgs(mode="ray", llm_handle=engine)
                 IPCWeightTransferEngine.trainer_send_weights(iterator=iter(mapped_params), trainer_args=trainer_args)
@@ -1385,13 +1431,15 @@ def broadcast_weights_to_vllm(
     vllm_engines: list[ray.actor.ActorHandle],
     model_update_group: Any | None,
     model_step: int,
-    name_mapper: Callable[[str], str] | None = None,
+    name_mapper: Callable[[str], str | None] | None = None,
     gather_whole_model: bool = True,
 ) -> list[ray.ObjectRef]:
     """Broadcast model weights to vLLM engines using the native weight transfer API.
 
     Must be called on ALL ranks when using DeepSpeed stage 3 or FSDP,
     since gathering is a collective operation. Only rank 0 sends weights.
+
+    ``name_mapper`` may return None to drop a parameter from the send.
 
     When model_update_group is None, uses IPC backend (single GPU mode).
     Otherwise uses NCCL backend.

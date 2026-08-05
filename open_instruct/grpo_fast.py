@@ -55,6 +55,7 @@ import random
 import shutil
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import asdict
 from queue import Empty, Full, Queue
 from typing import Any
@@ -70,12 +71,19 @@ import torch.utils.data
 import wandb
 from datasets import Dataset
 from huggingface_hub import HfApi
-from peft import PeftModel, get_peft_model_state_dict
+from peft import (
+    LoraConfig,
+    PeftModel,
+    TaskType,
+    get_peft_model,
+    get_peft_model_state_dict,
+    prepare_model_for_kbit_training,
+)
 from ray.util import queue as ray_queue
 from ray.util.placement_group import PlacementGroup, placement_group
 from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
 from rich.pretty import pprint
-from transformers import AutoModelForCausalLM, PreTrainedModel, PreTrainedTokenizer, get_scheduler
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig, PreTrainedModel, PreTrainedTokenizer, get_scheduler
 from transformers.integrations import HfDeepSpeedConfig
 from vllm.distributed.weight_transfer.base import WeightTransferInitRequest
 from vllm.distributed.weight_transfer.nccl_engine import NCCLWeightTransferEngine
@@ -97,7 +105,7 @@ from open_instruct.environments.pool import EnvironmentPool
 from open_instruct.environments.tools.parsers import create_tool_parser
 from open_instruct.environments.tools.tools import TOOL_REGISTRY, GenericMCPToolConfig
 from open_instruct.environments.tools.utils import EnvsConfig, ParsedEnvConfig
-from open_instruct.ground_truth_utils import RewardConfig, build_all_verifiers, cleanup_all_llm_judge_clients
+from open_instruct.ground_truth_utils import RewardConfig, cleanup_all_llm_judge_clients
 from open_instruct.model_utils import (
     ModelConfig,
     disable_dropout_in_model,
@@ -107,6 +115,8 @@ from open_instruct.model_utils import (
     push_folder_to_hub,
 )
 from open_instruct.rl_utils import Timer, masked_mean
+from open_instruct.scored_rewards.registry import load_plugins as load_reward_plugins
+from open_instruct.scored_rewards.reward_config import make_reward_config
 from open_instruct.utils import (
     ArgumentParserPlus,
     BeakerRuntimeConfig,
@@ -163,6 +173,15 @@ PLACEMENT_GROUP_READY_TIMEOUT_S = 300.0
 LEARNER_ACTOR_NUM_CPUS = 4
 EXCLUDED_ENV_VARS = {"CUDA_VISIBLE_DEVICES", "ROCR_VISIBLE_DEVICES"}
 
+# Same set finetune.py and dpo_tune_cache.py use, so a LoRA run here is comparable to
+# one from the other trainers.
+DEFAULT_LORA_TARGET_MODULES = ["q_proj", "o_proj", "v_proj", "k_proj", "gate_proj", "up_proj", "down_proj"]
+# PEFT names every base weight base_model.model.<hf name>, and wraps each adapted
+# module so its frozen weight lands under an extra .base_layer. vLLM wants the plain
+# HF names, and must never be sent an adapter tensor.
+_PEFT_PREFIX = "base_model.model."
+_PEFT_BASE_LAYER = ".base_layer."
+
 
 def _build_vlm_name_mapper(model_name: str):
     """Sometimes we have different weight names btw vLLM and HF, so we build
@@ -170,6 +189,25 @@ def _build_vlm_name_mapper(model_name: str):
     if "qwen3.5" in model_name.lower():
         return lambda name: f"language_model.{name}"
     return None
+
+
+def _build_peft_name_mapper(inner: Callable[[str], str | None] | None) -> Callable[[str], str | None]:
+    """Present a LoRA-wrapped policy to vLLM as if it were the plain base model.
+
+    Only valid while the adapters are merged: the tensor behind a base weight is the
+    sum the policy actually generates with, and the adapter tensors themselves are
+    dropped rather than renamed, because vLLM has no parameter to receive them.
+    """
+
+    def mapper(name: str) -> str | None:
+        if "lora_" in name:
+            return None
+        if name.startswith(_PEFT_PREFIX):
+            name = name[len(_PEFT_PREFIX) :]
+        name = name.replace(_PEFT_BASE_LAYER, ".")
+        return inner(name) if inner else name
+
+    return mapper
 
 
 def _startup_debug_context(
@@ -350,11 +388,20 @@ class PolicyTrainerRayProcess(RayProcess):
             dschf = None
         logger.info(f"Deepspeed config: {dschf=}")
 
+        quantization_config = None
+        if model_config.use_peft and model_config.load_in_4bit:
+            quantization_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type=model_config.bnb_4bit_quant_type,
+                bnb_4bit_use_double_quant=model_config.use_bnb_nested_quant,
+                bnb_4bit_compute_dtype=torch.bfloat16,
+            )
         self.policy: PreTrainedModel = AutoModelForCausalLM.from_pretrained(
             model_config.model_name_or_path,
             revision=model_config.model_revision,
             dtype=torch.bfloat16,
             attn_implementation=model_utils.olmo_core_attn_to_hf(model_config.attn_implementation),
+            **({"quantization_config": quantization_config} if quantization_config is not None else {}),
             **({"device_map": {"": self.local_rank}} if args.deepspeed_stage != 3 else {}),
         )
         self.mpu = UlyssesSPAttentionHF.register_with_transformers(
@@ -368,10 +415,44 @@ class PolicyTrainerRayProcess(RayProcess):
         self.policy.config.use_cache = False
         disable_dropout_in_model(self.policy)
         self.policy.gradient_checkpointing_enable()
+
+        # LoRA turns the base weights into a fixed reference, which is what makes a
+        # frozen-encoder reward legitimate: a probe fitted on this checkpoint's
+        # activations keeps meaning something, because the policy can only change what
+        # it writes and not the space it is read in.
+        self.uses_peft = bool(model_config.use_peft)
+        if self.uses_peft and args.deepspeed_stage == 3:
+            # merge_adapter needs the real base weight, and under ZeRO-3 each rank holds
+            # only a shard of it. LoRA also removes the reason to use stage 3, since the
+            # optimizer state it shards is now a few tens of MB.
+            raise ValueError("use_peft is not supported with deepspeed_stage 3; use stage 2 or lower.")
+        if self.uses_peft:
+            if model_config.load_in_4bit or model_config.load_in_8bit:
+                # True, not a flag: gradient checkpointing is enabled unconditionally above.
+                self.policy = prepare_model_for_kbit_training(self.policy, use_gradient_checkpointing=True)
+            else:
+                # Checkpointed blocks otherwise hand back activations with no grad path,
+                # since every base weight is frozen and only the adapters need one.
+                self.policy.enable_input_require_grads()
+            self.policy = get_peft_model(
+                self.policy,
+                LoraConfig(
+                    task_type=TaskType[model_config.lora_task_type],
+                    inference_mode=False,
+                    r=model_config.lora_r,
+                    lora_alpha=model_config.lora_alpha,
+                    lora_dropout=model_config.lora_dropout,
+                    target_modules=model_config.lora_target_modules or DEFAULT_LORA_TARGET_MODULES,
+                    modules_to_save=model_config.lora_modules_to_save,
+                ),
+            )
+            if self.rank == 0:
+                self.policy.print_trainable_parameters()
+
         if args.set_weight_decay_on_bias_and_norm:
             optim_params = get_optimizer_grouped_parameters(self.policy, args.weight_decay)
         else:
-            optim_params = self.policy.parameters()
+            optim_params = [p for p in self.policy.parameters() if p.requires_grad]
         self.optimizer = torch.optim.AdamW(optim_params, lr=args.learning_rate, fused=args.fused_optimizer)
         num_scheduler_steps = args.num_training_steps * args.num_epochs * args.num_mini_batches
         warmup_steps = int(num_scheduler_steps * args.warmup_ratio)
@@ -443,8 +524,10 @@ class PolicyTrainerRayProcess(RayProcess):
                 )
         self.model.train()
 
-        # reference model
-        if args.load_ref_policy:
+        # reference model. Under LoRA there is nothing to load: the frozen base already
+        # IS the reference, reachable by switching the adapters off, which saves a second
+        # copy of the whole model on the GPU.
+        if args.load_ref_policy and not self.uses_peft:
             ds_config, self.ref_policy_hf_ds_config = get_eval_ds_config(
                 offload=False,
                 # inference model only has stage 3 (sharding) or stage 0 (no sharding)
@@ -556,17 +639,40 @@ class PolicyTrainerRayProcess(RayProcess):
         # Ensure CUDA device is set before broadcast operations.
         # DeepSpeed 0.17.3+ sets device_id in init_process_group which affects NCCL device binding.
         torch.cuda.set_device(self.local_rank)
-        return vllm_utils.broadcast_weights_to_vllm(
-            model=self.model.module,
-            vllm_engines=self.vllm_engines,
-            model_update_group=self.model_update_group,
-            model_step=model_step,
-            gather_whole_model=self.args.gather_whole_model,
-            name_mapper=_build_vlm_name_mapper(self._model_name_or_path),
-        )
+        module = self.model.module
+        name_mapper = _build_vlm_name_mapper(self._model_name_or_path)
+
+        if not self.uses_peft:
+            return vllm_utils.broadcast_weights_to_vllm(
+                model=module,
+                vllm_engines=self.vllm_engines,
+                model_update_group=self.model_update_group,
+                model_step=model_step,
+                gather_whole_model=self.args.gather_whole_model,
+                name_mapper=name_mapper,
+            )
+
+        # vLLM knows nothing about adapters, so fold them into the base weights for the
+        # duration of the send and then take them back out. Unmerging matters: leaving
+        # them merged would let the next step's update apply on top of an already-merged
+        # weight, quietly compounding the adapter into the frozen base.
+        module.merge_adapter()
+        try:
+            return vllm_utils.broadcast_weights_to_vllm(
+                model=module,
+                vllm_engines=self.vllm_engines,
+                model_update_group=self.model_update_group,
+                model_step=model_step,
+                gather_whole_model=self.args.gather_whole_model,
+                name_mapper=_build_peft_name_mapper(name_mapper),
+            )
+        finally:
+            module.unmerge_adapter()
 
     def update_ref_policy(self):
-        if not self.args.load_ref_policy:
+        # Nothing to move under LoRA: the reference is the frozen base by construction,
+        # and an EMA towards the policy would defeat the point of freezing it.
+        if not self.args.load_ref_policy or self.uses_peft:
             return
         for ref_param, param in zip(self.ref_policy.parameters(), self.model.parameters()):
             if self.args.deepspeed_stage == 3:
@@ -610,9 +716,15 @@ class PolicyTrainerRayProcess(RayProcess):
         ref_logprobs_BT: list[torch.Tensor] = []
         if self.args.load_ref_policy:
             with Timer("Inference Calculation", noop=self.rank != 0):
-                ref_logprobs_BT = grpo_utils.compute_logprobs(
-                    self.ref_policy, data_BT, self.pad_token_id, self.streaming_config.temperature, use_grad=False
-                )
+                if self.uses_peft:
+                    with self.model.module.disable_adapter():
+                        ref_logprobs_BT = grpo_utils.compute_logprobs(
+                            self.model, data_BT, self.pad_token_id, self.streaming_config.temperature, use_grad=False
+                        )
+                else:
+                    ref_logprobs_BT = grpo_utils.compute_logprobs(
+                        self.ref_policy, data_BT, self.pad_token_id, self.streaming_config.temperature, use_grad=False
+                    )
 
         # if we have multiple minibatches, we need to calculate the old logprobs for each minibatch
         # following gtrl scripts in just doing this on the current active policy, rather than use the logprobs
@@ -785,8 +897,10 @@ class PolicyTrainerRayProcess(RayProcess):
         client_state["rng_states"] = rng_states
         client_state["rank"] = self.rank
 
-        # Save reference policy checkpoint (model only, no optimizer)
-        if self.args.load_ref_policy:
+        # Save reference policy checkpoint (model only, no optimizer). Skipped under LoRA
+        # for the same reason it is never loaded: the reference is the untouched base
+        # weights, which the pretrained checkpoint already holds.
+        if self.args.load_ref_policy and not self.uses_peft:
             ref_policy_dir = os.path.join(checkpoint_state_dir, "ref_policy")
             os.makedirs(ref_policy_dir, exist_ok=True)
 
@@ -883,7 +997,13 @@ class PolicyTrainerRayProcess(RayProcess):
             # only save peft weights https://github.com/microsoft/DeepSpeed/issues/4295
             if isinstance(model_to_save, PeftModel):
                 model_to_save.save_pretrained(output_dir)
-                if self.stage == 3:
+                # self.args.deepspeed_stage, not self.stage, which this class has never had.
+                # The line was unreachable until grpo_fast learned to wrap the policy in a
+                # PeftModel, so an AttributeError sat here behind an isinstance nothing
+                # satisfied. It fires at the first checkpoint rather than at startup, which
+                # on a preemptable partition means a run dies exactly when it first tries to
+                # make itself resumable.
+                if self.args.deepspeed_stage == 3:
                     torch.save(
                         get_peft_model_state_dict(model_to_save, output_state_dict), output_path / "adapter_model.bin"
                     )
@@ -2052,6 +2172,29 @@ def run_training(
     save_final_model(args, policy_group, tokenizer, training_step, wandb_url, tc.chat_template_name)
 
 
+#: Extensions ``--dataset_mixer_list`` accepts as a local file, and the builder each one
+#: needs. Mirrors DatasetConfig.__post_init__ in dataset_transformation.py, which is the
+#: loader that actually reads the data.
+_LOCAL_DATASET_BUILDERS = {".jsonl": "json", ".parquet": "parquet"}
+
+
+def _load_dataset_for_scan(dataset_name: str, split: str) -> datasets.Dataset:
+    """Load one entry of a dataset mixer, whether it names the Hub or a file on disk.
+
+    A local path has to be loaded through its builder with ``data_files``: passing the
+    path as the first argument makes ``datasets`` look for a dataset *directory* and
+    raise ``Couldn't find any data file at <the path that exists>``, which is a confusing
+    thing to read about a file you can see. dataset_transformation.py already does this;
+    the scan below did not, so a run reading a local jsonl died here rather than in the
+    loader that supports it.
+    """
+    extension = os.path.splitext(dataset_name)[1]
+    builder = _LOCAL_DATASET_BUILDERS.get(extension)
+    if builder is not None and os.path.exists(dataset_name):
+        return datasets.load_dataset(builder, data_files=dataset_name, split="train")
+    return datasets.load_dataset(dataset_name, split=split)
+
+
 def _discover_tools_from_datasets(dataset_mixer_list: list[str], dataset_mixer_list_splits: list[str]) -> set[str]:
     """Scan datasets for tool names referenced in 'tools' and 'env_config' columns."""
     tool_names: set[str] = set()
@@ -2064,7 +2207,7 @@ def _discover_tools_from_datasets(dataset_mixer_list: list[str], dataset_mixer_l
     for i in range(0, len(dataset_mixer_list), 2):
         dataset_name = dataset_mixer_list[i]
         split = splits[i // 2]
-        ds = datasets.load_dataset(dataset_name, split=split)
+        ds = _load_dataset_for_scan(dataset_name, split)
         if TOOLS_COLUMN_KEY in ds.column_names:
             for tools in ds[TOOLS_COLUMN_KEY]:
                 if tools:
@@ -2191,6 +2334,48 @@ def initialize_tools_and_envs(
     return pools, tool_definitions, stop_sequences
 
 
+def pickle_torch_config_modules_by_reference() -> int:
+    """Let Ray export an actor class that can reach a torch config module.
+
+    Without this, creating the first learner actor dies with `cannot pickle
+    'ConfigModuleInstance' object` and a serializability report that blames
+    PolicyTrainerRayProcess.__init__ for holding its own class - which is circular and
+    names nothing a reader can act on.
+
+    What is actually happening: this file runs as a script, so its module is __main__,
+    and cloudpickle serializes anything defined in __main__ *by value* rather than by
+    reference. Walking the trainer class that way eventually reaches one of torch's
+    config modules - torch._dynamo.config and seven of its siblings - and those are
+    module objects, which pickle refuses outright.
+
+    By reference is also the semantically correct answer rather than a way around the
+    error. These objects are per-process singletons that live in sys.modules under their
+    own names; an actor should be reading its own process's dynamo config, not a copy of
+    the driver's. So the reduction re-imports by name, which returns the actor's.
+
+    One reducer per config module rather than one for the ConfigModule base class,
+    because cloudpickle dispatches on the exact type and torch builds a fresh
+    ConfigModuleInstance subclass for each of them. Everything torch, deepspeed and vllm
+    import is in sys.modules by the time this runs, since all three are imported at the
+    top of this file.
+    """
+    import importlib  # noqa: PLC0415
+    import sys  # noqa: PLC0415
+
+    import ray.cloudpickle  # noqa: PLC0415
+    from torch.utils._config_module import ConfigModule  # noqa: PLC0415
+
+    def by_name(module: ConfigModule):
+        return importlib.import_module, (module.__name__,)
+
+    registered = 0
+    for module in list(sys.modules.values()):
+        if isinstance(module, ConfigModule):
+            ray.cloudpickle.CloudPickler.dispatch_table[type(module)] = by_name
+            registered += 1
+    return registered
+
+
 def main(
     args: grpo_utils.GRPOExperimentConfig,
     tc: TokenizerConfig,
@@ -2199,6 +2384,14 @@ def main(
     vllm_config: data_loader_lib.VLLMConfig,
     tools_config: EnvsConfig,
 ):
+    # Ahead of any actor being created, because the first one to be exported is the one
+    # that would fail. See the function for why this is needed at all.
+    logger.info(f"pickling {pickle_torch_config_modules_by_reference()} torch config modules by reference")
+
+    # Before anything else: plugins register scorers AND environments as an
+    # import side effect, and initialize_tools_and_envs below reads the registry.
+    load_reward_plugins(streaming_config.reward_plugins)
+
     tokenizer = make_tokenizer(tc, model_config)
     args = setup_runtime_variables(args, streaming_config, tools_config)
     validate_configs(streaming_config, vllm_config, tuple(args.num_learners_per_node), args.sequence_parallel_size)
@@ -2271,18 +2464,9 @@ def main(
     # We don't care if we ever hit the max, so we let the queue be unbounded.
     evaluation_inference_results_Q = ray_queue.Queue()
 
-    reward_config = RewardConfig(
-        apply_r1_style_format_reward=streaming_config.apply_r1_style_format_reward,
-        r1_style_format_reward=streaming_config.r1_style_format_reward,
-        apply_verifiable_reward=streaming_config.apply_verifiable_reward,
-        verification_reward=streaming_config.verification_reward,
-        non_stop_penalty=streaming_config.non_stop_penalty,
-        non_stop_penalty_value=streaming_config.non_stop_penalty_value,
-        only_reward_good_outputs=tools_config.only_reward_good_outputs,
-        additive_format_reward=streaming_config.additive_format_reward,
-        verifier_functions=build_all_verifiers(args, streaming_config),
-        reward_aggregator=streaming_config.reward_aggregator,
-    )
+    # Returns exactly the RewardConfig above unless --group_scorer or
+    # --score_verifiers is set. See open_instruct/scored_rewards/.
+    reward_config = make_reward_config(args, streaming_config, tools_config)
 
     # AFTER potentially adding tool stop sequences, create generation configs
     generation_configs = create_generation_configs(args, streaming_config, vllm_config)
