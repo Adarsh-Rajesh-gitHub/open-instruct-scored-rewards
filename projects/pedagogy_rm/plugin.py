@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import threading
+from typing import Any
 
 from open_instruct.scored_rewards import GroupScorer, Sample, ScoreResult, register
 from open_instruct.scored_rewards.guards import MultiDimensional
@@ -144,8 +145,12 @@ class PedagogyHead(GroupScorer):
         self.model_name = model or self.meta["model"]
         self.device, self.max_len, self.batch_size = device, max_len, int(batch_size)
         self._lock = threading.Lock()
-        self._model = None
-        self._tokenizer = None
+        # Annotated because these are loaded on first use, not in __init__: without it ty
+        # narrows both to None for the whole class and reports every call on them as a call
+        # on None. Any rather than the concrete classes so this module still imports without
+        # transformers, which the CPU-only tests rely on.
+        self._model: Any = None
+        self._tokenizer: Any = None
 
     def _load(self):
         """Loaded once, on first use, inside the actor that will use it."""
@@ -161,7 +166,7 @@ class PedagogyHead(GroupScorer):
             model = AutoModelForCausalLM.from_pretrained(self.model_name, dtype=torch.bfloat16)
             self._truncate(model)
             device = self.device if torch.cuda.is_available() else "cpu"
-            self._model = model.to(device).eval()
+            self._model = model.to(device).eval()  # ty: ignore[invalid-argument-type]  # transformers stubs type .to() as taking a model
             for p in self._model.parameters():  # the encoder is never trained
                 p.requires_grad_(False)
 

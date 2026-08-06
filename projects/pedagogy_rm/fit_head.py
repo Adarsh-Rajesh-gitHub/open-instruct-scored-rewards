@@ -134,7 +134,9 @@ def main() -> None:
     ids = [str(x) for x in real["ids"]]
     by_unit = load_labels(sorted(glob.glob(args.labels)))
 
-    out: dict[str, np.ndarray] = {}
+    # np.ndarray for the fitted vectors and a 0-d np.float32 for each intercept, so the value
+    # type is the union rather than ndarray alone; savez_compressed accepts both.
+    out: dict[str, np.ndarray | np.floating] = {}
     meta = {"model": args.model, "dimensions": {}}
     for dim in dims:
         pooling, layer = CELLS[dim.key]
@@ -250,7 +252,9 @@ def main() -> None:
             f"alpha={model.alpha_:g}  spread={spread:.2f}{held}{warn}"
         )
 
-    np.savez_compressed(args.out, meta=np.array(json.dumps(meta)), **out)
+    # ty reads the **out splat against savez_compressed's keyword-only `allow_pickle` bool
+    # rather than its **kwds array sink, which is a stub limitation and not a real mismatch.
+    np.savez_compressed(args.out, meta=np.array(json.dumps(meta)), **out)  # ty: ignore[invalid-argument-type]
     print(f"\nwrote {args.out}: {len(dims)} heads over {real[CELLS['leak'][0]].shape[-1]} dims")
 
 

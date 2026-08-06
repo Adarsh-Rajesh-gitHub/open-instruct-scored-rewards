@@ -84,7 +84,7 @@ def main() -> None:
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16)
-    model.to("cuda" if torch.cuda.is_available() else "cpu").eval()
+    model.to("cuda" if torch.cuda.is_available() else "cpu").eval()  # ty: ignore[invalid-argument-type]  # transformers stubs type .to() as taking a model
     n_layers = model.config.num_hidden_layers
     layers = (
         [int(x) for x in args.layers.split(",")]

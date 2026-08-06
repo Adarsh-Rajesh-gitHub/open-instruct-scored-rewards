@@ -57,12 +57,15 @@ def normalize_then_sum(rows: list[DimensionRow], names: tuple[str, ...] | list[s
     n = len(rows)
     per_dimension: list[list[float]] = []
     for name in names:
-        present = [float(r[name]) for r in rows if r.get(name) is not None]
+        # Walrus rather than `float(r[name]) ... if r.get(name) is not None`: the guard and the
+        # access were separate expressions, so nothing narrowed away the `None` and the float() call
+        # was typed against `int | float | None`. Binding once narrows and reads no worse.
+        present = [float(v) for r in rows if (v := r.get(name)) is not None]
         if not present:
             per_dimension.append([0.0] * n)
             continue
         mean = statistics.fmean(present)
-        values = [float(r[name]) if r.get(name) is not None else mean for r in rows]
+        values = [float(v) if (v := r.get(name)) is not None else mean for r in rows]
         sd = statistics.pstdev(values)
         if sd <= eps:
             per_dimension.append([0.0] * n)

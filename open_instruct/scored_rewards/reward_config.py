@@ -240,7 +240,10 @@ def make_reward_config(args, streaming_config, tools_config) -> RewardConfig:
         name = spec.partition(":")[0].strip().lower()
         verifiers[name] = ScoreVerifier(spec=spec, plugins=plugins, name=name)
 
-    common = dict(
+    # Annotated rather than inferred: these fields are bools, floats and a dict of verifiers, so an
+    # inferred value type is their union, and a `**common` splat against either dataclass then fails
+    # to match every single field. `ty` reported nineteen errors here for one construct.
+    common: dict[str, Any] = dict(
         apply_r1_style_format_reward=streaming_config.apply_r1_style_format_reward,
         r1_style_format_reward=streaming_config.r1_style_format_reward,
         apply_verifiable_reward=streaming_config.apply_verifiable_reward,

@@ -199,7 +199,7 @@ def score_by_loglikelihood(llm, tokenizer, rows: list[dict], lora, args, task: s
                     if ident in entry:
                         total += entry[ident].logprob
             totals.append(total)
-        hit = max(range(len(totals)), key=totals.__getitem__) == row["gold"]
+        hit = max(range(len(totals)), key=lambda i: totals[i]) == row["gold"]
         right += hit
         per_item.append(int(hit))
 
