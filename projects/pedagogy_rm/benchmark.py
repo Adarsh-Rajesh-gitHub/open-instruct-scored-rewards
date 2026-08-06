@@ -33,6 +33,7 @@ import argparse
 import json
 import os
 import re
+from typing import Any
 
 
 def load_arc(limit: int) -> list[dict]:
@@ -231,7 +232,10 @@ def main() -> None:
     for t, rows in loaded.items():
         print(f"{t}: {len(rows)} items")
 
-    engine_kwargs = {}
+    # Annotated because the values are a bool and an int: an inferred `dict[str, bool | int]`
+    # splatted into vLLM's LLM(...) fails to match every typed parameter it has. Only CI sees
+    # this, since ty skips the call entirely when vllm is not installed.
+    engine_kwargs: dict[str, Any] = {}
     lora = None
     if args.adapter:
         from vllm.lora.request import LoRARequest  # noqa: PLC0415
