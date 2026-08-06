@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import math
 import statistics
 
 from projects.pedagogy_rm.rubric import BY_KEY, DIMENSIONS
@@ -51,6 +52,28 @@ CELLS = {
 # the way there and the states earn the rest; it passes, but it is the weakest of the five.
 SURFACE_BOUND = {"concise": (0.96, 0.97), "correct": (0.47, 0.63)}
 SURFACE_RATIO = 0.9  # above this, the states bought nothing and the label is about form
+
+
+def _corr(first, second) -> float:
+    # numpy is imported inside main so that --help works without it; this helper is called
+    # from there, so it takes the same route rather than forcing a module-level import.
+    import numpy  # noqa: PLC0415
+
+    left = numpy.asarray(first, dtype=numpy.float64)
+    right = numpy.asarray(second, dtype=numpy.float64)
+    if left.std() == 0 or right.std() == 0:
+        return 0.0
+    return float(numpy.corrcoef(left, right)[0, 1])
+
+
+def word_counts(patterns: str) -> dict[str, float]:
+    """log word count per unit id, for the length decoupling."""
+    out = {}
+    for path in sorted(glob.glob(patterns)):
+        with open(path) as handle:
+            for u in json.load(handle).get("units", []):
+                out[u["id"]] = math.log(max(len(u["tutor_turn"].split()), 1))
+    return out
 
 
 def choose_attacks(hack, n_real: int, ratio: float, seed: int) -> list[int]:
@@ -93,9 +116,17 @@ def main() -> None:
     parser.add_argument("--model", default="allenai/OLMo-2-1124-7B-Instruct")
     parser.add_argument("--attack-ratio", type=float, default=0.5, help="attacks as a fraction of real rows")
     parser.add_argument("--dimensions", default="", help="comma-separated keys; default is DIMENSIONS")
+    parser.add_argument("--decouple", default="leak",
+                        help="dimensions whose length sensitivity is pulled back to the labels'")
+    parser.add_argument("--slices", default="data/label_slices/slice_*.json",
+                        help="read only for turn lengths, used by --decouple")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     dims = DIMENSIONS if not args.dimensions else tuple(BY_KEY[k] for k in args.dimensions.split(","))
+    decouple = {k for k in args.decouple.split(",") if k}
+    lengths = word_counts(args.slices) if decouple else None
+    if decouple and not lengths:
+        raise SystemExit(f"--decouple needs turn texts; nothing matched {args.slices}")
 
     real = np.load(args.hidden, allow_pickle=False)
     hack = np.load(args.hack, allow_pickle=False) if glob.glob(args.hack) else None
@@ -124,8 +155,43 @@ def main() -> None:
             augmented = len(rows_a)
             target = np.concatenate([target, np.full(augmented, float(dim.hi))])
 
+        # LENGTH IS REMOVED AS AN AVAILABLE CUE, RATHER THAN SUBTRACTED AFTERWARDS. A post-hoc
+        # rank-1 correction was tried first and failed for an instructive reason: on the training
+        # turns the head's leak-vs-length correlation is 0.44 against the labels' 0.37, so there
+        # is almost nothing to correct, and the correction that fits in-distribution moved the
+        # out-of-distribution coupling only from 0.70 to 0.67. The 0.70 is distribution shift -
+        # on policy-generated text the head never saw, length becomes a far stronger cue than it
+        # was in training - and no correction estimated in-distribution can reach that.
+        #
+        # So the states are projected onto the complement of the length direction BEFORE fitting,
+        # and the labels' own length dependence is added back as an explicit scalar term. The head
+        # then has no length direction left to rediscover on new text, and the only route from
+        # length to the score is the one coefficient we chose deliberately.
+        #
+        # WHY NOT REMOVE IT ENTIRELY. Longer turns genuinely do give more away; the human's labels
+        # say so at 0.37-0.43. Zeroing the coupling would be as wrong as amplifying it, just in
+        # the other direction. The labels are the only evidence of the right amount.
+        length_meta = None
+        if dim.key in decouple and lengths is not None:
+            lw = np.array([lengths[ids[i]] for i in rows], dtype=np.float64)
+            if augmented:  # attacks are minimal edits; treat them as length-neutral
+                lw = np.concatenate([lw, np.full(augmented, lw.mean())])
+            lw_mean = float(lw.mean())
+            centred = lw - lw_mean
+            var = float((centred**2).sum())
+            # One slope per state dimension: how much of each activation is just length.
+            proj = (X.astype(np.float64).T @ centred) / max(var, 1e-9)
+            slope = float((target.astype(np.float64) @ centred) / max(var, 1e-9))
+            X = (X.astype(np.float64) - np.outer(centred, proj)).astype(np.float32)
+            target = (target.astype(np.float64) - slope * centred).astype(np.float32)
+            length_meta = {"mean": lw_mean, "slope": round(slope, 4),
+                           "labels_r": round(_corr(np.array(y), lw[: len(y)]), 3)}
+
         scaler = StandardScaler().fit(X)
         model = RidgeCV(alphas=np.logspace(-1, 4, 12)).fit(scaler.transform(X), target)
+        if length_meta is not None:
+            out[f"{dim.key}/length_proj"] = proj.astype(np.float32)
+
         out[f"{dim.key}/mean"] = scaler.mean_.astype(np.float32)
         out[f"{dim.key}/scale"] = scaler.scale_.astype(np.float32)
         out[f"{dim.key}/coef"] = model.coef_.astype(np.float32)
@@ -138,6 +204,7 @@ def main() -> None:
             "n": len(rows),
             "augmented": augmented,
             "alpha": float(model.alpha_),
+            "length": length_meta,
             "surface_baseline": (SURFACE_BOUND.get(dim.key) or (None, None))[0],
         }
         # A head whose output barely moves across real turns is a constant reward,

@@ -104,10 +104,12 @@ mkdir -p "$WANDB_DIR"
 # that is wrong - which is the state every run before this one was in.
 COMMIT=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo unknown)
 DIRTY=$(git -C "$REPO" status --porcelain 2>/dev/null | grep -cvE '^\?\? (logs|output|data)/' || true)
-HEAD_SHA=$(sha256sum "$REPO/data/head.npz" 2>/dev/null | cut -c1-12)
+# Hashes whichever head this arm actually loads, not always data/head.npz - a tag naming
+# the wrong artefact is worse than no tag, which is the same reason the dirty count is here.
+HEAD_SHA=$(sha256sum "$REPO/${HEAD:-data/head.npz}" 2>/dev/null | cut -c1-12)
 DATA_SHA=$(sha256sum "$REPO/data/rl/train.jsonl" 2>/dev/null | cut -c1-12)
-export WANDB_TAGS="commit-$COMMIT,head-$HEAD_SHA,${MODE},${SCORER:-pedagogy}"
-export WANDB_NOTES="code $COMMIT (uncommitted files: $DIRTY) | head.npz $HEAD_SHA | train.jsonl $DATA_SHA | $(hostname)"
+export WANDB_TAGS="commit-$COMMIT,head-$HEAD_SHA,${MODE},${SCORER:-pedagogy}${LENGTH_BAND:+,len-$LENGTH_BAND}"
+export WANDB_NOTES="code $COMMIT (uncommitted files: $DIRTY) | ${HEAD:-data/head.npz} $HEAD_SHA | length ${LENGTH_BAND:-none} x ${LENGTH_WEIGHT:-0} | train.jsonl $DATA_SHA | $(hostname)"
 echo "provenance: $WANDB_NOTES"
 if [ "$DIRTY" != "0" ]; then
     echo "WARNING: $DIRTY files differ from $COMMIT, so this run is NOT reproducible from it" >&2

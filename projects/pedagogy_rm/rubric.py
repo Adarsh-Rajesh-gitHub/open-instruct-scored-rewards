@@ -173,7 +173,214 @@ DIAGNOSTIC: tuple[Dimension, ...] = (
     *DROPPED,
 )
 
-BY_KEY = {d.key: d for d in (*DIMENSIONS, *DROPPED, *DIAGNOSTIC)}
+#: The second rubric, for the next round of data. DIMENSIONS above stays as it is, because
+#: 600 labelled turns depend on it and a redefinition would silently reinterpret them.
+#:
+#: WHY REPLACE IT AT ALL. Three measurements on our own labels, none of them arguable:
+#:
+#:   `actionable` and `elicits` correlate at 0.95. They are one dimension with two names,
+#:   and the reward counted it twice.
+#:
+#:   The five dimensions have an effective rank of 2.9. The first component alone explains
+#:   47% of the variance.
+#:
+#:   Nine turns score top-quartile on leak, targeted, actionable AND elicits at once. Their
+#:   median length is 12 words against the corpus's 30. That is the collapse the trained
+#:   policy found, and it was visible in the labels before any training happened.
+#:
+#: The diagnosis, which the learning-science literature supplies and our data confirms: every
+#: dimension above measures what the tutor WITHHELD. None measures what it CONTRIBUTED. A
+#: rubric made only of withholding measures has its optimum at maximal withholding. Against
+#: 70 effect sizes, elaborated feedback is d=0.49, knowledge of the correct response d=0.32,
+#: and bare right/wrong with nothing else is d=0.05 (Van der Kleij et al. 2015). We built a
+#: reward that maximises the d=0.05 end.
+#:
+#: Also load-bearing, from the same reading: the same construct names get kappa 0.13-0.30 from
+#: cold crowdworkers and 0.65-0.71 from four in-house annotators given anchors, worked examples
+#: and a calibration pilot (Daheim et al. 2024 against Maurya et al. 2025). The protocol moves
+#: agreement 3-5x, more than any choice of construct. Whatever is used here, use it that way.
+V2: tuple[Dimension, ...] = (
+    Dimension(
+        "guidance",
+        "Does the turn give the student something to work with on THIS problem?",
+        {
+            1: "Nothing about the content. Praise, agreement, 'try again', a restatement of "
+            "the question, or a bare request to explain, with no material offered.",
+            2: "Something, but not usable here. Names a concept or rule without saying how it "
+            "applies to this problem, or offers content that is true in general and idle here.",
+            3: "Correct, specific content the student can act on: the relevant rule, quantity, "
+            "step, distinction, or a parallel case - and it is right.",
+        },
+    ),
+    Dimension(
+        "locates",
+        "Does the turn point at a specific thing in what the student just wrote?",
+        {
+            1: "Points at nothing of the student's. Could follow any wrong answer to any problem.",
+            2: "Points at the problem but not at the student. Re-explains the right method "
+            "without indicating which part of what the student wrote departs from it.",
+            3: "Points at a specific element of the student's message - a number, a step, an "
+            "operation, a word - and treats that as the thing to work on.",
+        },
+    ),
+    Dimension(
+        "hands_over",
+        "Does the turn hand the next move to the student, and name what that move is?",
+        {
+            1: "No. The tutor makes the next move itself, or asks something answerable without "
+            "thought ('does that make sense?', 'ready?').",
+            2: "Hands over, but unspecified. 'Why?', 'are you sure?', 'can you explain?', "
+            "'try again' - the student must work out what is being asked of them.",
+            3: "Hands over and names it. Points at a specific quantity, choice, or line and "
+            "asks the student to account for or attempt that one thing.",
+        },
+    ),
+    Dimension(
+        "verdict",
+        "Does the turn's signal about right and wrong match what the student actually said?",
+        {
+            1: "Contradicts it. Affirms a wrong answer, corrects a correct one, or praises with "
+            "no referent ('great job!', 'you're on the right track') where nothing was verified.",
+            2: "Silent where a verdict was called for. The student's last message was wrong or "
+            "partly wrong, and the turn neither signals it nor visibly works around it.",
+            3: "Matches. Right treated as right, wrong as wrong, partial as partial - and any "
+            "approval names the specific step being approved. Giving no verdict where the "
+            "student asked a question rather than answering one is also a 3.",
+        },
+    ),
+    Dimension(
+        "leak",
+        "How much of the student's remaining work does this turn take away?",
+        {
+            1: "None. A question, a method, or a principle that still leaves the student the work.",
+            2: "Hints. The student could work it out from this, but the turn does not state it.",
+            3: "Takes the work away. States an answer, restates one, or rules out the others so "
+            "only one remains - WHETHER OR NOT the answer it states is the right one.",
+        },
+    ),
+    Dimension(
+        "correct",
+        "Does anything in this turn conflict with the reference solution? (Rater: the reference "
+        "solution is shown to you. Check against it - do not re-derive it.)",
+        {
+            1: "Yes. A stated value, step, relationship or fact contradicts the reference. "
+            "Includes a leading question that presupposes a wrong operation.",
+            2: "Nothing checkable. The turn asserts nothing about this problem that the "
+            "reference can confirm or contradict.",
+            3: "No. Every claim this turn makes about the problem checks out against the "
+            "reference.",
+        },
+    ),
+)
+
+#: Things measured but NOT rated, because rating them is worse than computing them.
+#:
+#: LENGTH. `length_fit` predicted human preference better than any rated dimension (74% against
+#: the six-dimension average of 59%), and it is 85% one value, which makes its kappa look bad
+#: for a reason that has nothing to do with rater disagreement. But eight crude statistics
+#: predict it at 0.74 linear and 0.76 with a tree, so it is a word counter, and a learned head
+#: for it would be a word counter with extra steps. It is already implemented as an explicit
+#: band in plugin.py, which is the honest version of the same thing and costs no labels.
+#:
+#: WHAT WAS CONSIDERED AND LEFT OUT, with the evidence, so it is not re-proposed:
+#:
+#:   `actionable` - 0.95 correlated with `elicits` here, and kappa 0.13 in the paper that
+#:   named it. `hands_over` is what survives of both.
+#:
+#:   Cognitive demand / "how much thinking does this ask for" - kappa 0.09 to 0.34 across
+#:   three independent studies. This is why `elicits` was reframed behaviourally as
+#:   `hands_over`: the same construct scores 0.55-0.66 when asked as "does it hand over the
+#:   next move" and 0.09-0.34 when asked as "how much thinking".
+#:
+#:   Uptake / revoicing - the field's flagship discourse measure, Fleiss kappa 0.286, and a
+#:   single feature (student-token overlap) predicts the human labels at 0.52, so as a reward
+#:   target it is gamed by parroting.
+#:
+#:   Anything about the student's internal state - goals, motivation, interest. Krippendorff
+#:   alpha 0.03, 0.02 and 0.07, replicated across two model conditions. Below chance.
+#:
+#:   Which strategy the tutor should have used - three tutors pick the same action in 18% of
+#:   cases, and the tutor who made a move agrees with outside raters about what it was at
+#:   kappa 0.34.
+#:
+#:   Tone, encouragement, warmth - alpha 0.24-0.30, and rewarding it means rewarding praise,
+#:   which meta-analyses at d = -0.17.
+#:
+#:   Holistic overall quality - two annotators agreed at r = 0.15.
+NOT_RATED = ("length", "tone", "uptake", "strategy", "overall_quality")
+
+#: WHY V2's `leak` IS WORDED DIFFERENTLY FROM THE ONE ABOVE, which is otherwise identical. The
+#: old anchors were "never points at one option" at 1 and "states the CORRECT option" at 3, and a
+#: rater in the pilot found the hole between them: a turn that confidently states a WRONG option
+#: satisfies neither, so it falls to 2 by default. Pedagogically that is the worst case and not
+#: the middle one - it removes the student's work AND misleads - so the scale was measuring the
+#: wrong thing on exactly the turns that matter most. V2 asks how much of the student's remaining
+#: work the turn takes away, which does not depend on whether the answer given is right; whether
+#: it is right is what `correct` is for. The bug was in the first rubric from the beginning.
+#:
+#: Rated on the STUDENT's message, not the tutor's. Not a quality judgement and not part of
+#: any reward - it is the covariate that makes the others interpretable.
+#:
+#: WHY THIS IS THE MOST VALUABLE THING TO ADD, despite scoring nothing. Every dimension in V2
+#: is a property of the tutor's turn judged largely on its own. None asks whether the amount
+#: of help matched what the student had just demonstrated - which is contingency, the defining
+#: property of scaffolding (van de Pol et al. 2010) and the only property whose optimum a fixed
+#: policy cannot reach, because the target moves with the student.
+#:
+#: And it is nearly free: `control` in that literature - open question, then hint, then tells
+#: them - is the same scale as `leak`. So contingency does not need a new tutor-side code. It
+#: needs the student-side one, and is then a lookup over (student_state, leak).
+#:
+#: COLLECTED BUT NOT REWARDED, deliberately. Tested against 85 preference judgements using
+#: agent leak scores and an automatic proxy for this code, contingency agreed with the human
+#: 50% of the time against leak's 44% - better, but still chance. That test cannot be trusted
+#: in either direction, because the agent leak scores going into it track length at +0.59
+#: against the human's +0.43. Collect this, then answer the question properly with real labels
+#: before putting it in a reward.
+CONTEXT: tuple[Dimension, ...] = (
+    Dimension(
+        "student_state",
+        "What did the STUDENT's last message demonstrate? (Rate the student, not the tutor.)",
+        {
+            1: "Nothing to work with. No attempt, says they do not know, asks for help, or "
+            "restates the question.",
+            2: "An attempt. Produces a step, a number, or a claim, with no reasoning shown.",
+            3: "An attempt with reasoning. Shows the step or the why that produced the answer, "
+            "whether or not it is right.",
+        },
+    ),
+)
+
+#: Not in V2, because five dimensions already collapsed to an effective rank of 2.9 and adding
+#: correlated ones makes that worse. Pilot them on a hundred turns first; keep whichever earns
+#: its variance.
+CANDIDATES: tuple[Dimension, ...] = (
+    Dimension(
+        "step_size",
+        "How far does the turn ask the student to move? (Compare against the reference "
+        "solution: one step is roughly one line of it.)",
+        {
+            1: "Too far, or nowhere. Asks for the answer, the whole method, or a leap of "
+            "several lines; or asks for something the student has already done.",
+            2: "Between the two, or hard to place against the reference.",
+            3: "About one step, from where the student currently is.",
+        },
+    ),
+    Dimension(
+        "works_from",
+        "Does the turn continue from the student's own move, or replace it with the tutor's?",
+        {
+            1: "Replaces it. Sets the student's reasoning aside and substitutes the tutor's "
+            "method, without engaging what the student actually did.",
+            2: "Neither. Does not take up the student's move, but does not override it either.",
+            3: "Continues from it. Takes the student's own step, number, or claim as the "
+            "starting point and pushes on it - asks what it gives, where it leads, whether it "
+            "matches the question.",
+        },
+    ),
+)
+
+BY_KEY = {d.key: d for d in (*DIMENSIONS, *DROPPED, *DIAGNOSTIC, *V2, *CONTEXT, *CANDIDATES)}
 
 
 def rubric_markdown(dimensions: tuple[Dimension, ...] = DIMENSIONS) -> str:
