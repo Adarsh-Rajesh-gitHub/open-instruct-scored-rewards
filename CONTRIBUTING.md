@@ -74,20 +74,13 @@ Track new large or binary test data files with `git lfs track "path/to/file"` an
 
 ## CI Workflows
 
-Four GitHub Actions workflows run on PRs:
-
 1. **PR Checks** (`pr_checks.yml`): Runs `make style-check` and `make quality-check`. Also verifies that `CHANGELOG.md` was updated for changes to `open_instruct/` (bypass with `CHANGELOG=` in PR body).
 
-2. **Unit Tests** (`tests.yml` → `unit-tests` job): Runs `uv run pytest` on an Ubuntu runner. 20-minute timeout.
+2. **Docs** (`docs.yml` → `check-diff` job): Builds the docs and reports what a change moves.
 
-3. **GPU Tests** (`tests.yml` → `gpu-tests` job): Builds a Docker image, uploads it to Beaker, and runs `open_instruct/test_*_gpu.py` on a single GPU. 45-minute timeout. Auto-skipped for fork PRs (no Beaker secrets). Can be overridden with `GPU_TESTS=[EXPERIMENT_ID]` or bypassed with `GPU_TESTS=bypass` in the PR body.
+3. **Platform image** (`edullm-platform-build.yml`): On a push to `main` or an `edullm/**` branch, runs ruff over `open_instruct`, `projects` and `mason.py` and then publishes the research image the eduLLM platform runs submissions from. Not a PR check.
 
-4. **Integration Tests** (`beaker-experiment.yml`): Runs in the merge queue (not on every PR push). Launches up to 3 Beaker experiments:
-   - GRPO integration test (always runs)
-   - DPO integration test (runs if DPO-related files changed)
-   - SFT integration test (runs if `finetune.py` changed)
-
-   Sends a Slack notification on failure.
+**There are no GPU tests and no Beaker integration tests in this fork.** Upstream has both, in `tests.yml` and `beaker-experiment.yml`, and they were deleted here on 2026-08-06 because neither could ever run: both ask for `8-Core-XL-Runner-Ubuntu-Latest`, which is an Allen AI runner label that does not resolve in this organization, and both want `BEAKER_TOKEN`, which is not a secret here. `tests.yml` had run eight times and completed zero times — every one of the eight was still queued — which put a permanently pending check on every pull request. If you need GPU tests here, they have to be written against runners this organization has.
 
 ## Launching Experiments on Beaker
 
