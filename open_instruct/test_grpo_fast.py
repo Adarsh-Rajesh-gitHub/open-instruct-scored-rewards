@@ -936,9 +936,9 @@ class TestPeftWeightSync(unittest.TestCase):
         torch.nn.init.normal_(module.lora_B["default"].weight, std=0.02)
 
         before = dict(wrapped.named_parameters())[f"{target}.base_layer.weight"].detach().clone()
-        expected = before + (
-            module.lora_B["default"].weight @ module.lora_A["default"].weight
-        ) * module.scaling["default"]
+        expected = (
+            before + (module.lora_B["default"].weight @ module.lora_A["default"].weight) * module.scaling["default"]
+        )
 
         wrapped.merge_adapter()
         merged = dict(wrapped.named_parameters())[f"{target}.base_layer.weight"].detach().clone()

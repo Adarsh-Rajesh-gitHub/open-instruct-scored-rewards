@@ -89,7 +89,7 @@ def fit_mlp(xtr, ytr, xte, args):
     return best.predict(zte)
 
 
-def run_dimension(X, y, groups, args, models: tuple[str, ...] | None = None) -> dict:
+def run_dimension(X, y, groups, args, models: tuple[str, ...] | None = None) -> tuple[dict, dict]:
     import numpy as np  # noqa: PLC0415
     from sklearn.linear_model import RidgeCV  # noqa: PLC0415
     from sklearn.preprocessing import StandardScaler  # noqa: PLC0415

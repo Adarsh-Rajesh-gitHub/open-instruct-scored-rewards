@@ -81,6 +81,29 @@ CKPT_ROOT=${CKPT_ROOT:-}
 # both sides. They are two arms of one experiment, not a setting with a right answer.
 SCORER=${SCORER:-pedagogy}
 
+# Which fitted head, and whether a length band is added on top of it. Both are arguments to
+# the scorer rather than edits to it, so an arm is a wrapper that exports three variables.
+#
+# head.npz scores four dimensions; head5.npz adds `correct`, which was dropped in the first
+# round for missing its agreement gate and re-added after the rewritten rubric reached 0.43.
+#
+# LENGTH_BAND IS EMPTY BY DEFAULT, so the two finished arms still reproduce exactly. It is a
+# flat in-band bonus in whitespace words, and it exists because every dimension the head
+# scores improves as a turn gets shorter - -0.26 per log-word over the five, and the human's
+# own ratings agree at -0.49. No reweighting of monotone terms can say "now it is too short".
+HEAD=${HEAD:-data/head.npz}
+LENGTH_BAND=${LENGTH_BAND:-}
+LENGTH_WEIGHT=${LENGTH_WEIGHT:-0}
+# Empty means a hard band, which is what arm C ran. A pair like "8-90" makes the term fall
+# linearly to zero at those word counts instead of cliff-edging, so 200 words costs more than 60.
+LENGTH_RAMP=${LENGTH_RAMP:-}
+
+scorer_spec="$SCORER:head=$HEAD"
+if [ -n "$LENGTH_BAND" ]; then
+    scorer_spec="$scorer_spec,length_band=$LENGTH_BAND,length_weight=$LENGTH_WEIGHT"
+    [ -n "$LENGTH_RAMP" ] && scorer_spec="$scorer_spec,length_ramp=$LENGTH_RAMP"
+fi
+
 CACHE_ROOT=${CACHE_ROOT:-${SCRATCH:-/tmp}}
 export HF_HOME=${HF_HOME:-$CACHE_ROOT/hf-cache}
 export HF_HUB_CACHE=${HF_HUB_CACHE:-$CACHE_ROOT/hf-cache/hub}
@@ -199,7 +222,7 @@ exec python -u open_instruct/grpo_fast.py \
     --dataset_mixer_eval_list data/rl/eval.jsonl 1.0 \
     --dataset_mixer_eval_list_splits train \
     --reward_plugins projects/pedagogy_rm/plugin.py \
-    --group_scorer "$SCORER:head=data/head.npz" \
+    --group_scorer "$scorer_spec" \
     --group_reward_mode replace \
     --apply_verifiable_reward True \
     --max_prompt_token_length 1024 \

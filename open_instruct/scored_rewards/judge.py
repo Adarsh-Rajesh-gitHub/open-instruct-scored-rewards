@@ -151,6 +151,11 @@ def parse_scores(text: str, rubric: Rubric, names: Iterable[str] | None = None) 
         value = blob.get(name)
         if isinstance(value, dict):
             value = value.get("score")
+        if value is None:
+            # float(None) raises TypeError, which the handler below already caught, so this changes
+            # no behaviour - it states the missing-key case rather than routing it through an
+            # exception, which is also what lets a type checker see that float() gets a number.
+            continue
         try:
             raw = int(round(float(value)))
         except (TypeError, ValueError):

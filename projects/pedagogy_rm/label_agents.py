@@ -257,7 +257,14 @@ async def main_async(args) -> None:
 
     shots: list[tuple[dict, dict]] = []
     if args.examples:
+        # Demonstrations may come from a DIFFERENT pool than the one being rated, and usually do:
+        # blinded ids are salted per pool, so a later round shares no ids with the round whose
+        # labels exist. Without --shot-units this silently found nothing, and the guard below
+        # turned that into a stop rather than a run with the agents' own standards.
         by_id = {u["id"]: u for u in units}
+        if args.shot_units:
+            with open(args.shot_units) as handle:
+                by_id = {u["id"]: u for u in json.load(handle)["units"]}
         held = set()
         if args.holdout and os.path.exists(args.holdout):
             with open(args.holdout) as handle:
@@ -292,6 +299,8 @@ def main() -> None:
     parser.add_argument("--out-dir", default="data/labels")
     parser.add_argument("--calibration", default="data/calibration.md")
     parser.add_argument("--examples", default="", help="your labels, used as few-shot demonstrations")
+    parser.add_argument("--shot-units", default="",
+                        help="pool the --examples ids refer to, when it is not --units")
     parser.add_argument("--holdout", default="data/holdout.json")
     parser.add_argument("--raters", default="", help=f"subset of {sorted(DEFAULT_RATERS)}")
     parser.add_argument("--dimensions", default="", help="re-rate only these, merging into existing files")

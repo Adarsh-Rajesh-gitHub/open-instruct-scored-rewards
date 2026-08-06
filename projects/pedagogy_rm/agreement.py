@@ -115,7 +115,7 @@ def load(paths: list[str], shots: dict[str, set[str]] | None = None) -> dict[str
 
 
 def against_reference(
-    by_unit: dict[str, dict[str, dict]], reference: str, contaminated: set[str], dims: tuple = DIMENSIONS
+    by_unit: dict[str, dict[str, dict]], reference: str, contaminated: dict[str, set[str]], dims: tuple = DIMENSIONS
 ) -> None:
     """Each rater versus one designated rater, plus their consensus versus it.
 

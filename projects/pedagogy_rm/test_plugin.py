@@ -92,7 +92,9 @@ def test_truncation_does_not_change_what_is_read():
 
     short = PedagogyHead(head=HEAD)
     full = PedagogyHead(head=HEAD)
-    full._truncate = lambda model: None  # noqa: SLF001 - the point is to compare against no truncation
+    # Assigned on the instance, so the replacement takes no self - correct at runtime and
+    # necessarily a mismatch against the bound method's signature, which is what ty objects to.
+    full._truncate = lambda model: None  # noqa: SLF001  # ty: ignore[invalid-assignment]
 
     for cell, vecs in short.states(contexts).items():
         a, b = np.stack(vecs), np.stack(full.states(contexts)[cell])

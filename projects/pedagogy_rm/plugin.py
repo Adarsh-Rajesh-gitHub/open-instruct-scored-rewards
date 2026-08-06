@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import threading
+from typing import Any
 
 from open_instruct.scored_rewards import GroupScorer, Sample, ScoreResult, register
 from open_instruct.scored_rewards.guards import MultiDimensional
@@ -67,6 +68,9 @@ class PedagogyHead(GroupScorer):
         device: str = "cuda",
         max_len: int = 2048,
         batch_size: int = 16,
+        length_band: str = "",
+        length_weight: float = 0.0,
+        length_ramp: str = "",
     ) -> None:
         import numpy as np  # noqa: PLC0415
 
@@ -87,11 +91,66 @@ class PedagogyHead(GroupScorer):
             raise ValueError(f"{head} holds {sorted(self.meta['dimensions'])}, none of which have a sign here")
         self.dims = wanted
         self.weights = {d: {k: blob[f"{d}/{k}"] for k in ("mean", "scale", "coef", "intercept")} for d in self.dims}
+        # Dimensions fitted with length projected out carry the projection and the one length
+        # coefficient that was deliberately kept. Both must be applied here or the head is being
+        # read on states it was not fitted on. See fit_head.py for why it is done this way.
+        self.length = {
+            d: (blob[f"{d}/length_proj"], self.meta["dimensions"][d]["length"])
+            for d in self.dims
+            if f"{d}/length_proj" in blob.files and (self.meta["dimensions"][d].get("length") or {}).get("slope")
+        }
+        # A FLAT BAND, WHICH IS THE POINT RATHER THAN A SIMPLIFICATION. Every dimension the
+        # head scores gets *better* as a turn gets shorter - measured at -0.26 per log-word
+        # over the five of them, and the human's own ratings agree at -0.49 - so no
+        # reweighting of them can express "this is now too short". Only a term that turns
+        # around can, and this is the cheapest one that does.
+        #
+        # WHY THE LOWER EDGE IS THE TARGET AND NOT THE LIMIT. Inside the band this term is
+        # constant, so the head's pull towards brevity slides the policy to the bottom edge
+        # and parks it there. That is a feature: the resting length is a number you write
+        # down rather than one you infer from two quantities you do not know precisely.
+        # Measured over 1131 length judgements, 21-58 words is the 90%-acceptable range, so
+        # an edge at 30 leaves room below it and rests where ~90% of turns read as right.
+        #
+        # A SMOOTH CURVE WAS TRIED AND IS WORSE HERE. Fitting the acceptability curve itself
+        # and rewarding it directly rests at 25 words at the measured slope, but drifts to 19
+        # if the slope steepens to -0.8 and to 32 if it flattens to -0.15 - and the slope does
+        # move as the policy trains. The band does not move at all.
+        #
+        # WEIGHT 2.0 BECAUSE THE FAILURE IS A CLIFF, NOT A DRIFT. Too small and the band stops
+        # binding entirely and the policy collapses to five words; there is no graceful middle.
+        # At 1.0 that happens once the slope passes -0.5, at 1.5 past -0.7, at 2.0 past -1.0.
+        # The measured slope is -0.26, so 2.0 is roughly a 4x margin on a catastrophic mode.
+        self.length_lo, self.length_hi = 0, 10**9
+        self.length_zero_lo, self.length_zero_hi = 0, 10**9
+        self.length_weight = float(length_weight)
+        if length_band:
+            lo, _, hi = length_band.partition("-")
+            self.length_lo, self.length_hi = int(lo), int(hi)
+            if self.length_lo >= self.length_hi:
+                raise ValueError(f"length_band wants lo-hi with lo < hi, got {length_band!r}")
+            # Dash, not comma: --group_scorer splits its kwargs on commas, so a comma here
+            # would be parsed as a second key and silently drop the upper edge.
+            zlo, _, zhi = (length_ramp or "").partition("-")
+            self.length_zero_lo = int(zlo) if zlo else self.length_lo
+            self.length_zero_hi = int(zhi) if zhi else self.length_hi
+            if not self.length_zero_lo <= self.length_lo < self.length_hi <= self.length_zero_hi:
+                raise ValueError(
+                    f"length_ramp must bracket length_band: got ramp {length_ramp!r} "
+                    f"around band {length_band!r}"
+                )
+        elif self.length_weight:
+            raise ValueError("length_weight without length_band would reward every turn equally")
+
         self.model_name = model or self.meta["model"]
         self.device, self.max_len, self.batch_size = device, max_len, int(batch_size)
         self._lock = threading.Lock()
-        self._model = None
-        self._tokenizer = None
+        # Annotated because these are loaded on first use, not in __init__: without it ty
+        # narrows both to None for the whole class and reports every call on them as a call
+        # on None. Any rather than the concrete classes so this module still imports without
+        # transformers, which the CPU-only tests rely on.
+        self._model: Any = None
+        self._tokenizer: Any = None
 
     def _load(self):
         """Loaded once, on first use, inside the actor that will use it."""
@@ -107,7 +166,7 @@ class PedagogyHead(GroupScorer):
             model = AutoModelForCausalLM.from_pretrained(self.model_name, dtype=torch.bfloat16)
             self._truncate(model)
             device = self.device if torch.cuda.is_available() else "cpu"
-            self._model = model.to(device).eval()
+            self._model = model.to(device).eval()  # ty: ignore[invalid-argument-type]  # transformers stubs type .to() as taking a model
             for p in self._model.parameters():  # the encoder is never trained
                 p.requires_grad_(False)
 
@@ -181,29 +240,69 @@ class PedagogyHead(GroupScorer):
                     out[(pooling, layer)].append(vec.float().cpu().numpy().astype(np.float32))
         return out
 
+    def length_fit(self, words: int) -> float:
+        """1.0 inside the band, falling linearly to 0 at the ramp edges.
+
+        FLAT INSIDE, SLOPED OUTSIDE, which is the combination the two failures argued for.
+
+        The interior has to be flat because that is what pins the resting length. A smooth peak
+        fitted to the acceptability curve rests at 25 words at the measured quality slope but
+        drifts to 19 or 32 as that slope moves during training; a flat band rests at its lower
+        edge whatever the slope, so the target is a number written down rather than inferred.
+
+        The exterior has to be sloped because a hard band cannot tell 59 words from 200 - both
+        score zero - so nothing pushes a runaway turn back. Arm C ended at a median of 46 words
+        with the band at 30-58 and its longest turns unpunished relative to its merely-long ones.
+        A ramp makes every extra word past the edge cost something.
+
+        AND THE RAMP IS THE ONLY LEVER LEFT ON LENGTH, which is why it matters more than it looks.
+        The head's `leak` tracks length at +0.70 against the human's +0.43, and two attempts to
+        correct that inside the head failed - a rank-1 projection moved it to 0.67, residualising
+        length out before fitting moved it to 0.74. Both were fitted in-distribution and neither
+        survived the shift to policy-generated text. So the head pulls towards brevity harder than
+        a person would, and this term is what offsets it.
+        """
+        if words >= self.length_lo and words <= self.length_hi:
+            return 1.0
+        if words < self.length_lo:
+            span = self.length_lo - self.length_zero_lo
+            return max(0.0, (words - self.length_zero_lo) / span) if span else 0.0
+        span = self.length_zero_hi - self.length_hi
+        return max(0.0, (self.length_zero_hi - words) / span) if span else 0.0
+
     async def score_group(self, group: list[Sample]) -> list[ScoreResult]:
         import numpy as np  # noqa: PLC0415
 
         contexts = [self.context(s) for s in group]
         pooled = self.states(contexts)
+        words = np.array([max(len(turn.split()), 1) for _, turn in contexts], dtype=np.float64)
         scored: dict[str, list[float]] = {}
         for dim in self.dims:
             spec = self.meta["dimensions"][dim]
             w = self.weights[dim]
-            x = (np.stack(pooled[(spec["pooling"], spec["layer"])]) - w["mean"]) / w["scale"]
-            raw = x @ w["coef"] + w["intercept"]
+            states = np.stack(pooled[(spec["pooling"], spec["layer"])]).astype(np.float64)
+            bias = 0.0
+            if dim in self.length:
+                proj, meta = self.length[dim]
+                centred = np.log(words) - meta["mean"]
+                states = states - np.outer(centred, proj)
+                bias = meta["slope"] * centred
+            x = (states - w["mean"]) / w["scale"]
+            raw = x @ w["coef"] + w["intercept"] + bias
             scored[dim] = [float(np.clip(v, spec["lo"], spec["hi"])) for v in raw]
 
         results = []
         for i, (_, turn) in enumerate(contexts):
             dims = {d: SIGNS[d] * scored[d][i] for d in self.dims}
-            results.append(
-                ScoreResult(
-                    score=float(sum(dims.values()) / len(dims)),
-                    dimensions=dims,
-                    info={"raw": {d: scored[d][i] for d in self.dims}, "turn_chars": len(turn)},
-                )
-            )
+            score = float(sum(dims.values()) / len(dims))
+            info = {"raw": {d: scored[d][i] for d in self.dims}, "turn_chars": len(turn)}
+            if self.length_weight:
+                n = len(turn.split())
+                fit = self.length_fit(n)
+                score += self.length_weight * fit
+                dims["length"] = fit
+                info["words"] = n
+            results.append(ScoreResult(score=score, dimensions=dims, info=info))
         return results
 
 

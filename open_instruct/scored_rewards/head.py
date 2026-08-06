@@ -67,9 +67,14 @@ class LinearHead:
         self.tokenizer = AutoTokenizer.from_pretrained(blob["backbone"])
         if self.tokenizer.pad_token_id is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.model = (
-            AutoModelForCausalLM.from_pretrained(blob["backbone"], output_hidden_states=True).to(device).eval()
-        )
+        # Split across statements to keep the ignore narrow. transformers' stubs give
+        # `PreTrainedModel.to` an overload taking a model rather than a device, so passing a device
+        # string - which is the documented use and works at runtime - reads as the wrong type. Only
+        # that one call is suppressed; splitting the chain keeps `from_pretrained` and `eval`
+        # checked.
+        model = AutoModelForCausalLM.from_pretrained(blob["backbone"], output_hidden_states=True)
+        model = model.to(device)  # ty: ignore[invalid-argument-type]
+        self.model = model.eval()
         for p in self.model.parameters():
             p.requires_grad_(False)
 

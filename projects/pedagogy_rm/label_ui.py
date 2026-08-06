@@ -61,6 +61,8 @@ PAGE = """<!doctype html>
   .choices li.gold { color:var(--good); font-weight:600; }
   .choices li.gold::after { content:" — correct answer"; font-weight:400; opacity:.75; font-size:12px; }
   .goldline { margin-top:10px; color:var(--good); font-size:14px; }
+  .ref { margin:0; white-space:pre-wrap; font-family:inherit; font-size:13.5px;
+         line-height:1.55; color:var(--dim); }
   .turn { white-space:pre-wrap; }
   .tutor { border-left:3px solid var(--accent); padding-left:14px; font-size:16px; }
   .student { border-left:3px solid #4b5563; padding-left:14px; color:#c7cdd8; }
@@ -122,13 +124,20 @@ function render() {
   const goldShown = (unit.choices || []).some(c => unit.gold != null && norm(c) === norm(unit.gold));
   const goldLine = (!goldShown && unit.gold)
     ? '<div class="goldline">correct answer: ' + esc(unit.gold) + '</div>' : '';
+  // The worked solution, when the pool carries one. It exists so `correct` is a comparison
+  // rather than a re-derivation: asking a rater to verify a tutor's arithmetic from the
+  // question alone is what took that dimension to kappa 0.18, and showing the steps is what
+  // took the same question to 0.75 in the published version.
+  const ref = unit.reference
+    ? '<div class="card"><div class="label">Worked solution — check the tutor against this, ' +
+      'do not re-derive it</div><pre class="ref">' + esc(unit.reference) + '</pre></div>' : '';
   const left =
     '<div><div class="card"><div class="label">Question</div><div class="q">' + esc(unit.question) + '</div>' +
       (opts ? '<ul class="choices">' + opts + '</ul>' : '') + goldLine + '</div>' +
     '<div class="card"><div class="label">Student, just before</div>' +
       '<div class="turn student">' + esc(unit.student_before) + '</div></div>' +
     '<div class="card"><div class="label">Tutor turn &mdash; rate this</div>' +
-      '<div class="turn tutor">' + esc(unit.tutor_turn) + '</div></div></div>';
+      '<div class="turn tutor">' + esc(unit.tutor_turn) + '</div></div>' + ref + '</div>';
 
   const right = '<div>' + DIMS.map((d, i) => {
     const sel = answers[d.key];
