@@ -138,7 +138,6 @@ def main() -> None:
         raise SystemExit(2)
 
     import torch  # noqa: PLC0415 -- lazy so --selftest stays offline
-
     from edullm_data.s3 import Boto3S3  # noqa: PLC0415
     from olmo_core.config import DType  # noqa: PLC0415
     from olmo_core.nn.hf import convert_checkpoint_to_hf, load_config  # noqa: PLC0415
