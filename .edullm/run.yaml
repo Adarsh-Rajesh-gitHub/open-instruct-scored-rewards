@@ -6,21 +6,23 @@
 # Workload profiles registered for open-instruct-scored-rewards: open-instruct-scored-rewards-check, open-instruct-scored-rewards-train.
 # edullm check prices this and lists every refusal, without dispatching anything.
 schema_version: 1
-# PRM-vs-ORM Stage 0: base checkpoint conversion. Downloads the staged Olmo3-370M
-# OLMo-core DCP (the run-10b-equal/step12716 base, copied into the job-readable outputs
-# bucket), rebuilds the model from the checkpoint's own config.json, and converts DCP -> HF
-# with OLMo-core's convert_checkpoint_to_hf. Logit validation stays ON (the correctness
-# gate). The HF model + dolma2 tokenizer are uploaded to the run's checkpoint prefix for
-# Stage 2 (SFT) to consume. CPU-only (conversion on device=cpu); the -train profile is
-# required because this WRITES outputs.
+# PRM-vs-ORM Stage 2: supervised fine-tune (SFT) the converted HF base on the Stage-1
+# sft.jsonl (87,917 chosen-trajectory solutions). run_sft.py downloads the Stage-0 HF base
+# and the Stage-1 sft.jsonl from the outputs bucket, accelerate-launches open-instruct
+# finetune.py (via the _sft_launch.py local-path shim) over the tulu chat template + dolma2
+# tokenizer, and uploads the SFT model to this run's checkpoint prefix for Stages 3-5.
+# GPU stage: needs the GPU workload role (reads prior-run outputs) and W&B is auto-wired by
+# that role. The -train profile is required because this READS prior outputs and WRITES its own.
 workload_profile: open-instruct-scored-rewards-train
-# devices: 0 -- DCP->HF conversion + logit check + S3 I/O all run on CPU; a CPU box is
-# right and cheapest. Overridable at submit with --compute.
-suggested_compute: cpu-32vcpu
-# $EDULLM_CHECKPOINT_DIR is the writable s3:// prefix the platform hands the job; the
-# script uploads the HF model tree there itself (the platform does not sync local files).
-# dtype named in the command so the precision guard can see it (harmless on CPU).
+# 370M SFT over ~88k examples fits comfortably on one H100 (81,920 MiB, bf16). Well under the
+# 6h/stage target. Overridable at submit with --compute.
+suggested_compute: gpu-1xh100
+# $EDULLM_CHECKPOINT_DIR is the writable s3:// prefix the platform hands the job; run_sft.py
+# uploads the trained model tree there itself (the platform does not sync local files).
+# --hf-base-uri = Stage-0 convert output; --sft-uri = Stage-1 data-prep sft.jsonl.
+# dtype named in the command so the precision guard sees bf16 (H100 has it).
 command: >-
-  bash -lc 'python projects/prm_vs_orm/convert_base.py
-  --dcp-uri s3://sbsandbox-intern-edullm-outputs/teams/input-core/runs/base-olmo3-370m-step12716/checkpoints/dcp/
+  bash -lc 'python projects/prm_vs_orm/run_sft.py
+  --hf-base-uri s3://sbsandbox-intern-edullm-outputs/teams/input-core/runs/run_019fde46-e392-70c5-9986-e2618a5cfe28/checkpoints/
+  --sft-uri s3://sbsandbox-intern-edullm-outputs/teams/input-core/runs/run_019fdd78-db6f-702c-a119-7faa90ea0a33/checkpoints/sft.jsonl
   --out "$EDULLM_CHECKPOINT_DIR" --dtype bfloat16'
