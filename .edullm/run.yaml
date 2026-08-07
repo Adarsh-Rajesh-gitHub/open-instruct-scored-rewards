@@ -14,15 +14,22 @@ schema_version: 1
 # GPU stage: needs the GPU workload role (reads prior-run outputs) and W&B is auto-wired by
 # that role. The -train profile is required because this READS prior outputs and WRITES its own.
 workload_profile: open-instruct-scored-rewards-train
-# 370M SFT over ~88k examples fits comfortably on one H100 (81,920 MiB, bf16). Well under the
-# 6h/stage target. Overridable at submit with --compute.
-suggested_compute: gpu-1xh100
+# gpu-1xh100 is priced but NOT provisioned (no p5.4xlarge environment -> "may never arrive").
+# gpu-8xa100 IS provisioned and places "after_a_wait" (it will place, just queued), 8x A100
+# 80GiB bf16. An 88k-example x3-epoch 370M SFT is well under the 6h/stage target on 8-way DP
+# (~2k steps at effective batch 128). Overridable at submit with --compute.
+suggested_compute: gpu-8xa100
+# run_sft.py is a single ORCHESTRATOR process: it does the S3 download/upload the platform
+# doesn't, and INTERNALLY `accelerate launch`es one rank per visible GPU (num_processes=8 here).
+# The platform's per-device launch check reads only this outer command and sees one process
+# against 8 GPUs, so we mark the single top-level process as deliberate with
+# EDULLM_LAUNCH_CHECK=waived (the sanctioned way to record "the launcher is inside the wrapper").
 # $EDULLM_CHECKPOINT_DIR is the writable s3:// prefix the platform hands the job; run_sft.py
 # uploads the trained model tree there itself (the platform does not sync local files).
 # --hf-base-uri = Stage-0 convert output; --sft-uri = Stage-1 data-prep sft.jsonl.
-# dtype named in the command so the precision guard sees bf16 (H100 has it).
+# dtype named in the command so the precision guard sees bf16 (A100 has it).
 command: >-
-  bash -lc 'python projects/prm_vs_orm/run_sft.py
+  bash -lc 'EDULLM_LAUNCH_CHECK=waived python projects/prm_vs_orm/run_sft.py
   --hf-base-uri s3://sbsandbox-intern-edullm-outputs/teams/input-core/runs/run_019fde46-e392-70c5-9986-e2618a5cfe28/checkpoints/
   --sft-uri s3://sbsandbox-intern-edullm-outputs/teams/input-core/runs/run_019fdd78-db6f-702c-a119-7faa90ea0a33/checkpoints/sft.jsonl
   --out "$EDULLM_CHECKPOINT_DIR" --dtype bfloat16'
