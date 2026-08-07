@@ -6,16 +6,21 @@
 # Workload profiles registered for open-instruct-scored-rewards: open-instruct-scored-rewards-check, open-instruct-scored-rewards-train.
 # edullm check prices this and lists every refusal, without dispatching anything.
 schema_version: 1
-# PRM-vs-ORM Stage 1: data prep. Reads the published PRM800K corpus in-job via
-# edullm_data (job role), grades outcome labels with open-instruct's own MathVerifier,
-# and writes the SFT / ORM / PRM corpora plus GSM8K/MATH prompt and eval sets to the
-# run's checkpoint prefix. CPU-only (no tokenizer, no torch training); the -train
-# profile is required because this is the first stage that WRITES outputs.
+# PRM-vs-ORM Stage 0: base checkpoint conversion. Downloads the staged Olmo3-370M
+# OLMo-core DCP (the run-10b-equal/step12716 base, copied into the job-readable outputs
+# bucket), rebuilds the model from the checkpoint's own config.json, and converts DCP -> HF
+# with OLMo-core's convert_checkpoint_to_hf. Logit validation stays ON (the correctness
+# gate). The HF model + dolma2 tokenizer are uploaded to the run's checkpoint prefix for
+# Stage 2 (SFT) to consume. CPU-only (conversion on device=cpu); the -train profile is
+# required because this WRITES outputs.
 workload_profile: open-instruct-scored-rewards-train
-# devices: 0 -- pure data transform + S3 I/O; a CPU box is right and cheapest.
-# Overridable at submit with --compute.
+# devices: 0 -- DCP->HF conversion + logit check + S3 I/O all run on CPU; a CPU box is
+# right and cheapest. Overridable at submit with --compute.
 suggested_compute: cpu-32vcpu
 # $EDULLM_CHECKPOINT_DIR is the writable s3:// prefix the platform hands the job; the
-# script uploads every corpus there itself (the platform does not sync local files).
+# script uploads the HF model tree there itself (the platform does not sync local files).
+# dtype named in the command so the precision guard can see it (harmless on CPU).
 command: >-
-  bash -lc 'python projects/prm_vs_orm/data_prep.py --out "$EDULLM_CHECKPOINT_DIR"'
+  bash -lc 'python projects/prm_vs_orm/convert_base.py
+  --dcp-uri s3://sbsandbox-intern-edullm-outputs/teams/input-core/runs/base-olmo3-370m-step12716/checkpoints/dcp/
+  --out "$EDULLM_CHECKPOINT_DIR" --dtype bfloat16'
