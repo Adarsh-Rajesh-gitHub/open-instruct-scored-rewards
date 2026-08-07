@@ -12,6 +12,45 @@
 # `pip freeze` of a working env pulls cu11 and cu12 wheels side by side, and they
 # collide on the shared nvidia/<lib>/lib/ paths - the older cu11 file wins and torch
 # dies on a missing symbol. Let torch declare its own.
+
+# TORCH IS NAMED HERE BECAUSE NOTHING ELSE NAMED IT. Until this line it arrived only as
+# vllm's dependency. That fixed the version by inheritance rather than by decision -
+# vllm==0.21.0 requires torch==2.11.0 exactly - and it never fixed the build at all: with
+# no index url, pip took whichever CUDA variant PyPI happened to serve for that version.
+#
+# Two builds of 2.11.0 are published, +cu128 and +cu130, and only one of them agrees with
+# the rest of this environment. nvidia-cuda-nvcc below is pinned to 13.0.88 and
+# .edullm/Dockerfile points CUDA_HOME at nvidia/cu13, so a cu128 torch makes DeepSpeed
+# refuse the mismatch and `import deepspeed` takes open_instruct.model_utils down with it.
+# Today PyPI's default for 2.11.0 happens to be the CUDA 13 build, so this environment has
+# been correct by luck; the luck runs out on the first version that defaults the other way.
+#
+# THE LOCAL VERSION IS LOAD-BEARING, not decoration. Under PEP 440 a specifier carrying no
+# local part ignores one on the candidate, so a bare torch==2.11.0 is also satisfied by
+# 2.11.0+cpu - which imports, reports the same version, and trains on the CPU of a GPU
+# instance without one log line saying so. ==2.11.0+cu130 names one artifact. It still
+# satisfies vllm's torch==2.11.0, by that same PEP 440 rule read the other way.
+#
+# torchvision and torchaudio follow torch's index rather than PyPI's, which is the rule
+# pyproject.toml already states for them. vllm pins both to exact versions, so they are
+# installed either way and the only open question was which build.
+#
+# All three wheels are manylinux_2_28, as PyPI's are, so this changes nothing for the
+# glibc 2.28 cluster this file exists for.
+#
+# INSTALL THIS FILE WITH pip, WHICH IS WHAT BOTH PLACES THAT INSTALL IT ALREADY USE -
+# .edullm/Dockerfile and the venvs the .sbatch scripts activate. pip searches every index
+# and takes the highest version, so the line below adds the torch builds to what is
+# available and changes nothing else. uv defaults the other way: under its first-match
+# strategy any package the PyTorch index also mirrors is taken from there rather than from
+# PyPI, and that index carries a requests from 2022 that wandb cannot be resolved against,
+# so `uv pip install -r` on this file fails somewhere that has nothing to do with torch.
+# `uv pip install --index-strategy unsafe-best-match -r` is the same resolution pip does.
+--extra-index-url https://download.pytorch.org/whl/cu130
+torch==2.11.0+cu130
+torchvision==0.26.0+cu130
+torchaudio==2.11.0+cu130
+
 vllm==0.21.0
 transformers>=5.4.0
 deepspeed>=0.18.3
@@ -28,7 +67,7 @@ bitsandbytes>=0.44.1
 # MissingCUDAException when the variable is unset, so `import deepspeed` fails and takes
 # open_instruct.model_utils with it. torch ships CUDA runtime libraries but no compiler.
 #
-# 13.0.88 rather than the latest, to match torch 2.11.0+cu130: DeepSpeed compares the
+# 13.0.88 rather than the latest, to match the torch pinned above: DeepSpeed compares the
 # installed nvcc against torch's CUDA version and only tolerates a mismatch for majors
 # it has an explicit allowance for, which does not yet include 13. This is the same nvcc
 # build as the cluster's cuda/13.0.1 module, so the two ways of satisfying DeepSpeed
