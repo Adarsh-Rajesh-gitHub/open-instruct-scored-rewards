@@ -137,45 +137,70 @@ def main() -> None:
         print(f"--out must be an s3:// prefix (got {args.out!r})", file=sys.stderr)
         raise SystemExit(2)
 
-    import torch  # noqa: PLC0415 -- lazy so --selftest stays offline
-    from edullm_data.s3 import Boto3S3  # noqa: PLC0415
-    from olmo_core.config import DType  # noqa: PLC0415
-    from olmo_core.nn.hf import convert_checkpoint_to_hf, load_config  # noqa: PLC0415
-    from olmo_core.utils import prepare_cli_environment  # noqa: PLC0415
-
-    prepare_cli_environment()
-    _ensure_single_process_group()
-
-    s3 = Boto3S3.default()
-
-    print(f"downloading DCP {args.dcp_uri} -> {args.local_dcp} ...", flush=True)
-    n = download_prefix(s3, args.dcp_uri, args.local_dcp)
-    print(f"downloaded {n} objects", flush=True)
-
-    experiment_config = load_config(args.local_dcp)
-    if experiment_config is None:
-        raise RuntimeError("experiment config.json not found in the staged checkpoint")
-    transformer_config_dict = experiment_config["model"]
-    tokenizer_config_dict = experiment_config["dataset"]["tokenizer"]
-
-    print("converting DCP -> HF (CPU) with logit validation ...", flush=True)
-    convert_checkpoint_to_hf(
-        original_checkpoint_path=args.local_dcp,
-        output_path=args.local_hf,
-        transformer_config_dict=transformer_config_dict,
-        tokenizer_config_dict=tokenizer_config_dict,
-        dtype=DType(args.dtype),
-        tokenizer_id=args.tokenizer,
-        validate=not args.no_validate,
-        device=torch.device("cpu"),
+    # Everything below prints milestones to *stdout* (flushed). The prior run of this stage
+    # exited 1 in ~6s with an empty ``edullm logs`` body: olmo_core's logging / an uncaught
+    # traceback on stderr is not surfaced by the platform's log report, so the failure was
+    # invisible. We therefore (a) echo a start banner + a milestone after each pre-download
+    # step so the last line printed pinpoints where it died even with no traceback, and
+    # (b) catch any exception and force its traceback onto stdout before re-raising.
+    print(
+        f"CONVERT START argv={sys.argv[1:]} cwd={os.getcwd()} python={sys.executable}",
+        flush=True,
     )
 
-    print(f"uploading HF model -> {args.out} ...", flush=True)
-    uploaded = upload_dir(s3, args.local_hf, args.out)
-    for u in uploaded:
-        print(f"  wrote {u}", flush=True)
+    try:
+        print("step: importing torch / olmo_core / edullm_data ...", flush=True)
+        import torch  # noqa: PLC0415 -- lazy so --selftest stays offline
+        from edullm_data.s3 import Boto3S3  # noqa: PLC0415
+        from olmo_core.config import DType  # noqa: PLC0415
+        from olmo_core.nn.hf import convert_checkpoint_to_hf, load_config  # noqa: PLC0415
+        from olmo_core.utils import prepare_cli_environment  # noqa: PLC0415
 
-    print(f"CONVERT OK: hf_base={args.out.rstrip('/')} files={len(uploaded)}", flush=True)
+        print("step: imports OK", flush=True)
+
+        prepare_cli_environment()
+        print("step: prepare_cli_environment OK", flush=True)
+        _ensure_single_process_group()
+        print("step: single-process group OK", flush=True)
+
+        s3 = Boto3S3.default()
+        print("step: Boto3S3.default() OK", flush=True)
+
+        print(f"downloading DCP {args.dcp_uri} -> {args.local_dcp} ...", flush=True)
+        n = download_prefix(s3, args.dcp_uri, args.local_dcp)
+        print(f"downloaded {n} objects", flush=True)
+
+        experiment_config = load_config(args.local_dcp)
+        if experiment_config is None:
+            raise RuntimeError("experiment config.json not found in the staged checkpoint")
+        transformer_config_dict = experiment_config["model"]
+        tokenizer_config_dict = experiment_config["dataset"]["tokenizer"]
+
+        print("converting DCP -> HF (CPU) with logit validation ...", flush=True)
+        convert_checkpoint_to_hf(
+            original_checkpoint_path=args.local_dcp,
+            output_path=args.local_hf,
+            transformer_config_dict=transformer_config_dict,
+            tokenizer_config_dict=tokenizer_config_dict,
+            dtype=DType(args.dtype),
+            tokenizer_id=args.tokenizer,
+            validate=not args.no_validate,
+            device=torch.device("cpu"),
+        )
+
+        print(f"uploading HF model -> {args.out} ...", flush=True)
+        uploaded = upload_dir(s3, args.local_hf, args.out)
+        for u in uploaded:
+            print(f"  wrote {u}", flush=True)
+
+        print(f"CONVERT OK: hf_base={args.out.rstrip('/')} files={len(uploaded)}", flush=True)
+    except BaseException:
+        import traceback as _tb  # noqa: PLC0415
+
+        print("CONVERT FAILED -- traceback (forced to stdout):", flush=True)
+        _tb.print_exc(file=sys.stdout)
+        sys.stdout.flush()
+        raise
 
 
 if __name__ == "__main__":
