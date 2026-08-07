@@ -1,0 +1,19 @@
+# Written by edullm check, from config/workload-catalog.yaml in /home/tom/code/alpha/eduLLM/platform/config.
+# Everything here is a property of the code and travels with it in git.
+# The machine, the corpus and the experiment are supplied at submit time,
+# because one commit run by two people belongs to two teams.
+#
+# Workload profiles registered for open-instruct-scored-rewards: open-instruct-scored-rewards-check, open-instruct-scored-rewards-train.
+# edullm check prices this and lists every refusal, without dispatching anything.
+schema_version: 1
+# PRM-vs-ORM milestone 1: a plumbing smoke. It proves our committed tree is in the
+# image, our reward plugin imports and registers under the image's Python, and the
+# scored_rewards build->score path works -- on the -check workload (1h, 1 attempt, no
+# checkpoint), with no GPU and no corpus. The reward-model backend it exercises is the
+# torch-free stub; the real one lands with reward_modeling_scored.py (Stage 3-4).
+workload_profile: open-instruct-scored-rewards-check
+# devices: 0 -- the smoke only touches the torch-free scored_rewards layer, so a CPU box
+# is right and cheapest. Overridable at submit with --compute.
+suggested_compute: cpu-32vcpu
+command: >-
+  bash -lc 'python projects/prm_vs_orm/selftest.py'
