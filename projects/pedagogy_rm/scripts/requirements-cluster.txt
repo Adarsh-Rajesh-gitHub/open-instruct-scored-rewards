@@ -51,6 +51,11 @@ hf-transfer>=0.1.8
 beaker-py
 ai2-olmo-core @ git+https://github.com/allenai/OLMo-core.git@fa6c5014c9f6e9ee789da2d9c20d5126fee8df0d
 
+# In-job reader for published eduLLM datasets (projects/prm_vs_orm/data_prep.py reads
+# vendor/openai-prm800k with the job role). Pinned to the exact commit the platform pins
+# (NOT @v0.2.0 -- that tag has a documented validation-set leak).
+edullm-data @ git+https://github.com/edu-llm/edullm-data@38bf831a6c3f445e394784018441fd59288b876c
+
 openenv-core>=0.2.1
 langdetect==1.0.9
 immutabledict>=1.2.0
