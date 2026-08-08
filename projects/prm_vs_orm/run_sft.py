@@ -118,7 +118,7 @@ def build_accelerate_cmd(
     add_bos: bool,
     chat_template: str,
     max_seq_length: int,
-    epochs: float,
+    epochs: int,
     lr: float,
     per_device_batch: int,
     grad_accum: int,
@@ -141,7 +141,7 @@ def build_accelerate_cmd(
         "--learning_rate", str(lr),
         "--lr_scheduler_type", "linear",
         "--warmup_ratio", str(warmup_ratio),
-        "--num_train_epochs", str(epochs),
+        "--num_train_epochs", str(int(epochs)),  # finetune.py types this int; str(3.0) would be refused
         "--chat_template_name", chat_template,
         "--output_dir", output_dir,
         "--do_not_randomize_output_dir",
@@ -206,7 +206,7 @@ def main() -> None:
     ap.add_argument("--chat-template", default="tulu", help="open-instruct chat template name")
     ap.add_argument("--add-bos", choices=["auto", "yes", "no"], default="auto")
     ap.add_argument("--max-seq-length", type=int, default=2048)
-    ap.add_argument("--epochs", type=float, default=3.0)
+    ap.add_argument("--epochs", type=int, default=3)  # finetune.py num_train_epochs is int
     ap.add_argument("--lr", type=float, default=1e-5)
     ap.add_argument("--per-device-batch", type=int, default=16)
     ap.add_argument("--grad-accum", type=int, default=1)
