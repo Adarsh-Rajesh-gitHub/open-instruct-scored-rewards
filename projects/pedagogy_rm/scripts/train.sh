@@ -69,6 +69,15 @@ SEED=${SEED:-1}
 OUTPUT_DIR=${OUTPUT_DIR:-output/$EXP}
 
 LORA_R=${LORA_R:-32}
+# MIXTURE-OF-EXPERT KNOBS, empty for a dense policy so nothing changes for the existing arms.
+# EXPERT_PARAMS names fused 3-D expert tensors that target_modules cannot reach; EXPERT_R and
+# EXPERT_ALPHA give them their own rank and scaling. For OLMoE the settings PERFT measured are
+#   EXPERT_PARAMS="mlp.experts.gate_up_proj mlp.experts.down_proj" EXPERT_R=2 EXPERT_ALPHA=8
+# which is 16.8M trainable and keeps alpha/r equal to attention's.
+EXPERT_PARAMS=${EXPERT_PARAMS:-}
+EXPERT_R=${EXPERT_R:-}
+EXPERT_ALPHA=${EXPERT_ALPHA:-}
+LORA_TARGET_MODULES=${LORA_TARGET_MODULES:-}
 LORA_ALPHA=${LORA_ALPHA:-64}
 
 # Where trainer state goes so a killed run resumes instead of restarting. Empty disables
@@ -158,6 +167,10 @@ elif [ "$MODE" = lora ]; then
         --deepspeed_stage 2
         --use_peft
         --lora_r "$LORA_R"
+        ${LORA_TARGET_MODULES:+--lora_target_modules $LORA_TARGET_MODULES}
+        ${EXPERT_PARAMS:+--lora_target_parameters $EXPERT_PARAMS}
+        ${EXPERT_R:+--lora_expert_rank "$EXPERT_R"}
+        ${EXPERT_ALPHA:+--lora_expert_alpha "$EXPERT_ALPHA"}
         --lora_alpha "$LORA_ALPHA"
         --lora_dropout 0.0
     )

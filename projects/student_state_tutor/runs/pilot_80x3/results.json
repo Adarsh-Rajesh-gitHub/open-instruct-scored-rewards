@@ -1,0 +1,54 @@
+{
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "n_classified": 113,
+  "class_counts": {
+    "correct": 46,
+    "off_by_one": 30,
+    "operation_error": 18,
+    "sign_error": 19
+  },
+  "n_problem_groups": 58,
+  "primary_layer": 12,
+  "results": {
+    "majority": {
+      "accuracy": 0.40707964601769914,
+      "balanced_accuracy": 0.25,
+      "macro_f1": 0.14465408805031446
+    },
+    "surface_simple": {
+      "accuracy": 0.2831858407079646,
+      "balanced_accuracy": 0.28210653445207223,
+      "macro_f1": 0.2652013308532655
+    },
+    "surface_tfidf": {
+      "accuracy": 0.3185840707964602,
+      "balanced_accuracy": 0.32459954233409605,
+      "macro_f1": 0.3161844384307012
+    },
+    "hidden_layer_6": {
+      "accuracy": 0.34513274336283184,
+      "balanced_accuracy": 0.2926201372997711,
+      "macro_f1": 0.2838711904369945
+    },
+    "hidden_layer_12": {
+      "accuracy": 0.30973451327433627,
+      "balanced_accuracy": 0.2807716755657259,
+      "macro_f1": 0.27893772893772895,
+      "balanced_accuracy_95_ci": [
+        0.20598039878830318,
+        0.3602449866310161
+      ],
+      "gain_over_best_surface": -0.04382786676837014
+    },
+    "hidden_layer_18": {
+      "accuracy": 0.336283185840708,
+      "balanced_accuracy": 0.28403890160183065,
+      "macro_f1": 0.2851224834400585
+    },
+    "hidden_layer_24": {
+      "accuracy": 0.3185840707964602,
+      "balanced_accuracy": 0.26181667937960845,
+      "macro_f1": 0.26115112267747986
+    }
+  }
+}

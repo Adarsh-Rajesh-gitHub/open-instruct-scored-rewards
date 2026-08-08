@@ -205,6 +205,37 @@ class ModelConfig:
     """Model layers to unfreeze & train"""
     lora_task_type: str = "CAUSAL_LM"
     """The task_type to pass for LoRA (use SEQ_CLS for reward modeling)"""
+    lora_target_parameters: list[str] | None = None
+    """LoRA targets that are bare nn.Parameters rather than modules.
+
+    Mixture-of-expert layers in transformers v5 store all experts in one fused 3-D tensor -
+    OLMoE's are (num_experts, 2048, 2048) and (num_experts, 2048, 1024) - instead of a ModuleList
+    of nn.Linear. `target_modules` cannot reach those, because PEFT adapts a module by replacing
+    its forward and an nn.Parameter has none. `target_parameters` is PEFT's route to them (>=0.17),
+    and it treats dim 0 as the expert dimension, so each expert gets its own A and B.
+
+    For OLMoE: ["mlp.experts.gate_up_proj", "mlp.experts.down_proj"]. That is inside the experts and
+    downstream of the router; the router itself (mlp.gate) is a plain Linear and is left alone
+    unless it is named in target_modules."""
+    lora_expert_alpha: int | None = None
+    """lora_alpha for the target_parameters entries, when it should differ from lora_alpha.
+
+    LoRA scales its update by alpha/r, so giving the experts a smaller rank through
+    lora_expert_rank while leaving alpha global silently gives them a LARGER scaling than the
+    attention modules: at r=8/alpha=32 attention scales by 4, while experts at r=2 scale by 16.
+    PEFT's own MoE example has this asymmetry and does not comment on it. Setting this to
+    4 * lora_expert_rank equalises the two. Left unset, PEFT's behaviour is kept, which is what
+    "LoRA Without Regret" argues for - it holds alpha fixed deliberately - so this is a knob rather
+    than a correction, and the two conventions have never been compared with ranks mixed inside one
+    adapter."""
+    lora_expert_rank: int | None = None
+    """Rank for the target_parameters entries, when it should differ from lora_r.
+
+    It usually should. There are as many LoRA pairs as experts, so rank r on 64 experts is 64x the
+    parameter budget of rank r on one dense layer: for OLMoE at r=8 that is 58.7M against 2.1M for
+    attention. PEFT's guidance, following Schulman et al.'s "LoRA Without Regret", is
+    lora_r // num_experts, which keeps the budgets comparable. Left unset, target_parameters
+    inherit lora_r."""
 
     # quantization args
     load_in_8bit: bool = False

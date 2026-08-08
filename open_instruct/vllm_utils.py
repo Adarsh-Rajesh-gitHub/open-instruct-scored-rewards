@@ -20,11 +20,12 @@ import asyncio
 import dataclasses
 import os
 import queue
+import re
 import sys
 import threading
 import time
 from collections import defaultdict
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from concurrent import futures
 from typing import Any, TypedDict
 
@@ -1348,23 +1349,74 @@ def _get_fsdp2_submodules(model: torch.nn.Module) -> list[tuple[str, FSDPModule]
     return fsdp_modules
 
 
-def _prepare_params_for_sync(
-    params: list[tuple[str, torch.nn.Parameter]], name_mapper: Callable[[str], str | None] | None
+# transformers>=5 stores a MoE layer's experts as one stacked parameter per projection; vLLM
+# still expects the per-expert checkpoint names its FusedMoE loader knows how to stack itself.
+_FUSED_EXPERTS = re.compile(r"\.experts\.(gate_up_proj|down_proj)$")
+
+
+def _split_fused_experts(name: str, shape: Sequence[int]) -> list[tuple[str, list[int], tuple]] | None:
+    """Per-expert (name, shape, index) for a fused MoE parameter, or None if it is not one.
+
+    WHY THIS EXISTS. transformers 5 replaced OLMoE's 64 expert modules with a single stacked
+    nn.Parameter per projection, so the trainer holds `...mlp.experts.gate_up_proj` with shape
+    (64, 2*intermediate, hidden). vLLM's OlmoeForCausalLM never changed: its load_weights builds
+    an expert_params_mapping keyed on the *old* names, gate_proj/up_proj/down_proj per expert, and
+    stacks them into its own FusedMoE layout. Sending the new name means load_weights has no entry
+    for it and the sync dies at the first MoE layer with
+
+        Call to collective_rpc method failed: 'layers.0.mlp.experts.gate_up_proj'
+
+    which reads like a broken RPC rather than like a naming mismatch two libraries disagree on.
+
+    NO TRANSPOSE, AND THAT IS CHECKED RATHER THAN ASSUMED. modeling_olmoe applies these as
+    `F.linear(x, gate_up_proj[e])` and `F.linear(x, down_proj[e])`, and F.linear takes (out, in) -
+    the same layout nn.Linear.weight uses. So each expert slice is already exactly the tensor the
+    old per-expert checkpoint held, and the split is pure slicing. The gate/up order follows from
+    the same line: the forward chunks the output in two and calls the first half gate, so gate is
+    the first `intermediate` rows and up is the rest.
+
+    Returns index tuples rather than tensors so the metadata pass, which only has shapes, and the
+    send pass, which has storage, can share one definition and cannot drift apart.
+    """
+    match = _FUSED_EXPERTS.search(name)
+    if match is None or len(shape) != 3:
+        return None
+    stem, experts = name[: match.start()], shape[0]
+    if match.group(1) == "down_proj":
+        return [(f"{stem}.experts.{e}.down_proj.weight", list(shape[1:]), (e,)) for e in range(experts)]
+    inter = shape[1] // 2
+    out = []
+    for e in range(experts):
+        rows = [inter, shape[2]]
+        out.append((f"{stem}.experts.{e}.gate_proj.weight", rows, (e, slice(0, inter))))
+        out.append((f"{stem}.experts.{e}.up_proj.weight", rows, (e, slice(inter, 2 * inter))))
+    return out
+
+
+def _params_to_send(
+    params: list[tuple[str, torch.nn.Parameter]], name_mapper: Callable[[str], str | None] | None, clone: bool
 ) -> list[tuple[str, torch.Tensor]]:
-    """Map parameter names and clone into contiguous tensors for NCCL send.
+    """The (name, tensor) pairs vLLM should receive: mapped, dropped and expert-split.
 
-    DS3 gathered tensors may be non-contiguous or views into temporary buffers.
-    Cloning ensures we send independent, contiguous tensors over NCCL.
+    ONE FUNCTION BECAUSE THERE ARE THREE SENDERS AND THEY MUST AGREE. The NCCL path, the IPC path
+    and the metadata pass each used to walk named_parameters() and apply the mapper themselves.
+    Adding the expert split to two of them left the third - IPC, which is the single-GPU colocated
+    mode our MoE runs use - still sending the fused name, so the sync failed identically after the
+    fix as before it. Anything that changes what gets sent belongs here, where all three see it.
 
-    A ``name_mapper`` returning None drops the parameter, which is how the LoRA
-    mapper keeps adapter tensors out of a send that vLLM would reject.
+    ``clone`` is the one real difference between the callers. NCCL needs owned contiguous memory,
+    since DS3 gathered tensors can be views into buffers that are about to be reused. IPC must not
+    clone: it hands vLLM a handle to this same GPU memory, and copying would duplicate the model.
+    Expert slices are row ranges of a contiguous block, so they are views either way.
     """
     out = []
     for name, param in params:
         mapped = name_mapper(name) if name_mapper else name
         if mapped is None:
             continue
-        out.append((mapped, param.data.contiguous().clone()))
+        split = _split_fused_experts(mapped, param.data.shape)
+        pieces = [(mapped, param.data)] if split is None else [(n, param.data[i]) for n, _, i in split]
+        out.extend((n, t.contiguous().clone() if clone else t) for n, t in pieces)
     return out
 
 
@@ -1377,7 +1429,7 @@ def _collect_weight_metadata(
     For FSDP1, param.shape returns full shape when parameters are registered (not flat).
 
     Skips whatever the mapper drops, so this stays in step with the tensors
-    _prepare_params_for_sync actually sends.
+    _params_to_send actually sends.
     """
     names: list[str] = []
     dtype_names: list[str] = []
@@ -1386,10 +1438,18 @@ def _collect_weight_metadata(
         mapped_name = name_mapper(name) if name_mapper else name
         if mapped_name is None:
             continue
-        names.append(mapped_name)
-        dtype_names.append(str(param.dtype).split(".")[-1])
         shape = getattr(param, "ds_shape", param.shape)
-        shapes.append(list(shape))
+        dtype = str(param.dtype).split(".")[-1]
+        split = _split_fused_experts(mapped_name, shape)
+        if split is None:
+            names.append(mapped_name)
+            dtype_names.append(dtype)
+            shapes.append(list(shape))
+            continue
+        for expert_name, expert_shape, _ in split:
+            names.append(expert_name)
+            dtype_names.append(dtype)
+            shapes.append(expert_shape)
     return names, dtype_names, shapes
 
 
@@ -1414,11 +1474,7 @@ def _broadcast_weights_ipc(
         if is_rank_0:
             # No .clone() here, unlike the NCCL path: IPC hands vLLM a handle to this
             # same GPU memory, and cloning would cost a second copy of the whole model.
-            mapped_params = [
-                (mapped, p.data)
-                for mapped, p in ((name_mapper(n) if name_mapper else n, p) for n, p in params)
-                if mapped is not None
-            ]
+            mapped_params = _params_to_send(params, name_mapper, clone=False)
             for engine in vllm_engines:
                 trainer_args = IPCTrainerSendWeightsArgs(mode="ray", llm_handle=engine)
                 IPCWeightTransferEngine.trainer_send_weights(iterator=iter(mapped_params), trainer_args=trainer_args)
@@ -1481,7 +1537,7 @@ def broadcast_weights_to_vllm(
         torch.cuda.synchronize()
         try:
             if is_rank_0:
-                mapped_params = _prepare_params_for_sync(list(model.named_parameters()), name_mapper)
+                mapped_params = _params_to_send(list(model.named_parameters()), name_mapper, clone=True)
                 names = [n for n, _ in mapped_params]
                 dtype_names = [str(t.dtype).split(".")[-1] for _, t in mapped_params]
                 shapes = [list(t.shape) for _, t in mapped_params]
@@ -1522,7 +1578,7 @@ def broadcast_weights_to_vllm(
     for ctx, batch_params in batches:
         with ctx:
             if is_rank_0:
-                mapped_params = _prepare_params_for_sync(batch_params, name_mapper)
+                mapped_params = _params_to_send(batch_params, name_mapper, clone=True)
                 NCCLWeightTransferEngine.trainer_send_weights(iterator=iter(mapped_params), trainer_args=trainer_args)
 
     return refs

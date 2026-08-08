@@ -435,6 +435,86 @@ ask for.'' The literature predicted this --- behavioural framings of the constru
 an interface change, not a rewording: raters had been re-deriving the mathematics, and are now shown a
 generated worked solution to check against.
 
+\subsection{The reward is largely a length penalty, and the new rubric does not fix that}
+
+Agreement was the wrong property to check alone. What the dimensions correlate \emph{with} explains
+more of this project's history than what raters agree on. Running the head over all 600 labelled turns,
+against the seven-rater consensus on the same turns:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\toprule
+& \textbf{Probe} & \textbf{Labels} \\
+\midrule
+\qual{actionable} $\leftrightarrow$ \qual{elicits} & \textbf{0.96} & \textbf{0.95} \\
+\qual{leak} $\leftrightarrow$ $\log$(words) & $+0.64$ & $+0.53$ \\
+\qual{correct} $\leftrightarrow$ $\log$(words) & $-0.58$ & $-0.43$ \\
+\qual{elicits} $\leftrightarrow$ $\log$(words) & $-0.52$ & $-0.50$ \\
+\qual{actionable} $\leftrightarrow$ $\log$(words) & $-0.42$ & $-0.40$ \\
+\qual{targeted} $\leftrightarrow$ $\log$(words) & $\mathbf{+0.03}$ & $\mathbf{+0.02}$ \\
+\midrule
+mean $|r|$ among the five & 0.43 & 0.37 \\
+first principal component & 51\% & 47\% \\
+effective rank & 3.07 / 5 & 3.31 / 5 \\
+\bottomrule
+\end{tabular}
+\caption{The probe amplifies the label structure and invents none of it: every correlation matches the
+labels in sign and exceeds it by 0.01--0.15. The redundancy is a property of the ratings.}
+\label{tab:corr}
+\end{table}
+
+Applying the reward signs resolves the picture. \qual{leak} is negated, so its $+0.64$ becomes $-0.64$
+and joins the other three: \qual{correct} $-0.58$, \qual{elicits} $-0.52$, \qual{actionable} $-0.42$,
+with \qual{targeted} alone at $+0.03$. \textbf{The composite reward correlates with length at $-0.60$
+in the probe and $-0.57$ in the labels.}
+
+That is not a side effect but most of what the reward is, and it accounts for the sequence rather than
+sitting alongside it: why arm A collapsed to 12 words, why a length term had to be introduced, why that
+term supplies roughly 70\% of the measured gain --- it is the only one pushing back --- and why the
+probe dimensions collected only 40\% of their available headroom, the remainder lying behind the
+collapse the band blocks. \qual{targeted} is the exception, and it is also where surface features do
+worst (0.36 against 0.85); it is the one dimension length cannot fake and the one the policy improved
+least on.
+
+\paragraph{V2 fixes the redundancy and not the length coupling.} \qual{guidance} was included partly as
+a length-\emph{positive} counterweight, so this is checkable: nine raters scored 44 turns on all six V2
+dimensions. But 24 of those 44 are manufactured negatives, each corrupted along a single dimension,
+which decorrelates the dimensions by construction and says nothing about the rubric. Excluding them
+leaves 20 real turns.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+& \textbf{V1 ($n$=600)} & \textbf{V2, all 44} & \textbf{V2, real only ($n$=20)} \\
+\midrule
+mean $|r|$ & 0.37 & 0.22 & 0.28 \\
+max $|r|$ & \textbf{0.95} & 0.65 & 0.70 \\
+first PC & 47\% & 36\% & 40\% \\
+effective rank & 3.31 / 5 & 4.88 / 6 & \textbf{4.53 / 6} \\
+composite vs $\log$(words) & \textbf{$-0.57$} & $-0.37$ & \textbf{$-0.62$} \\
+\bottomrule
+\end{tabular}
+\caption{The last column is the one to read. V2 genuinely removes the redundancy --- the 0.95 duplicate
+is gone and effective rank rises from 3.31 of 5 to 4.53 of 6 --- while the length coupling is
+unchanged at $-0.62$ against V1's $-0.57$.}
+\label{tab:v2corr}
+\end{table}
+
+Per dimension on real turns: \qual{correct} $-0.66$, \qual{verdict} $-0.53$, \qual{hands\_over}
+$-0.51$, \qual{leak} $-0.26$, \qual{guidance} $-0.12$, \qual{locates} $-0.06$. The two dimensions
+designed to be length-neutral are, and the other four swamp them; \qual{guidance} was meant to be
+length-positive and came out neutral. At $n=20$ the interval on $-0.62$ is roughly $[-0.84, -0.24]$, so
+this cannot show V2 is worse --- only that it does not help.
+
+The conclusion is that rubric wording is the wrong lever here. Decorrelating the dimensions from each
+other and decorrelating them from length are separate problems; V2 solves the first and leaves the
+second untouched, because raters score shorter turns higher on most pedagogical qualities under either
+rubric. Brevity is confounded with quality in their own judgements, so any head fitted on this corpus
+inherits it. The lever is the corpus --- turns in which length and quality vary independently --- which
+has now been identified as necessary twice and still does not exist.
+
 \subsection{Negative examples had to be manufactured}
 
 The pool contained almost no bad turns: in a 20-turn pilot \qual{locates} never received the bottom score

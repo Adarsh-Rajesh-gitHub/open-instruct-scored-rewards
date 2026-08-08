@@ -1,0 +1,52 @@
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 27.94it/s]
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+generated 16/160
+generated 32/160
+generated 48/160
+generated 64/160
+generated 80/160
+generated 96/160
+generated 112/160
+generated 128/160
+generated 144/160
+generated 160/160
+{
+  "cases": 32,
+  "conditions": {
+    "latest": {
+      "valid_rate": 0.625,
+      "target_accuracy": 0.3,
+      "action_accuracy_given_target": 0.0
+    },
+    "full_history": {
+      "valid_rate": 0.21875,
+      "target_accuracy": 0.5714285714285714,
+      "action_accuracy_given_target": 0.0
+    },
+    "concept_only": {
+      "valid_rate": 1.0,
+      "target_accuracy": 0.25,
+      "action_accuracy_given_target": 0.5
+    },
+    "graph": {
+      "valid_rate": 0.84375,
+      "target_accuracy": 1.0,
+      "action_accuracy_given_target": 0.2222222222222222
+    },
+    "shuffled_graph": {
+      "valid_rate": 0.9375,
+      "target_accuracy": 0.16666666666666666,
+      "action_accuracy_given_target": 0.4
+    }
+  },
+  "shuffled_visible_target_accuracy": 0.9333333333333333,
+  "graph_shuffled_target_sensitivity": 1.0,
+  "gate_checks": {
+    "valid": false,
+    "target": true,
+    "action": false,
+    "beats_latest": true,
+    "uses_visible_state": true
+  },
+  "gate_passed": false
+}

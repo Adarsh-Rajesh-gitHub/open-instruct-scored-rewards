@@ -1,0 +1,129 @@
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 38.18it/s]
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+generated 24/308
+generated 48/308
+generated 72/308
+generated 96/308
+generated 120/308
+generated 144/308
+generated 168/308
+generated 192/308
+generated 216/308
+generated 240/308
+generated 264/308
+generated 288/308
+generated 308/308
+scored 128/1232 choices
+scored 256/1232 choices
+scored 384/1232 choices
+scored 512/1232 choices
+scored 640/1232 choices
+scored 768/1232 choices
+scored 896/1232 choices
+scored 1024/1232 choices
+scored 1152/1232 choices
+scored 1232/1232 choices
+{
+  "n": 154,
+  "subjects": {
+    "social_studies": 74,
+    "science": 80
+  },
+  "conditions": {
+    "transcript": {
+      "gold_probability": 0.2339439744608034,
+      "belief_margin": -0.7213512546830363,
+      "solved": 0.16233766233766234,
+      "leaked": 0.032467532467532464
+    },
+    "graph_actual": {
+      "gold_probability": 0.2719675237427157,
+      "belief_margin": -0.5184042783720153,
+      "solved": 0.22727272727272727,
+      "leaked": 0.045454545454545456
+    },
+    "concept_only": {
+      "gold_probability": 0.26133012142382933,
+      "belief_margin": -0.5480233148320929,
+      "solved": 0.22077922077922077,
+      "leaked": 0.07142857142857142
+    },
+    "shuffled_concept": {
+      "gold_probability": 0.2443008529873345,
+      "belief_margin": -0.6351795982230793,
+      "solved": 0.2077922077922078,
+      "leaked": 0.045454545454545456
+    }
+  },
+  "paired_comparisons": {
+    "graph_actual_minus_concept_only": {
+      "gold_probability": {
+        "mean": 0.010637402318886402,
+        "95_ci": [
+          -0.016771670416840224,
+          0.03729813931836633
+        ]
+      },
+      "belief_margin": {
+        "mean": 0.02961903646007761,
+        "95_ci": [
+          -0.14144007282259016,
+          0.18319790210913517
+        ]
+      },
+      "solved": {
+        "mean": 0.006493506493506494,
+        "95_ci": [
+          -0.06493506493506493,
+          0.07792207792207792
+        ]
+      }
+    },
+    "concept_only_minus_transcript": {
+      "gold_probability": {
+        "mean": 0.027386146963025982,
+        "95_ci": [
+          0.005028226843843161,
+          0.05176841895279802
+        ]
+      },
+      "belief_margin": {
+        "mean": 0.17332793985094344,
+        "95_ci": [
+          0.03182502014489918,
+          0.3315930438312617
+        ]
+      },
+      "solved": {
+        "mean": 0.05844155844155844,
+        "95_ci": [
+          0.0,
+          0.11688311688311688
+        ]
+      }
+    },
+    "concept_only_minus_shuffled_concept": {
+      "gold_probability": {
+        "mean": 0.017029268436494813,
+        "95_ci": [
+          -0.00648468484377049,
+          0.04094055347937044
+        ]
+      },
+      "belief_margin": {
+        "mean": 0.08715628339098645,
+        "95_ci": [
+          -0.07346375594278434,
+          0.24552949098023497
+        ]
+      },
+      "solved": {
+        "mean": 0.012987012987012988,
+        "95_ci": [
+          -0.05844155844155844,
+          0.07792207792207792
+        ]
+      }
+    }
+  }
+}

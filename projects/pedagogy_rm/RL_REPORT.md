@@ -426,6 +426,90 @@ construct, framed behaviourally instead of as a judgement about cognition.
 being asked to re-derive the mathematics from the question; showing a generated worked solution
 alongside the turn took it to 0.73.
 
+### The reward is a length penalty wearing a rubric
+
+Agreement was the wrong thing to check on its own. The more useful question is what the dimensions
+correlate *with*, and the answer explains most of the project's history. Running `head5.npz` over all
+600 labelled turns, and the 7-rater consensus labels over the same turns:
+
+| dimension pair / relation | probe | labels |
+|---|---|---|
+| `actionable` ↔ `elicits` | **0.96** | **0.95** |
+| `leak` ↔ log(words) | +0.64 | +0.53 |
+| `correct` ↔ log(words) | −0.58 | −0.43 |
+| `elicits` ↔ log(words) | −0.52 | −0.50 |
+| `actionable` ↔ log(words) | −0.42 | −0.40 |
+| `targeted` ↔ log(words) | **+0.03** | **+0.02** |
+| mean \|r\| among the five | 0.43 | 0.37 |
+| first principal component | 51% | 47% |
+| effective rank | 3.07 / 5 | 3.31 / 5 |
+
+**The probe amplifies the label structure but invents none of it.** Every correlation matches the
+labels in sign, and is 0.01–0.15 larger in magnitude. So the rank-3-of-5 problem lives in the
+*ratings*; the probe's contribution is a mild sharpening, worst on length.
+
+**Then apply the reward signs, and the picture resolves.** `leak` is negated in the reward, so its
++0.64 becomes −0.64 and lines up with the other three:
+
+| signed as rewarded | probe | labels |
+|---|---|---|
+| `leak` | −0.64 | −0.53 |
+| `correct` | −0.58 | −0.43 |
+| `elicits` | −0.52 | −0.50 |
+| `actionable` | −0.42 | −0.40 |
+| `targeted` | +0.03 | +0.02 |
+| **the reward itself** | **−0.60** | **−0.57** |
+
+Four of five dimensions push toward shorter turns and the composite reward correlates with length at
+−0.60. That is not a side effect to be tuned away, it is what the reward mostly *is*, and it explains
+the sequence rather than being another observation in it: why arm A collapsed to 12 words, why a
+length band had to be added at all, why that band ends up supplying ~70% of the measured gain (it is
+the only term pushing back), and why the probe dimensions collected only 40% of their available
+headroom — the rest sits behind the collapse the band blocks.
+
+`targeted` is the exception at +0.03, and it is also the dimension where surface features do worst
+(0.36 against the activations' 0.85). It is the one dimension measuring something length cannot fake,
+and it is the one the policy improved least on — 21% of its headroom.
+
+### Does the V2 rubric fix this? Half of it.
+
+V2 exists partly to break this coupling: `guidance` ("does the turn supply anything usable") should be
+length-*positive*, offsetting the others. Nine raters scored 44 turns on all six V2 dimensions, so it
+can be checked rather than assumed.
+
+| | V1 labels (n=600) | V2, all 44 | V2, **real turns only** (n=20) |
+|---|---|---|---|
+| mean \|r\| | 0.37 | 0.22 | 0.28 |
+| max \|r\| | **0.95** | 0.65 | 0.70 |
+| first PC | 47% | 36% | 40% |
+| effective rank | 3.31 / 5 | 4.88 / 6 | **4.53 / 6** |
+| composite vs log(words) | **−0.57** | −0.37 | **−0.62** |
+
+The third column is the honest one. 24 of the 44 V2-labelled turns are **manufactured negatives,
+each corrupted along a single dimension** — which decorrelates the dimensions mechanically, by
+construction, and has nothing to do with the rubric. Dropping them leaves 20 real turns.
+
+**On redundancy, V2 is a genuine fix.** The 0.95 duplicate is gone (max 0.70), and effective rank goes
+from 3.31 of 5 to 4.53 of 6 even on real turns. V2 measures close to six things where V1 measured
+about three.
+
+**On length, V2 changes nothing.** The composite still correlates −0.62, against V1's −0.57. Per
+dimension on real turns: `correct` −0.66, `verdict` −0.53, `hands_over` −0.51, `leak` −0.26,
+`guidance` −0.12, `locates` −0.06. The two dimensions designed to be length-neutral are, and the
+other four swamp them. `guidance` was supposed to be the length-*positive* counterweight and came out
+at −0.12 — neutral, not positive.
+
+At n=20 the interval on −0.62 is roughly [−0.84, −0.24], so this cannot claim V2 is *worse*. What it
+rules out is the hope that V2 fixes it.
+
+**Which means rubric wording is the wrong lever for the length problem.** Decorrelating the
+dimensions from each other and decorrelating them from length are different problems; V2 solves the
+first and leaves the second untouched. Raters score shorter turns higher on most pedagogical qualities
+under either rubric — brevity is confounded with quality in their own judgements, so any head fitted
+on this corpus inherits it. That points at the corpus, not the rubric: a set of turns where length and
+quality vary independently is the thing that has been identified as necessary twice now and still does
+not exist.
+
 ### Negative examples had to be manufactured, and half the recipes failed
 
 The pool had no bad turns to learn from: in the 20-turn pilot `locates` never received a 1 at all

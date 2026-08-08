@@ -52,6 +52,7 @@ import dataclasses
 import logging
 import math
 import random
+import re
 import shutil
 import threading
 import time
@@ -181,6 +182,9 @@ DEFAULT_LORA_TARGET_MODULES = ["q_proj", "o_proj", "v_proj", "k_proj", "gate_pro
 # HF names, and must never be sent an adapter tensor.
 _PEFT_PREFIX = "base_model.model."
 _PEFT_BASE_LAYER = ".base_layer."
+# One or more consecutive ".base_layer" segments plus the trailing dot. See _build_peft_name_mapper
+# for why a plain replace is not enough once MoE expert parameters are targeted.
+_PEFT_BASE_LAYER_RUN = re.compile(r"(?:\.base_layer)+\.")
 
 
 def _build_vlm_name_mapper(model_name: str):
@@ -189,6 +193,47 @@ def _build_vlm_name_mapper(model_name: str):
     if "qwen3.5" in model_name.lower():
         return lambda name: f"language_model.{name}"
     return None
+
+
+def _rank_key(target: str) -> str:
+    """The suffix rank_pattern/alpha_pattern match on, from a full dotted target name.
+
+    PEFT matches these keys against the end of the parameter's name, so the entry has to be the
+    tail rather than the whole path: "mlp.experts.gate_up_proj" is keyed as "experts.gate_up_proj".
+    """
+    parts = target.rsplit(".", 2)
+    return ".".join(parts[-2:]) if len(parts) >= 2 else target
+
+
+def _build_lora_config(model_config) -> "LoraConfig":
+    """The LoRA config, including the mixture-of-expert case.
+
+    Split out of the trainer so the MoE branch can be exercised without standing up a Ray actor
+    and a 7B policy, which is the only way it was practical to check.
+    """
+    kwargs = {}
+    if model_config.lora_target_parameters:
+        kwargs["target_parameters"] = model_config.lora_target_parameters
+        if model_config.lora_expert_alpha is not None:
+            kwargs["alpha_pattern"] = {
+                _rank_key(t): model_config.lora_expert_alpha for t in model_config.lora_target_parameters
+            }
+        if model_config.lora_expert_rank is not None:
+            # rank_pattern keys are matched as suffixes against the parameter name, so the entry
+            # has to be the tail of what was targeted rather than the full dotted path.
+            kwargs["rank_pattern"] = {
+                _rank_key(t): model_config.lora_expert_rank for t in model_config.lora_target_parameters
+            }
+    return LoraConfig(
+        task_type=TaskType[model_config.lora_task_type],
+        inference_mode=False,
+        r=model_config.lora_r,
+        lora_alpha=model_config.lora_alpha,
+        lora_dropout=model_config.lora_dropout,
+        target_modules=model_config.lora_target_modules or DEFAULT_LORA_TARGET_MODULES,
+        modules_to_save=model_config.lora_modules_to_save,
+        **kwargs,
+    )
 
 
 def _build_peft_name_mapper(inner: Callable[[str], str | None] | None) -> Callable[[str], str | None]:
@@ -204,7 +249,15 @@ def _build_peft_name_mapper(inner: Callable[[str], str | None] | None) -> Callab
             return None
         if name.startswith(_PEFT_PREFIX):
             name = name[len(_PEFT_PREFIX) :]
-        name = name.replace(_PEFT_BASE_LAYER, ".")
+        # A REGEX RATHER THAN str.replace, BECAUSE THE WRAPPERS NEST AND THE MATCHES OVERLAP.
+        # Targeting a fused MoE expert parameter puts PEFT's ParamWrapper around an already
+        # wrapped module, so the weight arrives as
+        #   ...mlp.experts.base_layer.base_layer.gate_up_proj
+        # and the two ".base_layer." occurrences share the dot between them. str.replace scans
+        # non-overlapping, consumes that dot with the first match, and leaves the second intact:
+        # the name reaching vLLM was ...experts.base_layer.gate_up_proj, which is not a parameter
+        # it has, so the expert weights would silently fail to sync while attention synced fine.
+        name = _PEFT_BASE_LAYER_RUN.sub(".", name)
         return inner(name) if inner else name
 
     return mapper
@@ -434,18 +487,7 @@ class PolicyTrainerRayProcess(RayProcess):
                 # Checkpointed blocks otherwise hand back activations with no grad path,
                 # since every base weight is frozen and only the adapters need one.
                 self.policy.enable_input_require_grads()
-            self.policy = get_peft_model(
-                self.policy,
-                LoraConfig(
-                    task_type=TaskType[model_config.lora_task_type],
-                    inference_mode=False,
-                    r=model_config.lora_r,
-                    lora_alpha=model_config.lora_alpha,
-                    lora_dropout=model_config.lora_dropout,
-                    target_modules=model_config.lora_target_modules or DEFAULT_LORA_TARGET_MODULES,
-                    modules_to_save=model_config.lora_modules_to_save,
-                ),
-            )
+            self.policy = get_peft_model(self.policy, _build_lora_config(model_config))
             if self.rank == 0:
                 self.policy.print_trainable_parameters()
 

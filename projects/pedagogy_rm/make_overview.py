@@ -41,8 +41,7 @@ PARTS = [
     (
         "3.  Train against it, and check with people",
         "done",
-        ["GRPO", "arms A-C\n120 steps", "arms E-G\n200 steps", "blind eval\n240 turns",
-         "benchmarks\nbase vs trained"],
+        ["GRPO", "arms A-C\n120 steps", "arms E-G\n200 steps", "blind eval\n240 turns", "benchmarks\nbase vs trained"],
         "Arm A claimed +0.36, two independent panels paid +0.34 and +0.35.\n"
         "Length is fixed: arm E has 100% of turns rated right-length, against base's 71%.\n"
         "2x, 4x and 8x the step size all reach the same reward, so the ceiling is the reward model.\n"
@@ -89,8 +88,14 @@ def main() -> None:
         # Right-aligned, because anything positioned after the title needs the rendered width
         # of the title, which is not knowable before the draw.
         ax.text(
-            98, top - 0.3, status.upper(), fontsize=8.5, fontweight="bold",
-            va="top", ha="right", color="white",
+            98,
+            top - 0.3,
+            status.upper(),
+            fontsize=8.5,
+            fontweight="bold",
+            va="top",
+            ha="right",
+            color="white",
             bbox={"boxstyle": "round,pad=0.34", "facecolor": BADGE[status], "edgecolor": "none"},
         )
 
@@ -105,22 +110,36 @@ def main() -> None:
             pending = status == "partly done" and position == len(boxes) - 1
             ax.add_patch(
                 FancyBboxPatch(
-                    (x, y - box_height), width, box_height,
+                    (x, y - box_height),
+                    width,
+                    box_height,
                     boxstyle="round,pad=0.28,rounding_size=0.9",
                     facecolor="white" if pending else fill,
-                    edgecolor=edge, linewidth=1.6,
+                    edgecolor=edge,
+                    linewidth=1.6,
                     linestyle="--" if pending else "-",
                 )
             )
             ax.text(
-                x + width / 2, y - box_height / 2, label, fontsize=10.5, ha="center", va="center",
-                color=ink, fontweight="bold" if pending else "normal", linespacing=1.35,
+                x + width / 2,
+                y - box_height / 2,
+                label,
+                fontsize=10.5,
+                ha="center",
+                va="center",
+                color=ink,
+                fontweight="bold" if pending else "normal",
+                linespacing=1.35,
             )
             if position < len(boxes) - 1:
                 ax.add_patch(
                     FancyArrowPatch(
-                        (x + width + 0.35, y - box_height / 2), (x + width + gap - 0.35, y - box_height / 2),
-                        arrowstyle="-|>", mutation_scale=13, linewidth=1.5, color=edge,
+                        (x + width + 0.35, y - box_height / 2),
+                        (x + width + gap - 0.35, y - box_height / 2),
+                        arrowstyle="-|>",
+                        mutation_scale=13,
+                        linewidth=1.5,
+                        color=edge,
                     )
                 )
 
@@ -130,8 +149,7 @@ def main() -> None:
             ax.plot([2, 98], [top - row_height + 4.0] * 2, color="#d8d8d8", linewidth=1)
 
     fig.suptitle(
-        "Reading a teaching reward out of a frozen model — three parts",
-        fontsize=14.5, fontweight="bold", y=0.965,
+        "Reading a teaching reward out of a frozen model — three parts", fontsize=14.5, fontweight="bold", y=0.965
     )
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, dpi=150, bbox_inches="tight", facecolor="white")

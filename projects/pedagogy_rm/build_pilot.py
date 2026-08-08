@@ -37,9 +37,7 @@ import os
 import random
 import re
 
-STUCK = re.compile(
-    r"\b(i don'?t know|not sure|no idea|i'?m stuck|confused|help|can you (explain|show)|lost)\b", re.I
-)
+STUCK = re.compile(r"\b(i don'?t know|not sure|no idea|i'?m stuck|confused|help|can you (explain|show)|lost)\b", re.I)
 REASON = re.compile(r"\b(because|since|so |therefore|which means|if |then )", re.I)
 
 PROMPT = """Write the worked solution to this question, for a rater who has to check whether a
@@ -94,8 +92,9 @@ async def solutions(units: list[dict], model: str) -> dict[str, str]:
         rendered = "OPTIONS: " + "; ".join(map(str, choices)) + "\n" if choices else ""
         reply = await client.chat.completions.create(
             model=model,
-            messages=[{"role": "user", "content": PROMPT.format(
-                question=q, choices=rendered, gold=u.get("gold", "?"))}],
+            messages=[
+                {"role": "user", "content": PROMPT.format(question=q, choices=rendered, gold=u.get("gold", "?"))}
+            ],
             temperature=0.0,
         )
         return q, (reply.choices[0].message.content or "").strip()
@@ -123,11 +122,10 @@ def main() -> None:
     picked = [units[u] for u in chosen]
     print(f"{len(picked)} turns from {len(units)}, spread over arm x length x student state:")
     spread = collections.Counter(
-        ((key.get(u["id"]) or {}).get("arm", "?"), student_state(u.get("student_before", "")))
-        for u in picked
+        ((key.get(u["id"]) or {}).get("arm", "?"), student_state(u.get("student_before", ""))) for u in picked
     )
     for (arm, st), c in sorted(spread.items()):
-        print(f"  {arm:<7} student showed {['nothing','an attempt','reasoning'][st-1]:<11} {c}")
+        print(f"  {arm:<7} student showed {['nothing', 'an attempt', 'reasoning'][st - 1]:<11} {c}")
 
     print(f"\nwriting worked solutions for {len({u['question'].strip() for u in picked})} questions...")
     worked = asyncio.run(solutions(picked, args.model))
@@ -135,8 +133,9 @@ def main() -> None:
 
     os.makedirs(args.out, exist_ok=True)
     with open(os.path.join(args.out, "pool.json"), "w") as h:
-        json.dump({"note": "V2 calibration pilot; `reference` is a generated worked solution",
-                   "units": out}, h, indent=1)
+        json.dump(
+            {"note": "V2 calibration pilot; `reference` is a generated worked solution", "units": out}, h, indent=1
+        )
     missing = sum(1 for u in out if not u["reference"])
     print(f"wrote {args.out}/pool.json  ({missing} turns without a reference solution)")
     print("\nLabel it with:")

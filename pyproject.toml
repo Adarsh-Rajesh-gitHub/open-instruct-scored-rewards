@@ -268,4 +268,16 @@ exclude = [
     "open_instruct/sample_logits_vllm.py",
     "open_instruct/utils.py",
     "open_instruct/vllm_utils.py",
+    # Exploratory projects, excluded for the same reason as the open_instruct files above: they
+    # fight the torch and transformers stubs rather than containing real type errors, mostly
+    # `model.to(device)` read as the wrong overload, config keywords the stubs do not enumerate,
+    # and tensor subscripting. 62 diagnostics between them, none of which name a defect.
+    #
+    # These are experiments rather than library code, and nothing in `open_instruct/` imports
+    # them, so the value of checking them is lower than for anything on the training path.
+    # `projects/pedagogy_rm/` is deliberately NOT here - it holds a reward plugin the trainer
+    # loads, so it is checked like the rest of that path.
+    "projects/dense_to_moe_upcycling/",
+    "projects/posttraining_paradigms/",
+    "projects/student_state_tutor/",
 ]

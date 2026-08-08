@@ -132,11 +132,16 @@ def main() -> None:
         json.dump({"units": [units[u] for u in chosen]}, handle, indent=1)
 
     print(f"{len(units)} turns, {len(done)} already labelled, {len(candidates)} candidates")
-    print(f"picked {len(chosen)}: " + "  ".join(f"{a} {sum(1 for u in chosen if key.get(u, {}).get('arm') == a)}" for a in sorted(arms)))
+    print(
+        f"picked {len(chosen)}: "
+        + "  ".join(f"{a} {sum(1 for u in chosen if key.get(u, {}).get('arm') == a)}" for a in sorted(arms))
+    )
     print(f"\n{'':>4} {'rater spread':>13} {'probe gap':>10}")
     for label, group in (("picked", chosen), ("rest", [u for u in candidates if u not in chosen])):
         if group:
-            print(f"{label:>6} {statistics.fmean(spread[u] for u in group):>11.2f} {statistics.fmean(gap[u] for u in group):>10.2f}")
+            print(
+                f"{label:>6} {statistics.fmean(spread[u] for u in group):>11.2f} {statistics.fmean(gap[u] for u in group):>10.2f}"
+            )
     print(f"\nwrote {args.out}")
     print("Label it with label_ui.py --units " + args.out)
 

@@ -1,0 +1,31 @@
+{
+  "canonical_bank_files": 30,
+  "selected_banks": 21,
+  "selected_questions": 455,
+  "question_types": {
+    "numerical": 252,
+    "multiple_choice": 70,
+    "multiple_answers": 51,
+    "categorization": 82
+  },
+  "units": {
+    "Vector and Math": 1,
+    "Angular Momentum": 1,
+    "Simple Harmonic Motion": 1,
+    "1D Motion": 2,
+    "2D Motion": 1,
+    "Forces": 5,
+    "Newton's Laws of Motion": 3,
+    "Conservation of ME": 2,
+    "Momentum and Impulse": 1,
+    "Many-particle Systems": 2,
+    "Rotational Motion": 2
+  },
+  "filter_reasons": {
+    "valid": 455,
+    "image_reference": 176,
+    "image_bank": 6,
+    "invalid_document": 1,
+    "yaml_error": 2
+  }
+}

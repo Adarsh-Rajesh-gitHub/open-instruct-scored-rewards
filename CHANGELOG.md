@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 
 ### Added
+- Support mixture-of-experts policies in GRPO. `transformers` 5 stores a MoE layer's experts as one stacked parameter per projection, while vLLM's loader expects the per-expert checkpoint names it stacks itself, so the first weight sync failed with `collective_rpc method failed: 'layers.0.mlp.experts.gate_up_proj'`; `_split_fused_experts` slices the stacked tensor into the names vLLM knows, and `_params_to_send` gives the NCCL path, the IPC path and the metadata pass one definition of what gets sent. LoRA on those experts uses PEFT's `target_parameters`, with `lora_expert_rank` and `lora_expert_alpha` so the expert scale is set rather than inherited (https://github.com/edu-llm/open-instruct-scored-rewards/pull/10).
 - Add tool-schema support to SFT tokenization: the `tools` column is parsed (JSON strings accepted) and passed to `apply_chat_template`, assistant labels are derived from offset mappings, and the tools column is consumed rather than persisted (https://github.com/allenai/open-instruct/pull/1746).
 - Drop stale async rollout results whose generating policy is more than `async_steps` behind the trainer (`max_result_age_steps`), replenishing a fresh prompt and logging a `stale_results_dropped` metric (https://github.com/allenai/open-instruct/pull/1738).
 

@@ -7,12 +7,22 @@ only things a stranger with a different task would want, and this is where the
 things they would not want go. If you find yourself adding a task-specific
 special case to `scored_rewards`, it belongs here instead.
 
-This directory is currently empty. The project that shaped `scored_rewards` — a
-teacher LLM trained against a frozen student, using a judged multi-dimensional
-score, a rule-based veto, a model as the environment, and a held-out anchor — was
-removed once its own experiments showed the environment could not distinguish
-teaching from telling. It is recoverable from the history of this branch, and is
-worth reading before building anything model-as-environment shaped.
+## What is here
+
+| | |
+|---|---|
+| `pedagogy_rm/` | teaching quality read by a linear probe on a frozen encoder's hidden states, with the labelling interface, the blinded evaluation, and `FLAWS.md` |
+| `rlvr_verifiable/` | upstream's verifiable rewards on maths, code and factual QA, with no reward model |
+| `dense_to_moe_upcycling/` | turning a dense MLP into a partial mixture of experts |
+| `posttraining_paradigms/` | whether a task vector transfers between checkpoints |
+| `student_state_tutor/` | tutoring conditioned on an explicit student state |
+
+The project that originally shaped `scored_rewards` — a teacher LLM trained
+against a frozen student, using a judged multi-dimensional score, a rule-based
+veto, a model as the environment, and a held-out anchor — was removed once its
+own experiments showed the environment could not distinguish teaching from
+telling. It is recoverable from the history of this branch, and is worth reading
+before building anything model-as-environment shaped.
 
 ---
 

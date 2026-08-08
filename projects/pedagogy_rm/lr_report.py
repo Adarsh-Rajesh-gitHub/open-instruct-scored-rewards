@@ -83,20 +83,28 @@ def main() -> None:
         _, k1 = head_tail(kl)
         l0, l1 = head_tail(length)
         _, b1 = head_tail(band)
-        rows.append({
-            "label": label_of(path), "steps": len(reward), "gain": r1 - r0, "kl": k1,
-            "per_kl": (r1 - r0) / k1 if k1 > 1e-6 else float("inf"),
-            "len_from": l0, "len_to": l1, "band": b1,
-        })
+        rows.append(
+            {
+                "label": label_of(path),
+                "steps": len(reward),
+                "gain": r1 - r0,
+                "kl": k1,
+                "per_kl": (r1 - r0) / k1 if k1 > 1e-6 else float("inf"),
+                "len_from": l0,
+                "len_to": l1,
+                "band": b1,
+            }
+        )
 
     rows.sort(key=lambda r: -r["per_kl"])
     print(f"\n{len(rows)} runs, first {args.steps} steps\n")
-    print(f"  {'run':<12} {'reward gain':>12} {'KL':>7} {'gain/KL':>9} "
-          f"{'tokens':>14} {'in band':>8}")
+    print(f"  {'run':<12} {'reward gain':>12} {'KL':>7} {'gain/KL':>9} {'tokens':>14} {'in band':>8}")
     print("  " + "-" * 70)
     for r in rows:
-        print(f"  {r['label']:<12} {r['gain']:>+12.3f} {r['kl']:>7.3f} {r['per_kl']:>9.2f} "
-              f"{r['len_from']:>6.0f}->{r['len_to']:<7.0f} {r['band']:>8.2f}")
+        print(
+            f"  {r['label']:<12} {r['gain']:>+12.3f} {r['kl']:>7.3f} {r['per_kl']:>9.2f} "
+            f"{r['len_from']:>6.0f}->{r['len_to']:<7.0f} {r['band']:>8.2f}"
+        )
 
     if rows:
         best = rows[0]

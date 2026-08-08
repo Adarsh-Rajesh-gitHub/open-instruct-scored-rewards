@@ -1,0 +1,167 @@
+loaded 180 examples: {'social_studies': 84, 'science': 96}
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 15.62it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 15.53it/s]
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+generated 24/540
+generated 48/540
+generated 72/540
+generated 96/540
+generated 120/540
+generated 144/540
+generated 168/540
+generated 192/540
+generated 216/540
+generated 240/540
+generated 264/540
+generated 288/540
+generated 312/540
+generated 336/540
+generated 360/540
+generated 384/540
+generated 408/540
+generated 432/540
+generated 456/540
+generated 480/540
+generated 504/540
+generated 528/540
+generated 540/540
+scored 128/2880 choices
+scored 256/2880 choices
+scored 384/2880 choices
+scored 512/2880 choices
+scored 640/2880 choices
+scored 768/2880 choices
+scored 896/2880 choices
+scored 1024/2880 choices
+scored 1152/2880 choices
+scored 1280/2880 choices
+scored 1408/2880 choices
+scored 1536/2880 choices
+scored 1664/2880 choices
+scored 1792/2880 choices
+scored 1920/2880 choices
+scored 2048/2880 choices
+scored 2176/2880 choices
+scored 2304/2880 choices
+scored 2432/2880 choices
+scored 2560/2880 choices
+scored 2688/2880 choices
+scored 2816/2880 choices
+scored 2880/2880 choices
+{
+  "n": 180,
+  "subjects": {
+    "social_studies": 84,
+    "science": 96
+  },
+  "baseline": {
+    "gold_probability": 0.20180965215491453,
+    "belief_margin": -0.9909304999642902,
+    "solved": 0.011111111111111112
+  },
+  "conditions": {
+    "transcript": {
+      "gold_probability": 0.24622249641765315,
+      "belief_margin": -0.7144703956113921,
+      "solved": 0.19444444444444445,
+      "leaked": 0.06111111111111111,
+      "nonleaky": {
+        "gold_probability": 0.2310141694833962,
+        "belief_margin": -0.7759104205306465,
+        "solved": 0.17159763313609466
+      }
+    },
+    "oracle": {
+      "gold_probability": 0.22654352370575642,
+      "belief_margin": -1.011624296175109,
+      "solved": 0.15,
+      "leaked": 0.03888888888888889,
+      "nonleaky": {
+        "gold_probability": 0.2108172932272779,
+        "belief_margin": -1.0975567471085257,
+        "solved": 0.12716763005780346
+      }
+    },
+    "counterfactual": {
+      "gold_probability": 0.23502205298298479,
+      "belief_margin": -0.6473897851175732,
+      "solved": 0.17222222222222222,
+      "leaked": 0.06111111111111111,
+      "nonleaky": {
+        "gold_probability": 0.22298251503839678,
+        "belief_margin": -0.699563611541274,
+        "solved": 0.15384615384615385
+      }
+    }
+  },
+  "paired_comparisons": {
+    "oracle_minus_transcript": {
+      "gold_probability": {
+        "mean": -0.01967897271189666,
+        "95_ci": [
+          -0.04603175479948326,
+          0.004673580034843642
+        ]
+      },
+      "belief_margin": {
+        "mean": -0.2971539005637169,
+        "95_ci": [
+          -0.49742309462279083,
+          -0.11613867707136631
+        ]
+      },
+      "solved": {
+        "mean": -0.044444444444444446,
+        "95_ci": [
+          -0.10555555555555556,
+          0.016666666666666666
+        ]
+      }
+    },
+    "oracle_minus_counterfactual": {
+      "gold_probability": {
+        "mean": -0.008478529277228305,
+        "95_ci": [
+          -0.030857639640903895,
+          0.01288796773328327
+        ]
+      },
+      "belief_margin": {
+        "mean": -0.3642345110575358,
+        "95_ci": [
+          -0.541255095563829,
+          -0.19666873212489824
+        ]
+      },
+      "solved": {
+        "mean": -0.022222222222222223,
+        "95_ci": [
+          -0.07777777777777778,
+          0.027777777777777776
+        ]
+      }
+    },
+    "transcript_minus_counterfactual": {
+      "gold_probability": {
+        "mean": 0.011200443434668363,
+        "95_ci": [
+          -0.015671792169924127,
+          0.038722943479393
+        ]
+      },
+      "belief_margin": {
+        "mean": -0.06708061049381892,
+        "95_ci": [
+          -0.21765775975253845,
+          0.08917699043535496
+        ]
+      },
+      "solved": {
+        "mean": 0.022222222222222223,
+        "95_ci": [
+          -0.044444444444444446,
+          0.08888888888888889
+        ]
+      }
+    }
+  }
+}

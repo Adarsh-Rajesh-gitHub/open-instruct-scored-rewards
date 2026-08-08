@@ -21,14 +21,33 @@ import os
 
 ROUND1 = ("A", "B", "C")
 LADDER = ("E", "F", "G")
-COLOUR = {"A": "#1f77b4", "B": "#d62728", "C": "#e08214", "D": "#999999",
-          "E": "#2c7fb8", "F": "#41ab5d", "G": "#c0504d"}
-LABEL = {"A": "A · raw mean, lr 1e-5", "B": "B · z-scored, lr 1e-5", "C": "C · hard band, lr 1e-5",
-         "D": "D · crashed at 46", "E": "E · lr 2e-5", "F": "F · lr 4e-5", "G": "G · lr 8e-5"}
+COLOUR = {
+    "A": "#1f77b4",
+    "B": "#d62728",
+    "C": "#e08214",
+    "D": "#999999",
+    "E": "#2c7fb8",
+    "F": "#41ab5d",
+    "G": "#c0504d",
+}
+LABEL = {
+    "A": "A · raw mean, lr 1e-5",
+    "B": "B · z-scored, lr 1e-5",
+    "C": "C · hard band, lr 1e-5",
+    "D": "D · crashed at 46",
+    "E": "E · lr 2e-5",
+    "F": "F · lr 4e-5",
+    "G": "G · lr 8e-5",
+}
 DIMS = ("leak", "targeted", "actionable", "elicits", "correct", "length")
-NICE = {"leak": "leak  ·  1 = gives nothing away\n(LOWER is better)", "targeted": "targeted",
-        "actionable": "actionable", "elicits": "elicits", "correct": "correct",
-        "length": "length fit, 0–1"}
+NICE = {
+    "leak": "leak  ·  1 = gives nothing away\n(LOWER is better)",
+    "targeted": "targeted",
+    "actionable": "actionable",
+    "elicits": "elicits",
+    "correct": "correct",
+    "length": "length fit, 0–1",
+}
 # `leak` is the one quality the reward subtracts, and open-instruct logs each dimension with its
 # reward sign already applied - so it arrives as -1.45 rather than 1.45. Plotting it as logged put
 # it outside a 1-3 axis and drew an empty panel. Negating it back shows the rating a rater would
@@ -102,10 +121,12 @@ def losses(history: dict, path: str) -> None:
     # the x-axis for the remaining 190 steps, so the panel shows only the spike. On a log axis both
     # are legible at once, and the spike is worth seeing rather than clipping away: it is the only
     # sign that 8e-5 starts unstably before recovering.
-    panels = [("loss/policy_avg", "policy loss", "step", False),
-              ("loss/kl_avg", "KL term of the loss (log)", "step", True),
-              ("loss/total_avg", "total loss", "step", False),
-              ("optim/grad_norm", "gradient norm (log)", "optim", True)]
+    panels = [
+        ("loss/policy_avg", "policy loss", "step", False),
+        ("loss/kl_avg", "KL term of the loss (log)", "step", True),
+        ("loss/total_avg", "total loss", "step", False),
+        ("optim/grad_norm", "gradient norm (log)", "optim", True),
+    ]
     fig, axes = plt.subplots(2, 2, figsize=(9.2, 5.4))
     for ax, (key, title, where, logy) in zip(axes.ravel(), panels, strict=True):
         for arm in LADDER:
@@ -117,12 +138,16 @@ def losses(history: dict, path: str) -> None:
             ax.set_yscale("log")
         else:
             ax.axhline(0, color="#888", lw=0.7, zorder=0)
-    axes[0][1].annotate("arm G's start is unstable\nbefore it settles", xy=(10, 0.09),
-                        xytext=(48, 0.045), fontsize=7, color="#8a3530",
-                        arrowprops={"arrowstyle": "->", "lw": 0.8, "color": "#8a3530"})
+    axes[0][1].annotate(
+        "arm G's start is unstable\nbefore it settles",
+        xy=(10, 0.09),
+        xytext=(48, 0.045),
+        fontsize=7,
+        color="#8a3530",
+        arrowprops={"arrowstyle": "->", "lw": 0.8, "color": "#8a3530"},
+    )
     axes[0][0].legend(fontsize=7.4, loc="best", framealpha=0.9)
-    fig.suptitle("The learning-rate ladder is healthy at every rate, and differs only in scale",
-                 fontsize=10, y=0.995)
+    fig.suptitle("The learning-rate ladder is healthy at every rate, and differs only in scale", fontsize=10, y=0.995)
     fig.tight_layout()
     fig.savefig(path)
     print(f"wrote {path}")
@@ -144,9 +169,11 @@ def rewards(history: dict, path: str) -> None:
     """
     import matplotlib.pyplot as plt  # noqa: PLC0415
 
-    panels = [(("A",), "Arm A · mean of 4 qualities\n(max 3.0)"),
-              (("C",), "Arm C · 5 qualities + 2.0 × length,\nhard band 30–58 (max 5.0)"),
-              (LADDER, "Arms E–G · same form, band 18–40\nwith ramps (max 5.0)")]
+    panels = [
+        (("A",), "Arm A · mean of 4 qualities\n(max 3.0)"),
+        (("C",), "Arm C · 5 qualities + 2.0 × length,\nhard band 30–58 (max 5.0)"),
+        (LADDER, "Arms E–G · same form, band 18–40\nwith ramps (max 5.0)"),
+    ]
     fig, axes = plt.subplots(1, 3, figsize=(10.4, 3.4))
     for ax, (arms, title) in zip(axes, panels, strict=True):
         labelled = False
@@ -162,19 +189,37 @@ def rewards(history: dict, path: str) -> None:
             if ex:
                 # One legend entry for the marker style, not one per arm: three arms sharing a
                 # panel would otherwise list "held out" three times.
-                ax.plot(ex, ey, "o", ms=3.4, color=COLOUR[arm], mfc="white", mew=1.2, zorder=3,
-                        label=None if labelled else "held out")
+                ax.plot(
+                    ex,
+                    ey,
+                    "o",
+                    ms=3.4,
+                    color=COLOUR[arm],
+                    mfc="white",
+                    mew=1.2,
+                    zorder=3,
+                    label=None if labelled else "held out",
+                )
                 labelled = True
         ax.set_title(title, fontsize=8.6)
         ax.set_xlabel("step", fontsize=8.5)
         ax.legend(fontsize=7.2, loc="lower right", framealpha=0.9)
     axes[0].set_ylabel("reward", fontsize=8.5)
-    axes[0].text(0.04, 0.94, "arm B is the same run with each\nquality z-scored, so its reward is\n"
-                             "0.000 at every step by construction",
-                 transform=axes[0].transAxes, fontsize=6.8, va="top", color="#8a3530",
-                 bbox={"boxstyle": "round,pad=0.3", "facecolor": "#fdf2f2", "edgecolor": "#d8b0b0"})
-    fig.suptitle("Values are comparable within a panel and not across them: the reward changed between arms",
-                 fontsize=9, y=1.005)
+    axes[0].text(
+        0.04,
+        0.94,
+        "arm B is the same run with each\nquality z-scored, so its reward is\n0.000 at every step by construction",
+        transform=axes[0].transAxes,
+        fontsize=6.8,
+        va="top",
+        color="#8a3530",
+        bbox={"boxstyle": "round,pad=0.3", "facecolor": "#fdf2f2", "edgecolor": "#d8b0b0"},
+    )
+    fig.suptitle(
+        "Values are comparable within a panel and not across them: the reward changed between arms",
+        fontsize=9,
+        y=1.005,
+    )
     fig.tight_layout()
     fig.savefig(path, bbox_inches="tight")
     print(f"wrote {path}")
@@ -194,9 +239,11 @@ def health(history: dict, path: str) -> None:
     import matplotlib.pyplot as plt  # noqa: PLC0415
 
     fig, axes = plt.subplots(1, 3, figsize=(10.4, 3.2))
-    panels = [("objective/kl1_avg", "KL from the starting policy (nats)", "step"),
-              ("scored/pedagogy/words", "tutor turn length (words)", "step"),
-              ("lr", "learning rate (3% warmup, then constant)", "step")]
+    panels = [
+        ("objective/kl1_avg", "KL from the starting policy (nats)", "step"),
+        ("scored/pedagogy/words", "tutor turn length (words)", "step"),
+        ("lr", "learning rate (3% warmup, then constant)", "step"),
+    ]
     for ax, (key, title, where) in zip(axes, panels, strict=True):
         for arm in LADDER:
             if arm in history:
@@ -209,8 +256,11 @@ def health(history: dict, path: str) -> None:
     axes[1].text(196, 41.5, "rewarded band, 18–40 words", ha="right", fontsize=7, color="#33608f")
     axes[2].set_yscale("log")
     axes[0].legend(fontsize=7.4, loc="lower right", framealpha=0.9)
-    fig.suptitle("Higher rates travel further from the starting policy for the same reward — "
-                 "the cost of the ladder", fontsize=9.4, y=1.01)
+    fig.suptitle(
+        "Higher rates travel further from the starting policy for the same reward — the cost of the ladder",
+        fontsize=9.4,
+        y=1.01,
+    )
     fig.tight_layout()
     fig.savefig(path, bbox_inches="tight")
     print(f"wrote {path}")
@@ -226,8 +276,7 @@ def dimensions(history: dict, path: str) -> None:
             if arm not in history:
                 continue
             prefix = history[arm]["prefix"]
-            draw_pair(ax, rows_for(history, arm, "step"), f"scored/{prefix}/dim_{dim}", arm,
-                      scale=FLIP.get(dim, 1.0))
+            draw_pair(ax, rows_for(history, arm, "step"), f"scored/{prefix}/dim_{dim}", arm, scale=FLIP.get(dim, 1.0))
         ax.set_title(NICE[dim], fontsize=8.6)
         ax.set_xlabel("step", fontsize=8)
         # The rating scale is 1-3 for the qualities and 0-1 for the length term, so a shared y
@@ -236,8 +285,11 @@ def dimensions(history: dict, path: str) -> None:
             ax.set_ylim(0.9, 3.1)
             ax.axhline(1 if dim in FLIP else 3, color="#888", lw=0.7, ls=":", zorder=0)
     axes[0][0].legend(fontsize=7, loc="upper right", framealpha=0.9)
-    fig.suptitle("Length and leak are the only qualities with room to move; the other four start near the top",
-                 fontsize=10, y=0.995)
+    fig.suptitle(
+        "Length and leak are the only qualities with room to move; the other four start near the top",
+        fontsize=10,
+        y=0.995,
+    )
     fig.tight_layout()
     fig.savefig(path)
     print(f"wrote {path}")

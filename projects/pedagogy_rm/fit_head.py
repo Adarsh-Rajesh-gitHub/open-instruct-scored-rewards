@@ -116,12 +116,28 @@ def main() -> None:
     parser.add_argument("--model", default="allenai/OLMo-2-1124-7B-Instruct")
     parser.add_argument("--attack-ratio", type=float, default=0.5, help="attacks as a fraction of real rows")
     parser.add_argument("--dimensions", default="", help="comma-separated keys; default is DIMENSIONS")
-    parser.add_argument("--decouple", default="leak",
-                        help="dimensions whose length sensitivity is pulled back to the labels'")
-    parser.add_argument("--slices", default="data/label_slices/slice_*.json",
-                        help="read only for turn lengths, used by --decouple")
+    parser.add_argument(
+        "--decouple", default="leak", help="dimensions whose length sensitivity is pulled back to the labels'"
+    )
+    parser.add_argument(
+        "--slices", default="data/label_slices/slice_*.json", help="read only for turn lengths, used by --decouple"
+    )
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--cells",
+        default="",
+        help="override the (pooling, layer) per dimension, as dim=pooling:layer,... . The defaults "
+        "in CELLS were read off probe.py's sweep for OLMo-2-7B and do not transfer: a different "
+        "encoder has a different best layer, and its layer indices may not even be the same depth. "
+        "Qwen2.5-7B, for instance, reads leak best at eot/21 where OLMo reads it at last/16.",
+    )
     args = parser.parse_args()
+
+    cells = dict(CELLS)
+    for entry in (e.strip() for e in args.cells.split(",") if e.strip()):
+        key, _, spec = entry.partition("=")
+        pooling, _, layer = spec.partition(":")
+        cells[key.strip()] = (pooling.strip(), int(layer))
     dims = DIMENSIONS if not args.dimensions else tuple(BY_KEY[k] for k in args.dimensions.split(","))
     decouple = {k for k in args.decouple.split(",") if k}
     lengths = word_counts(args.slices) if decouple else None
@@ -139,7 +155,7 @@ def main() -> None:
     out: dict[str, np.ndarray | np.floating] = {}
     meta = {"model": args.model, "dimensions": {}}
     for dim in dims:
-        pooling, layer = CELLS[dim.key]
+        pooling, layer = cells[dim.key]
         li = layers.index(layer)
         rows, y = [], []
         for i, uid in enumerate(ids):
@@ -186,8 +202,11 @@ def main() -> None:
             slope = float((target.astype(np.float64) @ centred) / max(var, 1e-9))
             X = (X.astype(np.float64) - np.outer(centred, proj)).astype(np.float32)
             target = (target.astype(np.float64) - slope * centred).astype(np.float32)
-            length_meta = {"mean": lw_mean, "slope": round(slope, 4),
-                           "labels_r": round(_corr(np.array(y), lw[: len(y)]), 3)}
+            length_meta = {
+                "mean": lw_mean,
+                "slope": round(slope, 4),
+                "labels_r": round(_corr(np.array(y), lw[: len(y)]), 3),
+            }
 
         scaler = StandardScaler().fit(X)
         model = RidgeCV(alphas=np.logspace(-1, 4, 12)).fit(scaler.transform(X), target)
@@ -255,7 +274,7 @@ def main() -> None:
     # ty reads the **out splat against savez_compressed's keyword-only `allow_pickle` bool
     # rather than its **kwds array sink, which is a stub limitation and not a real mismatch.
     np.savez_compressed(args.out, meta=np.array(json.dumps(meta)), **out)  # ty: ignore[invalid-argument-type]
-    print(f"\nwrote {args.out}: {len(dims)} heads over {real[CELLS['leak'][0]].shape[-1]} dims")
+    print(f"\nwrote {args.out}: {len(dims)} heads over {real[cells['leak'][0]].shape[-1]} dims")
 
 
 if __name__ == "__main__":

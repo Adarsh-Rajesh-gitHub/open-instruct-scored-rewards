@@ -1,0 +1,15 @@
+{
+  "train_loss": 0.03253198428459048,
+  "optimizer_steps": 60,
+  "epochs": 2,
+  "examples": 480,
+  "action_counts": {
+    "retrieval_practice": 96,
+    "diagnostic": 96,
+    "stop": 96,
+    "contrast_case": 96,
+    "worked_example": 96
+  },
+  "base_model": "Qwen/Qwen2.5-3B-Instruct",
+  "system_prompt": "You are selecting the next action for a physics tutor.\nReturn exactly one JSON object with keys target_node, action, item_id, and stop.\nUse only the supplied student evidence. Choose one candidate concept and an item\nfrom that concept. Do not solve any physics problem or add explanatory text.\n\nAction policy:\n- diagnostic: no unaided evidence exists for the target.\n- worked_example: repeated unaided failures and posterior mean below 0.30.\n- contrast_case: posterior mean from 0.30 through 0.49.\n- retrieval_practice: posterior mean from 0.50 through 0.74.\n- stop: all concepts have posterior mean at least 0.75.\nTarget the lowest posterior mean; break ties by wider interval."
+}

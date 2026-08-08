@@ -1,0 +1,43 @@
+loaded 150 examples: {'social_studies': 71, 'science': 79}
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 37.16it/s]
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+generated 24/600
+generated 48/600
+generated 72/600
+generated 96/600
+generated 120/600
+generated 144/600
+generated 168/600
+generated 192/600
+generated 216/600
+generated 240/600
+generated 264/600
+generated 288/600
+generated 312/600
+generated 336/600
+generated 360/600
+generated 384/600
+generated 408/600
+generated 432/600
+generated 456/600
+generated 480/600
+generated 504/600
+generated 528/600
+generated 552/600
+generated 576/600
+generated 600/600
+scored 128/3000 choices
+Traceback (most recent call last):
+  File "/nfs/software001/home/software-r8-x86_64/spack-20230328/opt/spack/linux-rocky8-x86_64/gcc-8.5.0/python-3.10.8-dgzhxpu7ahjyzpdkcfi65rh5nwgp5gxi/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/nfs/software001/home/software-r8-x86_64/spack-20230328/opt/spack/linux-rocky8-x86_64/gcc-8.5.0/python-3.10.8-dgzhxpu7ahjyzpdkcfi65rh5nwgp5gxi/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/orcd/scratch/orcd/013/zsophia/open-instruct/projects/student_state_tutor/memory_state_ablation.py", line 291, in <module>
+    main()
+  File "/orcd/scratch/orcd/013/zsophia/open-instruct/projects/student_state_tutor/memory_state_ablation.py", line 282, in main
+    score_sets = base.score_records(args, score_inputs)
+  File "/home/zsophia/venv_test/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/orcd/scratch/orcd/013/zsophia/open-instruct/projects/student_state_tutor/oracle_state_ablation.py", line 233, in score_records
+    log_probabilities = torch.log_softmax(logits[:, :-1].float(), dim=-1)
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 20.07 GiB. GPU 0 has a total capacity of 79.18 GiB of which 19.32 GiB is free. Including non-PyTorch memory, this process has 59.85 GiB memory in use. Of the allocated memory 50.15 GiB is allocated by PyTorch, and 9.03 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
