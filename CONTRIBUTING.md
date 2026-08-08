@@ -74,15 +74,15 @@ Track new large or binary test data files with `git lfs track "path/to/file"` an
 
 ## CI Workflows
 
-Four GitHub Actions workflows run on PRs:
+Three GitHub Actions workflows run on PRs:
 
 1. **PR Checks** (`pr_checks.yml`): Runs `make style-check` and `make quality-check`. Also verifies that `CHANGELOG.md` was updated for changes to `open_instruct/` (bypass with `CHANGELOG=` in PR body).
 
-2. **Unit Tests** (`tests.yml` → `unit-tests` job): Runs `uv run pytest` on an Ubuntu runner. 20-minute timeout.
+2. **Unit Tests** (`tests.yml` → `unit-tests` job): Runs `uv run pytest` on `ubuntu-latest`. 30-minute timeout. The five `open_instruct/test_*_gpu.py` files deselect themselves there — `conftest.py` drops them when `torch.cuda.is_available()` is false — so run them yourself on a GPU box as described under "Running Tests" above.
 
-3. **GPU Tests** (`tests.yml` → `gpu-tests` job): Builds a Docker image, uploads it to Beaker, and runs `open_instruct/test_*_gpu.py` on a single GPU. 45-minute timeout. Auto-skipped for fork PRs (no Beaker secrets). Can be overridden with `GPU_TESTS=[EXPERIMENT_ID]` or bypassed with `GPU_TESTS=bypass` in the PR body.
+   There is no GPU job in CI. The `gpu-tests` job this repository inherited from `allenai/open-instruct` ran its tests on Allen AI's Beaker cluster rather than on the runner, and this organization has neither a Beaker account nor the `BEAKER_TOKEN` it needed. GPU work here goes to AWS Batch through `edullm submit`.
 
-4. **Integration Tests** (`beaker-experiment.yml`): Runs in the merge queue (not on every PR push). Launches up to 3 Beaker experiments:
+3. **Integration Tests** (`beaker-experiment.yml`): Runs in the merge queue (not on every PR push). Launches up to 3 Beaker experiments:
    - GRPO integration test (always runs)
    - DPO integration test (runs if DPO-related files changed)
    - SFT integration test (runs if `finetune.py` changed)
