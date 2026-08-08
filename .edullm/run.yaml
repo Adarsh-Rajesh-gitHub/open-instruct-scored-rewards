@@ -1,0 +1,117 @@
+# Written by edullm check, from config/workload-catalog.yaml in /Users/adarshrajesh/.local/share/uv/tools/edullm/lib/python3.13/site-packages/edullm_platform/_config.
+# Everything here is a property of the code and travels with it in git.
+# The machine, the corpus and the experiment are supplied at submit time,
+# because one commit run by two people belongs to two teams.
+#
+# Workload profiles registered for open-instruct-scored-rewards: open-instruct-scored-rewards-check, open-instruct-scored-rewards-train.
+# edullm check prices this and lists every refusal, without dispatching anything.
+#
+# OLMo's default SFT -> DPO on OLMoE-1B-7B-0125, at smoke-test size.
+#
+# WHY LoRA AND NOT A FULL FINE-TUNE. OLMoE-1B-7B is 6.9B total parameters. A full
+# AdamW fine-tune needs roughly 110GB of device memory (bf16 weights and grads, plus
+# fp32 master weights and two moments). LoRA at rank 16 fits one accelerator.
+#
+# WHY THE A100 SHAPE EVEN THOUGH ONE GPU IS ENOUGH. The Hub checkpoint is 27.7GB of
+# float32 safetensors, not the 13.8GB a bf16 checkpoint would occupy. Stage 2 then
+# writes a ~13.8GB merged model. gpu-1xl40s is a g6e.xlarge with the NVIDIA AMI's
+# default 30GiB root volume and no local NVMe; the model files alone exceed it once
+# the merged output exists, before counting the research image. gpu-8xa100 is the
+# only provisioned profile whose platform launch template supplies a 500GiB root
+# volume. This smoke uses one process; the larger shape is selected for storage,
+# not because the LoRA model needs eight GPUs.
+#
+# WHY rank 16 AND NOT THE DEFAULT 64. The published image resolves Transformers 5.14.1
+# and PEFT 0.20.0. PEFT maps the trainers' gate/up/down targets onto OLMoE's fused
+# gate_up_proj and down_proj expert parameters, doubling gate_up's rank. Across 16
+# layers, rank 16 therefore trains 188,743,680 parameters (2.7% of the 6.9B base);
+# rank 64 would train 754,974,720 (10.9%). Attention-only is the next option if needed.
+#
+# WHY LoRA DROPOUT IS ZERO. PEFT's parameter-target ParamWrapper rejects every nonzero
+# lora_dropout. OLMoE expert targets use that wrapper in the published image, so the
+# otherwise conventional 0.05 value fails during get_peft_model(), before step zero.
+#
+# WHY bf16 IS WRITTEN OUT. The precision guard reads the text of this command and
+# cannot see a dtype set in code. L40S is Ada and has bfloat16 in hardware; a T4
+# does not, and naming it here is what makes that refusal free instead of fatal.
+#
+# WHY THE CHECKPOINT CHECK IS WAIVED. This is a throwaway nobody resumes, and
+# EDULLM_CHECKPOINT_DIR is an s3:// URI that accelerate cannot save into directly.
+#
+# WHAT IS DELIBERATELY LEFT AT ITS DEFAULT, AND IS THE FIRST THING TO REVISIT.
+# Both trainers carry --load_balancing_loss, documented in DPOConfig as being for
+# OLMoE, and both pass output_router_logits=True when it is set. It defaults to off
+# and this run leaves it off, because AI2's own archived OLMoE-0125 recipe never set
+# it and a smoke test should not confound a pipeline failure with a flag nobody has
+# run here before. For real post-training of an MoE it is the obvious next ablation.
+#
+# SFT's --max_train_samples field is dead code. The integer beside
+# --dataset_mixer_list is the actual sample count, so 64 is written there directly.
+#
+# SFT defaults push_to_hub and try_launch_beaker_eval_jobs to true. Both are disabled
+# explicitly: this platform injects no Hugging Face token, and a smoke test must not
+# publish an adapter or try to launch AI2 infrastructure as a side effect.
+#
+# OLMoE's base tokenizer declares no BOS token even though the archived Tulu recipe
+# requires --add_bos and the released SFT tokenizer aliases BOS to <|endoftext|>.
+# Materializing that alias before launch pins the intended tokenization independently
+# of which published research image runs this command.
+#
+# Flags verified against the parsed dataclass fields by .edullm/validate_smoke_flags.py,
+# which reads them with ast and needs no GPU. The archived DPO recipe has five stale
+# names: --dpo_loss_type, --dpo_beta, --num_train_epochs and --dataset_mixer_list are
+# now --loss_type, --beta, --num_epochs and --mixer_list, and dpo_tune_cache.py has
+# no --gradient_checkpointing flag.
+schema_version: 1
+workload_profile: open-instruct-scored-rewards-train
+suggested_compute: gpu-8xa100
+command: >-
+  bash -lc 'set -x ; export EDULLM_CHECKPOINT_CHECK=waived ;
+  export HF_HUB_ENABLE_HF_TRANSFER=1 ; OUT=/tmp/olmoe-smoke ; mkdir -p "$OUT" ;
+  echo "=== PREP OLMoE tokenizer BOS ===";
+  python -c "from transformers import AutoTokenizer;
+  t=AutoTokenizer.from_pretrained(\"allenai/OLMoE-1B-7B-0125\", use_fast=True);
+  t.bos_token=t.eos_token; t.save_pretrained(\"$OUT/tokenizer\")";
+  echo "=== STAGE 1/3 SFT (LoRA, bfloat16) ===";
+  accelerate launch --mixed_precision bf16 --num_processes 1
+  open_instruct/finetune.py
+  --model_name_or_path allenai/OLMoE-1B-7B-0125
+  --tokenizer_name_or_path "$OUT/tokenizer"
+  --use_slow_tokenizer false
+  --use_lora --lora_rank 16 --lora_alpha 32 --lora_dropout 0
+  --gradient_checkpointing
+  --max_seq_length 1024
+  --per_device_train_batch_size 1 --gradient_accumulation_steps 4
+  --learning_rate 2e-5 --lr_scheduler_type linear
+  --warmup_ratio 0.03 --weight_decay 0.0 --num_train_epochs 1
+  --dataset_mixer_list allenai/tulu-3-sft-personas-algebra 64
+  --add_bos --seed 123 --chat_template_name tulu --logging_steps 1
+  --exp_name olmoe-smoke-sft --do_not_randomize_output_dir
+  --output_dir "$OUT/sft"
+  --push_to_hub false --try_launch_beaker_eval_jobs false
+  --try_auto_save_to_beaker false
+  && echo "=== STAGE 2/3 merge LoRA into base ==="
+  && python open_instruct/merge_lora.py
+  --base_model_name_or_path allenai/OLMoE-1B-7B-0125
+  --lora_model_name_or_path "$OUT/sft"
+  --tokenizer_name_or_path "$OUT/sft"
+  --output_dir "$OUT/sft_merged" --save_tokenizer
+  && echo "=== STAGE 3/3 DPO (LoRA, bfloat16) ==="
+  && accelerate launch --mixed_precision bf16 --num_processes 1
+  open_instruct/dpo_tune_cache.py
+  --model_name_or_path "$OUT/sft_merged"
+  --tokenizer_name_or_path "$OUT/sft_merged"
+  --use_slow_tokenizer false
+  --use_lora --lora_rank 16 --lora_alpha 32 --lora_dropout 0
+  --max_seq_length 1024 --max_train_samples 32
+  --per_device_train_batch_size 1 --gradient_accumulation_steps 4
+  --learning_rate 5e-7 --lr_scheduler_type linear
+  --warmup_ratio 0.1 --weight_decay 0.0 --num_epochs 1
+  --mixer_list allenai/tulu-3-wildchat-reused-on-policy-8b 100
+  --loss_type dpo_norm --beta 5
+  --add_bos --seed 123 --chat_template_name tulu --logging_steps 1
+  --exp_name olmoe-smoke-dpo --do_not_randomize_output_dir
+  --output_dir "$OUT/dpo"
+  --push_to_hub false --try_launch_beaker_eval_jobs false
+  --try_auto_save_to_beaker false
+  && echo "=== SMOKE TEST PASSED: SFT+DPO on OLMoE-1B-7B-0125 ==="'

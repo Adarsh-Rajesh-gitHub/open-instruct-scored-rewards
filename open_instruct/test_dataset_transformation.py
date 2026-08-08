@@ -88,6 +88,36 @@ class TestConfigHash(unittest.TestCase):
         self.assertNotEqual(hash1, hash2, "Different configs should have different hashes")
 
 
+class TestOlmoTokenizerSetup(unittest.TestCase):
+    def test_add_bos_aliases_eos_when_pad_is_already_distinct(self):
+        class FakeGPTNeoXTokenizerFast:
+            pad_token_id = 1
+            eos_token_id = 50279
+            eos_token = "<|endoftext|>"
+            bos_token = None
+            chat_template = None
+
+        tc = open_instruct.dataset_transformation.TokenizerConfig(
+            tokenizer_name_or_path="allenai/OLMoE-1B-7B-0125",
+            tokenizer_revision="main",
+            use_fast=True,
+            chat_template_name="tulu",
+            add_bos=True,
+        )
+        with (
+            mock.patch.object(open_instruct.dataset_transformation, "GPTNeoXTokenizerFast", FakeGPTNeoXTokenizerFast),
+            mock.patch.object(
+                open_instruct.dataset_transformation.AutoTokenizer,
+                "from_pretrained",
+                return_value=FakeGPTNeoXTokenizerFast(),
+            ),
+        ):
+            tokenizer = open_instruct.dataset_transformation.get_tokenizer_tulu_v2_2(tc)
+
+        self.assertEqual(tokenizer.bos_token, tokenizer.eos_token)
+        self.assertTrue(tokenizer.chat_template.startswith("{{ bos_token }}"))
+
+
 class TestCachedDataset(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
