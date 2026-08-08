@@ -143,7 +143,6 @@ def build_accelerate_cmd(
         "--warmup_ratio", str(warmup_ratio),
         "--num_train_epochs", str(epochs),
         "--chat_template_name", chat_template,
-        "--reduce_loss", "mean",
         "--output_dir", output_dir,
         "--do_not_randomize_output_dir",
         "--dataset_skip_cache",
