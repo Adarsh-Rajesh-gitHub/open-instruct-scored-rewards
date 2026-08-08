@@ -54,9 +54,19 @@ RUN pip install --no-cache-dir --requirement /tmp/requirements.txt
 # The build fails here rather than in a $55/hour Batch job if any of that is wrong. It is
 # the cheapest place to learn it: an import error in the container arrives after the
 # queue wait, the image pull and the model download.
+#
+# THE LAST LINE ASSERTS WHAT THE LINE ABOVE ONLY PRINTS, and it reads both answers back out
+# of the requirements file rather than restating them, so there is one copy of each pin and
+# it is the copy pip installed from. Two things can go wrong and only one of them is
+# covered elsewhere. The platform refuses an image whose torch reports no CUDA runtime, so
+# a CPU wheel is already caught before the push; nothing outside this repository notices a
+# torch that moved off the version this environment was built around, or a torch whose CUDA
+# major stopped agreeing with the nvcc pinned beside it -- which is the pair DeepSpeed
+# compares, and the pair that decides whether `import deepspeed` works at all.
 ENV CUDA_HOME=/usr/local/lib/python3.12/site-packages/nvidia/cu13
 RUN "${CUDA_HOME}/bin/nvcc" --version \
- && python -c "import deepspeed, torch, vllm; print('deepspeed', deepspeed.__version__, 'torch', torch.__version__, 'vllm', vllm.__version__)"
+ && python -c "import deepspeed, torch, vllm; print('deepspeed', deepspeed.__version__, 'torch', torch.__version__, 'vllm', vllm.__version__)" \
+ && python -c "import re, torch; req = open('/tmp/requirements.txt').read(); pin = re.search(r'^torch==(\S+)', req, re.M).group(1); nvcc = re.search(r'^nvidia-cuda-nvcc==(\d+)[.]', req, re.M).group(1); assert torch.__version__ == pin, f'torch was moved off the pin {pin}: {torch.__version__}'; assert (torch.version.cuda or '').split('.')[0] == nvcc, f'nvidia-cuda-nvcc is pinned at CUDA {nvcc} and this torch is built for CUDA {torch.version.cuda}'"
 
 # THE CHECKSUM A CHECKPOINT WRITE ASKS FOR IS NOT IN botocore, AND NOTHING HERE BROUGHT
 # IT IN. The eduLLM platform commits a run's output by putting the payload with
