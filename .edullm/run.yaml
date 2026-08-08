@@ -24,17 +24,19 @@ suggested_compute: gpu-8xa100
 # INTERNALLY `accelerate launch`es one rank per visible GPU. The platform's per-device launch
 # check reads only this outer command and sees one process against 8 GPUs, so we mark the single
 # top-level process as deliberate with EDULLM_LAUNCH_CHECK=waived (the sanctioned "launcher is
-# inside the wrapper" marker), exported once for both sequential invocations.
+# inside the wrapper" marker). The check attributes an INLINE env-prefix (VAR=val python ...) to
+# the launched process, not a preceding `export`, so the waiver rides directly on each python
+# invocation (same form the Stage-2 SFT command used).
 # ${EDULLM_CHECKPOINT_DIR%/} strips any trailing slash so the /orm and /prm subprefixes are clean
 # single-slash S3 keys that Stage 5/6 list under. dtype named in the command so the precision
 # guard sees bf16 (A100 has it). --sft-uri = Stage-2 SFT output; --data-uri = Stage-1 scored data.
 command: >-
-  bash -lc 'export EDULLM_LAUNCH_CHECK=waived; O="${EDULLM_CHECKPOINT_DIR%/}";
-  python projects/prm_vs_orm/run_rm.py --rm-type orm
+  bash -lc 'O="${EDULLM_CHECKPOINT_DIR%/}";
+  EDULLM_LAUNCH_CHECK=waived python projects/prm_vs_orm/run_rm.py --rm-type orm
   --sft-uri s3://sbsandbox-intern-edullm-outputs/teams/input-core/runs/run_019fdfac-f2be-703f-af2b-aa525c23aa9e/checkpoints/
   --data-uri s3://sbsandbox-intern-edullm-outputs/teams/input-core/runs/run_019fdd78-db6f-702c-a119-7faa90ea0a33/checkpoints/orm.jsonl
   --out "$O/orm" --dtype bfloat16
-  && python projects/prm_vs_orm/run_rm.py --rm-type prm
+  && EDULLM_LAUNCH_CHECK=waived python projects/prm_vs_orm/run_rm.py --rm-type prm
   --sft-uri s3://sbsandbox-intern-edullm-outputs/teams/input-core/runs/run_019fdfac-f2be-703f-af2b-aa525c23aa9e/checkpoints/
   --data-uri s3://sbsandbox-intern-edullm-outputs/teams/input-core/runs/run_019fdd78-db6f-702c-a119-7faa90ea0a33/checkpoints/prm.jsonl
   --out "$O/prm" --dtype bfloat16'
