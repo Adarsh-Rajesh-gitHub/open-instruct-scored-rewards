@@ -1,0 +1,42 @@
+# Written by edullm check, from config/workload-catalog.yaml.
+# Everything here is a property of the code and travels with it in git.
+# The machine, the corpus and the experiment are supplied at submit time,
+# because one commit run by two people belongs to two teams.
+#
+# Workload profiles registered for open-instruct-scored-rewards: open-instruct-scored-rewards-check, open-instruct-scored-rewards-train.
+# edullm check prices this and lists every refusal, without dispatching anything.
+schema_version: 1
+
+# -train rather than -check, for headroom rather than for a checkpoint. -check caps at 1 hour,
+# and this job pays an image pull, a ~14GB model download and MoE engine startup before it
+# measures anything; losing the run to a wall clock would also throw away the queue wait, which
+# is the expensive part. The checkpoint contract this profile declares is waived in the command
+# below, because a throughput benchmark has no state a retry could resume from.
+workload_profile: open-instruct-scored-rewards-train
+suggested_compute: gpu-8xa100
+
+# ONE WAIVER, AND ONE CONTRACT MET RATHER THAN WAIVED.
+#
+# EDULLM_LAUNCH_CHECK=waived -- the guard counts processes and wants 8 on an 8-GPU node. This is a
+# single-engine throughput benchmark: vLLM owns its own workers, and a torchrun with 8 ranks would
+# start 8 independent engines racing for the same cards and measure nothing meaningful.
+#
+# The checkpoint contract is *satisfied*, not waived, and it is not a formality. Finished sweep
+# cells are the only state this job has, so they are exactly what a resume needs: the script writes
+# them to $EDULLM_CHECKPOINT_DIR as each one completes and skips them on a retry. That turns the
+# profile's every-30-minutes-and-resume into something real rather than a box ticked.
+#
+# bfloat16 is named in the text because the bfloat16_not_in_the_hardware guard reads the command as
+# a string and cannot see a precision set in code.
+#
+# The tests run first and are not allowed to gate the sweep: they cover the EAGLE-3 target, which
+# the autoregressive baseline does not use, so a failure there must not cost the measurement. They
+# have never run anywhere -- vLLM does not import on macOS -- so this is their first execution, and
+# PYTEST_EXIT is echoed to make the outcome greppable in `edullm logs`.
+command: >-
+  bash -lc 'export EDULLM_LAUNCH_CHECK=waived;
+  python -m pytest -q open_instruct/spec_decode/test_olmoe_eagle3.py
+  open_instruct/spec_decode/test_metrics_vllm.py; echo "PYTEST_EXIT=$?";
+  python projects/olmoe_specdec/sweep_generation.py --dtype bfloat16
+  --tensor_parallel_size 2 --output_prefix "$EDULLM_OUTPUT_PREFIX"
+  --checkpoint_dir "$EDULLM_CHECKPOINT_DIR"'
