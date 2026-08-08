@@ -33,10 +33,15 @@ suggested_compute: gpu-8xa100
 # the autoregressive baseline does not use, so a failure there must not cost the measurement. They
 # have never run anywhere -- vLLM does not import on macOS -- so this is their first execution, and
 # PYTEST_EXIT is echoed to make the outcome greppable in `edullm logs`.
+# The waiver is a PREFIX ASSIGNMENT on each command, not `export`. The guard parses the command
+# the way a shell would, and in `export EDULLM_LAUNCH_CHECK=waived` that token is an *argument to
+# export* rather than an assignment word, so it does not count. Written once per invocation
+# because a prefix assignment scopes to the one simple command it precedes.
 command: >-
-  bash -lc 'export EDULLM_LAUNCH_CHECK=waived;
-  python -m pytest -q open_instruct/spec_decode/test_olmoe_eagle3.py
+  bash -lc 'EDULLM_LAUNCH_CHECK=waived python -m pytest -q
+  open_instruct/spec_decode/test_olmoe_eagle3.py
   open_instruct/spec_decode/test_metrics_vllm.py; echo "PYTEST_EXIT=$?";
-  python projects/olmoe_specdec/sweep_generation.py --dtype bfloat16
-  --tensor_parallel_size 2 --output_prefix "$EDULLM_OUTPUT_PREFIX"
+  EDULLM_LAUNCH_CHECK=waived python projects/olmoe_specdec/sweep_generation.py
+  --dtype bfloat16 --tensor_parallel_size 2
+  --output_prefix "$EDULLM_OUTPUT_PREFIX"
   --checkpoint_dir "$EDULLM_CHECKPOINT_DIR"'
