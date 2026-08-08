@@ -184,6 +184,11 @@ cd "$REPO"
 mkdir -p logs output
 export PYTHONPATH=$REPO
 
-bash projects/pedagogy_rm/scripts/train.sh
+# WHICH RUN SCRIPT THIS WRAPPER DRIVES, parameterised so the wrapper can be reused. Everything
+# above it is cluster plumbing that took a while to get right - the snapshot-and-re-exec that
+# survives an edit mid-run, the per-node flashinfer cache that avoids a GLIBCXX mismatch, the
+# offline hub pin, the provenance tags - and none of it is specific to the pedagogy reward.
+# projects/rlvr_verifiable points INNER at its own script and inherits all of it.
+bash "${INNER:-projects/pedagogy_rm/scripts/train.sh}"
 
 echo "done $(date -Is)"
