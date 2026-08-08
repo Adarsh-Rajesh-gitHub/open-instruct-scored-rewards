@@ -797,6 +797,21 @@ def get_tokenizer_tulu_v2_2(tc: "TokenizerConfig"):
         trust_remote_code=tc.trust_remote_code,
         use_fast=tc.use_fast,
     )
+    # OLMoE's released tokenizer already has a distinct pad token, so the pad-token
+    # repair below does not run. Set its intended BOS alias independently; otherwise
+    # `--add_bos` prepends an undefined Jinja variable and silently adds no token.
+    if (
+        "olmo" in str(tc.tokenizer_name_or_path).lower()
+        and isinstance(tokenizer, GPTNeoXTokenizerFast)
+        and tokenizer.bos_token is None
+    ):
+        tokenizer.bos_token = tokenizer.eos_token
+        if tc.chat_template_name is None or "olmo" not in tc.chat_template_name:
+            assert tc.add_bos, (
+                "For OLMo with GPTNeoX, you must add bos token to the beginning of the input sequence "
+                "if using an older chat template."
+            )
+
     # no default pad token for llama!
     # here we add all special tokens again, because the default ones are not in the special_tokens_map
     # only add if the pad token is not present already, or if the current one is set to eos_token_id.

@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 ### Fixed
+- Ensure OLMo GPT-NeoX tokenizers with an existing distinct padding token still alias a missing BOS token to EOS, so `--add_bos` with older chat templates inserts the intended token instead of rendering an empty Jinja variable (https://github.com/edu-llm/open-instruct-scored-rewards/pull/11).
 - Rewrap the merged-weight assertion in `TestPeftWeightSync` so `ruff format` accepts it; the expression is unchanged, but as written it failed `make style-check` and so failed Code Quality on every pull request, including ones touching no Python (https://github.com/edu-llm/open-instruct-scored-rewards/pull/3).
 - Track the CUDA 12 image suffix in the merge-queue Beaker workflow and allow enough time for the larger image build and upload (https://github.com/allenai/open-instruct/pull/1783).
 - Exclude nested virtualenvs (e.g. `oe-eval-internal/.venv/`) from the Docker build context, so a uv venv inside a nested clone no longer fails the image build on a dangling host-interpreter symlink (https://github.com/allenai/open-instruct/pull/1786).
