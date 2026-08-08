@@ -125,6 +125,7 @@ def build_accelerate_cmd(
     warmup_ratio: float,
     wandb_project: str,
     with_tracking: bool,
+    max_train_steps: int | None = None,
 ) -> list[str]:
     """Assemble the ``accelerate launch`` argv for the finetune shim (bf16 data-parallel)."""
     cmd: list[str] = [
@@ -148,7 +149,17 @@ def build_accelerate_cmd(
         "--dataset_skip_cache",
         "--seed", "123",
         "--logging_steps", "1",
+        # We upload the trained model to S3 ourselves (upload_dir below); we never push to the
+        # HF Hub. Both of these default to True in finetune.py's FlatArguments, and push_to_hub
+        # triggers an HfApi().whoami() the image has no token for (LocalTokenNotFoundError),
+        # while try_launch_beaker_eval_jobs=True with push_to_hub=False is a hard __post_init__
+        # ValueError. Disable both explicitly.
+        "--push_to_hub", "false",
+        "--try_launch_beaker_eval_jobs", "false",
     ]
+    if max_train_steps is not None:
+        # diagnostic smoke: stop after N optimizer steps instead of full epochs
+        cmd += ["--max_train_steps", str(int(max_train_steps))]
     if add_bos:
         cmd.append("--add_bos")
     if with_tracking:
@@ -226,13 +237,20 @@ def _selftest() -> None:
     assert cmd[i + 1] == "/tmp/d/sft.jsonl" and cmd[i + 2] == "1.0"
     assert "--add_bos" in cmd and "--do_not_randomize_output_dir" in cmd
     assert "--with_tracking" in cmd and cmd[cmd.index("--wandb_entity") + 1] == "eduLLM"
-    # add_bos omitted when False
+    # Hub disabled explicitly (both default True in finetune.py; the pair is a hard error)
+    assert cmd[cmd.index("--push_to_hub") + 1] == "false"
+    assert cmd[cmd.index("--try_launch_beaker_eval_jobs") + 1] == "false"
+    # no --max_train_steps unless requested
+    assert "--max_train_steps" not in cmd
+    # add_bos omitted when False; max_train_steps emitted when set
     cmd2 = build_accelerate_cmd(
         num_gpus=1, base_dir="/b", sft_file="/f.jsonl", output_dir="/o", add_bos=False,
         chat_template="tulu", max_seq_length=1024, epochs=1, lr=1e-5, per_device_batch=8,
         grad_accum=2, warmup_ratio=0.0, wandb_project="p", with_tracking=False,
+        max_train_steps=5,
     )
     assert "--add_bos" not in cmd2 and "--with_tracking" not in cmd2
+    assert cmd2[cmd2.index("--max_train_steps") + 1] == "5"
     print("SFT SELFTEST OK: uri helpers + accelerate command builder verified")
 
 
@@ -246,8 +264,13 @@ def main() -> None:
     ap.add_argument("--max-seq-length", type=int, default=2048)
     ap.add_argument("--epochs", type=int, default=3)  # finetune.py num_train_epochs is int
     ap.add_argument("--lr", type=float, default=1e-5)
-    ap.add_argument("--per-device-batch", type=int, default=16)
-    ap.add_argument("--grad-accum", type=int, default=1)
+    # per-device 2 x grad-accum 8 x 8 GPUs = global batch 128. Keeps one fp32 CE-logits tensor
+    # at 2*2048*vocab*4B (~1.6 GiB for dolma2's ~100k vocab); the stock loss path holds ~5 of
+    # them, so batch 16 (~13 GiB each) would OOM even an 80 GiB A100. See A100-MFU-PLAYBOOK B3/B4.
+    ap.add_argument("--per-device-batch", type=int, default=2)
+    ap.add_argument("--grad-accum", type=int, default=8)
+    ap.add_argument("--max-train-steps", type=int, default=None,
+                    help="cap optimizer steps (diagnostic smoke); omit for full epochs")
     ap.add_argument("--warmup-ratio", type=float, default=0.03)
     ap.add_argument("--wandb-project", default="prm-vs-orm-sft")
     ap.add_argument("--no-tracking", action="store_true", help="disable W&B (e.g. CPU smoke)")
@@ -301,6 +324,7 @@ def main() -> None:
         warmup_ratio=args.warmup_ratio,
         wandb_project=args.wandb_project,
         with_tracking=not args.no_tracking,
+        max_train_steps=args.max_train_steps,
     )
     print("launching:", " ".join(cmd), flush=True)
     _run_and_surface_errors(cmd)
