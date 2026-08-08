@@ -161,6 +161,44 @@ def build_accelerate_cmd(
     return cmd
 
 
+_ERR_MARKER = "SFTERR| "  # kept in sync with _sft_launch.py's marker
+
+
+def _run_and_surface_errors(cmd: list[str]) -> None:
+    """Run the accelerate launch, streaming its output, and on failure re-print the child's
+    real traceback LAST.
+
+    ``torch.distributed.elastic`` prints a per-rank exit-code summary *after* the failing
+    rank's Python traceback, so the ~50-line tail ``edullm logs`` returns shows only the
+    teardown boilerplate and hides the root cause. We tee the child's combined output to a
+    file; if it exits non-zero we pull out the ``SFTERR|``-marked lines the shim emitted
+    (the real rank-0 traceback) and print them as the very last thing, guaranteeing they
+    land in that tail. Falls back to the raw output tail if no marker is present.
+    """
+    log_path = Path("/tmp/sft_launch.log")
+    with log_path.open("wb") as f:
+        proc = subprocess.Popen(
+            cmd, cwd=str(REPO_ROOT), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0
+        )
+        assert proc.stdout is not None
+        for chunk in iter(lambda: proc.stdout.readline(), b""):
+            sys.stdout.buffer.write(chunk)
+            sys.stdout.buffer.flush()
+            f.write(chunk)
+        rc = proc.wait()
+    if rc != 0:
+        lines = log_path.read_text(errors="replace").splitlines()
+        marked = [ln for ln in lines if _ERR_MARKER in ln]
+        print("\n=================== SFT REAL ERROR (rank-0 traceback) ===================", flush=True)
+        if marked:
+            print("\n".join(marked[-60:]), flush=True)
+        else:
+            print("(no SFTERR marker found — last 40 lines of child output:)", flush=True)
+            print("\n".join(lines[-40:]), flush=True)
+        print("=========================================================================", flush=True)
+        raise SystemExit(rc)
+
+
 def _detect_gpus() -> int:
     try:
         import torch  # noqa: PLC0415
@@ -265,7 +303,7 @@ def main() -> None:
         with_tracking=not args.no_tracking,
     )
     print("launching:", " ".join(cmd), flush=True)
-    subprocess.run(cmd, check=True, cwd=str(REPO_ROOT))
+    _run_and_surface_errors(cmd)
 
     print(f"uploading SFT model {args.local_out} -> {args.out} ...", flush=True)
     uploaded = upload_dir(s3, args.local_out, args.out)

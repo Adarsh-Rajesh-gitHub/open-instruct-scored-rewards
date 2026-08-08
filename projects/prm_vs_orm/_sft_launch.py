@@ -22,9 +22,18 @@ Invoked by ``run_sft.py`` as::
 from __future__ import annotations
 
 import os
+import sys
+import traceback
 
 import open_instruct.finetune as ft
 from open_instruct.finetune import ArgumentParserPlus, FlatArguments, TokenizerConfig
+
+# torch.distributed.elastic swallows the failing rank's Python traceback (error_file is
+# N/A here) and prints only a per-rank exit-code summary, so the real exception never
+# reaches the ~50-line log tail `edullm logs` returns. We re-emit it line-by-line with a
+# unique prefix the outer wrapper (run_sft.py) greps out and prints LAST, guaranteeing the
+# root cause lands in that tail instead of the distributed-teardown boilerplate.
+_ERR_MARKER = "SFTERR| "
 
 _real_snapshot_download = ft.snapshot_download
 
@@ -42,7 +51,16 @@ ft.snapshot_download = _snapshot_download_or_local
 def main() -> None:
     parser = ArgumentParserPlus((FlatArguments, TokenizerConfig))
     args, tc = parser.parse_args_into_dataclasses()
-    ft.main(args, tc)
+    try:
+        ft.main(args, tc)
+    except BaseException:
+        # re-emit the full traceback with a greppable per-line marker, then re-raise so the
+        # process still exits non-zero. Only the failing rank(s) reach here; the rest are
+        # SIGTERM'd by elastic and print nothing.
+        tb = traceback.format_exc()
+        sys.stderr.write("".join(f"{_ERR_MARKER}{ln}\n" for ln in tb.splitlines()))
+        sys.stderr.flush()
+        raise
 
 
 if __name__ == "__main__":
