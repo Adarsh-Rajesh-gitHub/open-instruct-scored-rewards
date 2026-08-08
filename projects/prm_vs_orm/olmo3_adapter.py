@@ -123,7 +123,17 @@ class Olmo3ForSequenceClassification(Olmo3PreTrainedModel):
 
 
 def register() -> None:
-    """Register the Olmo3 sequence-classification head with the Auto* factories (idempotent)."""
+    """Register the Olmo3 sequence-classification head with the Auto* factories (idempotent).
+
+    ``exist_ok=True`` on the seq-classification mapping is load-bearing: newer ``transformers``
+    images ship a *native* ``Olmo3ForSequenceClassification`` and pre-register ``Olmo3Config`` in
+    ``AutoModelForSequenceClassification``'s mapping at import, so a plain ``.register`` raises
+    ``'Olmo3Config' is already used by a Transformers model``. ``exist_ok=True`` overrides that
+    mapping with *this* module's class (the one whose forward/pooling the RM path was validated
+    against) whether or not a native class is present, and is a harmless no-op on images where it
+    is absent. ``AutoConfig.register`` stays wrapped in ``suppress(ValueError)`` for the same
+    already-registered case.
+    """
     with contextlib.suppress(ValueError):
         AutoConfig.register("olmo3", Olmo3Config)  # raises if already registered this process
-    AutoModelForSequenceClassification.register(Olmo3Config, Olmo3ForSequenceClassification)
+    AutoModelForSequenceClassification.register(Olmo3Config, Olmo3ForSequenceClassification, exist_ok=True)
