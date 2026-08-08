@@ -1,4 +1,62 @@
-[![Beaker Experiment Launch](https://github.com/allenai/open-instruct/actions/workflows/beaker-experiment.yml/badge.svg)](https://github.com/allenai/open-instruct/actions/workflows/beaker-experiment.yml)
+# eduLLM's open-instruct
+
+A fork of [allenai/open-instruct](https://github.com/allenai/open-instruct) that adds **rewards
+which are a score rather than a verdict**, plus the research projects built on them. Everything
+upstream still works unchanged: with none of the new flags set, `grpo_fast.py` behaves exactly as
+it does upstream. Upstream's own README begins at [Training Open Instruction-Following Language
+Models](#training-open-instruction-following-language-models) below.
+
+## Why this fork exists
+
+Upstream's reward path assumes a rule can read one completion and say whether it is right. That
+covers maths, code and instruction following. It does not cover the questions where no rule can
+decide — was this a good explanation, a fair negotiation, a useful interview question — and it
+does not cover an environment whose other participant is another model.
+
+## What is added
+
+| | |
+|---|---|
+| [`open_instruct/scored_rewards/`](open_instruct/scored_rewards/README.md) | the reusable part: a plugin registry, single and group scorers, guards for veto/gate/normalisation, a generative rubric judge, a learned head on a frozen backbone, and model-as-environment |
+| [`projects/`](projects/README.md) | one directory per experiment, none of which `open_instruct/` imports |
+| MoE support in the trainer | LoRA on fused mixture-of-expert parameters, and a weight sync that splits them into the per-expert names vLLM expects |
+
+## Running a scored-reward job
+
+A reward lives in your own directory and is loaded by import, so nothing task-specific needs to
+enter `open_instruct/`:
+
+```bash
+python open_instruct/grpo_fast.py \
+    --reward_plugins projects/your_project/plugin.py \
+    --group_scorer "your_scorer:option=value" \
+    --group_reward_mode replace \
+    ...
+```
+
+`--group_scorer` names something your plugin registered and passes it `key=value` options.
+`--group_reward_mode` chooses whether the score `replace`s the verifiable reward or is added to
+it. Use `--score_verifiers` instead when your scorer reads one completion at a time rather than
+the whole group. [`projects/README.md`](projects/README.md) walks through writing one.
+
+Two worked examples, both runnable on one H100:
+
+- **[`projects/pedagogy_rm/`](projects/pedagogy_rm/README.md)** — a reward model for teaching
+  quality, read by a linear probe off a frozen encoder's hidden states rather than by prompting a
+  judge. Includes the human labelling interface, the probe fitting, the blinded evaluation, and
+  [what the results do and do not support](projects/pedagogy_rm/FLAWS.md).
+- **[`projects/rlvr_verifiable/`](projects/rlvr_verifiable/README.md)** — upstream's verifiable
+  rewards on maths, code and factual QA, with no reward model at all. The useful contrast: same
+  trainer, same LoRA, reward from a checkable answer instead of a learned score.
+
+## Working here
+
+`make style-check quality-check` is what CI runs on a pull request, and `uv run --frozen pytest`
+runs the tests. Cluster launchers live under each project's `scripts/`
+and are Slurm-specific; `projects/pedagogy_rm/scripts/train.sbatch` is the shared wrapper the
+others reuse through `INNER`.
+
+---
 
 # Training Open Instruction-Following Language Models
 
