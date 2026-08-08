@@ -1,0 +1,4846 @@
+{
+  "nodes": [
+    {
+      "id": "adaptations and survival",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "adding whole numbers",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "adjusting solution concentration by evaporation",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "african american history and culture",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "agents of metamorphism",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "agricultural land management",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "air pathway through the respiratory system",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "air pollution from chemical emissions",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "alexander the great's impact on greek city-states",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "analyzing colonial grievances about taxation and representation",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "analyzing economic factors in historical outcomes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "analyzing federalism in u.s. political conflicts",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "analyzing historical cause and effect",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "analyzing how diet quality affects reproductive success",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "analyzing relationships among experiments in an informational text",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "ancient egyptian beliefs about the afterlife",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "animal behavior: learned versus inherited traits",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "animal dependence on plants",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "animal migration as a response to changes in resource availability",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "animals obtain energy from food",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "antebellum debates over federalism and sectionalism",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "applying the inverse-square law of gravitation",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "archimedes' principle",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "atomic number as proton count",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "attractive and repulsive forces",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "balanced and unbalanced forces",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "basic characteristics of living organisms",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "basic needs of animals",
+      "train_items": 1,
+      "eval_items": 1
+    },
+    {
+      "id": "biodiversity and ecosystem stability",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "buoyant force and flotation equilibrium",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "calculating and comparing linear momentum",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "calculating ratios with division",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "calculating temperature change",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "calculating total protons from atomic numbers",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "calculating wavelength from wave speed and frequency",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "carbon cycle processes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "carbon cycling between living and nonliving components",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "carbon cycling between the atmosphere and living organisms",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "carbon's ability to form covalent chains",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "cause and effect in history",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "cause-and-effect reasoning",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "cause-and-effect relationships in u.s. history",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes and aims of the russian revolution",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes and consequences of constitutional government",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes and consequences of world war ii",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes and effects of population migration during the great depression",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes and outcomes of religious dissent in colonial massachusetts",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes and responses to the great depression",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes and significance of the whiskey rebellion",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes and timeline of world war i",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes of british entry into world war i",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes of napoleon's rise to power",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes of permanent settlement in early civilizations",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes of semidiurnal ocean tides",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "causes of the cold war",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes of the decline of feudalism",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes of the qing dynasty's collapse",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes of trench warfare stalemate on the western front",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "causes of u.s. neutrality policy in the 1930s",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "cells and tissues",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "cellular respiration",
+      "train_items": 2,
+      "eval_items": 0
+    },
+    {
+      "id": "cellular respiration reactants and products",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "changes of state of matter",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "characteristics of fungi and animals",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "characteristics of lakes",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "characteristics of living things",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "characteristics of planetary orbits",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "chemical reactions form new substances",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "chinese cultural influence on japan",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "chinese political history in the early twentieth century",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "chronology of u.s. constitutional amendments",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "classification of elements as metals and nonmetals",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "classification of elements as metals, nonmetals, semimetals, and noble gases",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "classifying earth\u2019s surface water features",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "classifying elements as metals, nonmetals, or metalloids",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "classifying elements by physical properties at room temperature",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "classifying forms of energy",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "classifying materials as conductors, semiconductors, and insulators",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "classifying states of matter",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "cloud types and formation",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "cold war ideology",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "cold war interpretations of soviet foreign policy",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "cold war u.s. containment policies",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "colonial american history",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "colonial settlement systems",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing ancient civilizations",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing changes in kinetic and potential energy",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "comparing characteristics of aztec and incan societies",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing durations of natural cycles",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "comparing electrical conductivity of conductors and semiconductors",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing gravitational and electric forces",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing gravitational strength by mass",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "comparing heat energy using q = mc\u03b4t",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing how electrostatic and gravitational forces depend on distance",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing magnetic attraction when distance is held constant",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing physical properties of metals and nonmetals",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing prokaryotic and viral cell structures",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing proportional changes in a formula",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing sizes of bodies of water",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "comparing sizes of solar system objects",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing temperatures",
+      "train_items": 2,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing the nitrogenous bases in dna and rna",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "comparing the political principles of the american and french revolutions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "components of soil",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "concentration gradients",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "conditions needed for hurricane formation and intensification",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "conflict between scientific ideas and church teachings during the scientific revolution",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "congressional reconstruction restrictions on political participation",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "conservation of solute in a homogeneous solution",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "constitutional interpretation",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "convection currents in the atmosphere",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "converting between hours and minutes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "cultural diffusion through trade routes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "decomposers and nutrient cycling in ecosystems",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "defining mass as amount of matter",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "designing fair tests",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "determining zygote chromosome number from gamete chromosome contributions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "differences between lakes and rivers",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "diplomacy and alliances preceding world war ii",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "direct proportional reasoning",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing celestial objects by their orbital relationships",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing cells from viruses by cellular structure",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing cellular and viral reproduction",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing chemical changes from physical changes",
+      "train_items": 3,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing chemical evidence from physical soil properties",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing climate from weather",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing communication system components by function",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing conduction, convection, and radiation",
+      "train_items": 2,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing direct observation from scientific explanation",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing ecosystems from food webs",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing elements from mixtures",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing energy from nutrients",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing erosion from tectonic and volcanic landform formation",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing erosion, deposition, and glacial landform processes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing facts from opinions",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing flowing and still water",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing freshwater and saltwater bodies",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing freshwater and saltwater water systems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing how sound and light travel through a vacuum",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing independent and controlled variables",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing inherited traits from acquired characteristics",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing inherited traits from acquired traits",
+      "train_items": 1,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing learned behaviors from innate behaviors",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing living and nonliving components in ecosystems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing living and nonliving parts of a habitat",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing living and nonliving things",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing major cold war crises by date and location",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing manufacturing process stages",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing mass from volume, force, and inertia",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing natural and human-made systems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing natural and human-made things",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing natural and human-made water systems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing natural from human-made objects",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing objects that emit light from objects that reflect light",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing organisms by cell walls and feeding methods",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing physical and chemical changes",
+      "train_items": 4,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing physical and chemical changes in digestion",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing position from velocity",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing primary and secondary historical goals",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing principles of u.s. government",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing producers from consumers",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing prokaryotic and eukaryotic cell structures",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing refraction from reflection",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing renewable and nonrenewable resources",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing rotation from revolution",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing saltwater and freshwater bodies",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing scientific inquiry from mathematical reasoning or prior knowledge",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing scientific theories from opinions",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing simple diffusion from osmosis",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing the roles of jurors and voters",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "distinguishing units of mass, temperature, volume, and length",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "distinguishing x-linked from y-linked traits",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "dividing quantities with units",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "domestic versus foreign policy conflicts in early u.s. history",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "earth's orbital period around the sun",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "earth's rotation and daily cycles",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "ecological benefits of periodic fires",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "ecological roles of fungi",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "economic and social changes of the 1920s",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "economic and social effects of dust bowl migration",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "economic effects of the crusades",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "economic motives for immigration policy in the gilded age",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "economic role of cotton exports in the confederacy",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of dams on fish migration",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "effects of expanding the money supply",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of foreign imperialism on china",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of industrialization on labor demand",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of jacksonian democracy on voter participation",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of labor-law exclusions on union organizing",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of latin american immigration on u.s. religious demographics",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of mass production on consumer culture",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of ph changes on aquatic ecosystems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "effects of post-1965 u.s. immigration policy on ethnic diversity",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of refrigerated transportation on food availability",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "effects of the copernican heliocentric theory",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of the fifteenth amendment and southern voting restrictions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of the fugitive slave act of 1850",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of the great awakening on colonial society and politics",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "effects of timber harvesting on habitat availability",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "effects of vegetation cover and root systems on soil erosion",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "electrical conductivity of element classes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "electromagnetic spectrum properties",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "electromagnetic wave properties",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "electromagnetic waves in a vacuum",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "elements and compounds",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "energy and matter in ecosystems",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "energy transfer in symbiotic relationships",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "energy transformations in vertical motion",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "english constitutional influences on the u.s. congress",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "enlightenment and british influences on the u.s. constitution",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "enlightenment ideas of natural rights and equality",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "environmental impacts of coal-fired power plants",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "environmental influences on gene expression",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "european alliance systems before world war i",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "evaluating claims based on evidence",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "evaluating positive and negative effects of technology",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "evaluating the relative historical significance of world war i events",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "evaporation and atmospheric water vapor",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "evaporation and condensation",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "evolutionary relationships",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "explaining causes of religious diversity in the united states",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "explaining photosynthesis",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "explaining photosynthesis as conversion of atmospheric carbon dioxide into plant matter",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "explaining seasonal food availability through transportation",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "export-oriented industrialization",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "factors that weaken hurricanes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "features of medieval european feudalism",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "federalism",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "federalist and democratic-republican political differences",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "fertilization restores the diploid chromosome number",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "fertilizer runoff causing algal growth",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "feudalism",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "finding supporting details in an informational text",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "food preservation and distribution methods",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "forest succession and wildlife habitat needs",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "forms of energy",
+      "train_items": 0,
+      "eval_items": 2
+    },
+    {
+      "id": "forms of energy and energy transformations",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "forms of precipitation",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "franklin d. roosevelt's immediate response to the 1933 banking crisis",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "freedmen's bureau programs and services",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "freshwater and saltwater bodies",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "functions of cell organelles",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "functions of circulatory systems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "functions of digestive system organs",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "functions of major body systems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "functions of major human body systems",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "functions of respiratory system organs",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "functions of the skeletal system",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "genes and inherited traits",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "government economic policies and industrialization",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "gravitational attraction",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "gravitational attraction between masses",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "gravitational fields",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "gravitational interactions between celestial bodies",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "gravitational potential energy and height",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "gravity determines orbital motion",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "greek city-states and macedonian unification",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "groundwater recharge through infiltration",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "hamiltonian federalist support base",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "haploid and diploid chromosome numbers",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "haploid and diploid chromosome sets",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "haploid gamete fusion in fertilization",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "harlem renaissance goals and cultural impact",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "health effects of air pollution",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "historical cause-and-effect reasoning",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "historical chronology of communication technologies",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "historical impact of germ theory",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "historical use of fuel resources",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "homologous structures as evidence of common ancestry",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "human impacts on aquatic ecosystems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "human impacts on river ecosystems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "human-environment interaction",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying a shared outcome across multiple events",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying actions that reduce human environmental impact",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying air as the primary source of plant biomass carbon",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying alloys as mixtures of metals",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying animal needs from habitats",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying aquatic habitats of organisms",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying bacteria as prokaryotic cells",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying bacterial cell structures",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying biotic and abiotic components of ecosystems",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying body systems involved in voluntary movement",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying causes and chronology of major events in the american revolution",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying causes and effects in history",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying causes of new deal reforms",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying characteristics of living things",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying characteristics of ponds",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying chromosomes as the structures that carry genetic instructions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying civic responsibilities from contextual clues",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying climate data",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying closed-loop systems in biogeochemical cycles",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying common bodies of water",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying conduction as heat transfer through direct contact",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying constitutional protections that support religious freedom",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying controlled variables in experiments",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying cumulonimbus clouds and their associated weather",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying defining characteristics of oceans",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying elastic potential energy",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying electrical devices that convert electrical energy into motion",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying environmental impacts of transportation infrastructure",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying environmentally beneficial waste-management practices",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying enzyme-catalyzed chemical digestion",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying ethnic groups associated with civil rights era labor movements",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying evidence of a chemical reaction",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying evidence of chemical reactions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying evidence of policies that promote trade",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying evidence that supports a scientific claim",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying finishing steps in manufacturing",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying gravity as a force that pulls objects downhill",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying heat transfer by conduction",
+      "train_items": 2,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying herbivores as primary consumers",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying human-made objects",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying hydraulic systems as force-multiplying machines",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying inherited traits",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying landforms formed by deposition",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying landforms formed by water erosion",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying magnetic materials",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying major civil rights movement groups",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying major new deal programs and their goals",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying major united states territorial acquisitions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying measurable independent and dependent variables",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying mechanical digestion",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying mechanical energy in everyday activities",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying minerals using physical properties",
+      "train_items": 2,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying moons as natural satellites that orbit planets",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying natural water movement",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying newton's third-law force pairs",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying observations possible with a telescope",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying orbital relationships in the sun-earth-moon system",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying organism-environment interactions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying parallel circuits by multiple current paths",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying periodic processes by their time scale",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying photosynthesis as a source of atmospheric oxygen",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying physical changes in digestion",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying physical properties of common materials",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying properties of sandy and gravelly soils",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying questions investigable through controlled experiments",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying questions that can be investigated scientifically through experiments",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying raw materials and their sources",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying reasons for animal migration",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying refraction phenomena",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying renewable and nonrenewable resources",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying republicanism as representative government",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying river erosion as a cause of canyon formation",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying rivers and oceans from descriptions",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying shared allied goals at the paris peace conference",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying shared characteristics of ancient civilizations",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying shared characteristics of systems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying sources that release light energy",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying states' rights issues in u.s. history",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying suffix meanings",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying sunlight as an energy source in ecosystems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying systems with natural and human-made components",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying temperature as a measure of thermal state",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying temperature change as necessary for melting",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying that sound requires a material medium",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying the cuban missile crisis from its defining events",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying the factors that led to the allied victory in world war i",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying the function of an encoder in digital communication systems",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying the goals of abolitionism",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying the goals of nineteenth-century utopian communities",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying the largest object in the solar system",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying the nucleotide components of nucleic acids",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying the primary goals of historical leaders",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying the property measured by a balance",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying the purpose of social security",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying the source of carbon in plant biomass",
+      "train_items": 2,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying trisomy as evidence of meiotic nondisjunction",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying uses of construction materials",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying variables in a scientific investigation",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "identifying waxing and waning moon phases",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying weathering caused by rainwater",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying which organisms have nuclei",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "identifying x-linked inheritance",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "inferring animal habitat dependence from food sources",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "inferring past environments from fossils",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "inflation and purchasing power",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "international organizations for peaceful dispute resolution",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "interpretation of historical policy effects",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "interpreting a mineral identification key",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "interpreting cause-and-effect relationships in ecosystems",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "interpreting historical comparisons",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "interpreting historical evidence",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "interpreting information in the periodic table",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "interpreting long-term weather averages",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "interpreting mass and velocity units",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "interpreting the impact of supreme court decisions on american indian policy",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "interpreting the ph scale",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "interpreting the suffix -ion as meaning the act or process of",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "interpreting velocity as speed and direction",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "interpreting weather-condition indicators",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "inverse-square laws",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "japan's postwar economic recovery",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "kinetic energy and speed",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "lake-effect snow formation",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "latitude affects solar heating",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "lenin's goal of international socialist revolution",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "levels of organization in the human body",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "life processes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "linking historical events to progressive era financial regulation",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "major antebellum compromises and court decisions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "major features of pre-columbian civilizations",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "major organ system functions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "major religious affiliations in the united states",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "matching measurement tools to physical properties",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "matching physical quantities to measurement scales",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "matching weather instruments to the variables they measure",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "measuring length with standard units",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "medieval afro-eurasian trade networks",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "medieval european church influence on political authority",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "medieval european social and political institutions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "medieval european trade and commerce",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "medieval feudal social classes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "medieval japanese history",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "meiosis and gamete formation",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "mineral hardness testing",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "mineral luster classification",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "moon's orbital period around earth",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "multiplying fractions and decimals",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "multiplying mass by velocity",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "natural resources",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "natural selection",
+      "train_items": 1,
+      "eval_items": 2
+    },
+    {
+      "id": "nazi ideology and propaganda",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "nazi scapegoating of jews and communists",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "net force and motion",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "new deal debates over public versus private electric power",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "new deal economic policy",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "new deal emergency banking measures",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "new deal labor protections and exclusions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "new england colonial dissent and founding of colonies",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "newton's laws of motion",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "northwest ordinance provisions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "northwest ordinance statehood requirements",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "nullification and states' rights",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "nullification crisis and state challenges to federal authority",
+      "train_items": 2,
+      "eval_items": 0
+    },
+    {
+      "id": "nutrient cycling in ecosystems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "ordering trophic levels in food chains",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "organism-environment interactions",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "origins of checks and balances in the u.s. political system",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "passive transport across cell membranes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "pesticide resistance from overuse",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "pesticide resistance through natural selection",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "phase changes of water",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "photoelectric effect: relating photon frequency to emitted electron kinetic energy",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "photosynthesis",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "photosynthesis as carbon transfer from the atmosphere to producers",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "photosynthesis products and reactants",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "photosynthesis reactants and products",
+      "train_items": 2,
+      "eval_items": 0
+    },
+    {
+      "id": "physical properties of metals",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "plant adaptations and ecosystem roles",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "plant and animal cell organelles",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "plant leaf functions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "plant parts and their functions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "plant reproduction and life cycles",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "plant responses to environmental stimuli",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "ploidy of gametes and zygotes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "political changes during the jacksonian era",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "political effects of macedonian conquest of greece",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "political goals of revolutionary movements",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "post-world war i allied war aims",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "post-world war ii ideological rivalry",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "postwar economic reconstruction",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "postwar mass-media history",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "predicting changes in trait frequencies from differential survival",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "predicting heat flow based on temperature differences",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "predicting how a scientific development affects storage and distribution",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "predicting how habitat loss affects population size",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "predicting population changes in a food web",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "predicting weather from falling air pressure and temperature",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "products of cellular respiration",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "progressive era reform movements",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "properties of chemical compounds",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "properties of covalent bonding",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "public health and disease prevention",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "purpose of the union naval blockade during the civil war",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "purpose of the united nations",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "purposes of major events in the french revolution",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "purposes of major u.s. foreign aid programs during the cold war",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "push and pull factors of immigration",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "radical reconstruction policies toward former confederate leaders",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "recognizing basic cell types",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "recognizing common building construction sites",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "recognizing environmental causes of rock weathering",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "recognizing evidence of a chemical reaction",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "recognizing federalism as divided power between national and state governments",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "recognizing forces that cause motion",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "recognizing habitat fragmentation",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "recognizing how flowing water shapes landforms",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "recognizing inverse-distance relationships",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "recognizing magnetic materials",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "recognizing major nineteenth-century reform movements",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "recognizing noncontact forces",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "recognizing observable cloud characteristics",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "recognizing physical changes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "recognizing pollution reduction and resource conservation practices",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "recognizing that traits are passed from parents to offspring",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "recognizing the united farm workers as a hispanic american labor organization",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "recognizing traits passed genetically from parents to offspring",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "reconstruction policies and institutions",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "reconstruction-era african american civil rights",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "refraction at boundaries between media",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "relating cloud types to weather forecasts",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "relating inherited traits to genetic information",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "relating inhibited growth to extended shelf life",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "relating organism adaptations to habitats",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "relating organism roles to biogeochemical cycles",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "relating organisms to their habitats",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "relating photon energy to frequency",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "relating refraction direction to a change in light speed",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "relating resource availability to survival and reproduction",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "relating seasonal changes to animal food availability",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "relating soil particle size to water drainage",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "relating technology tools to their functions",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "relating temperature to average kinetic energy",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "relating territorial acquisitions to changes in u.s. geography and population",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "relating wave speed, frequency, and wavelength",
+      "train_items": 3,
+      "eval_items": 0
+    },
+    {
+      "id": "relationship between agriculture and settled life",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "relationship between religious revival movements and individualism",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "religion in modern u.s. political history",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "religious issues in the 1960 u.s. presidential election",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "religious persecution in early modern europe",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "religious purposes of ancient egyptian art and architecture",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "religious revival movements in colonial america",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "renewable and nonrenewable natural resources",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "representative government",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "resource formation times",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "rock cycle processes",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "rock cycle transformations",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "role of arabian merchants in medieval interregional trade",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "roles of decomposition in ecosystems",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "roles of meiosis and mitosis in chromosome number",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "roles of plants and animals in gas exchange",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "roles of precipitation in the water cycle",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "roles of producers and consumers in ecosystems",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "roles of producers and decomposers in ecosystems",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "roman republican influences on the u.s. constitution",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "schlieffen plan's strategic purpose",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "scientific contributions of louis pasteur",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "scope of federal authority under the constitution",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "seasonal camouflage adaptations",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "seasonal changes as a cause of animal migration",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "sectional tensions before the civil war",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "sedimentary rock formation processes",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "seed dispersal by animals",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "selecting tools for measuring and recording data",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "selecting units for liquid volume",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "sequence of digestive system organs",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "sequencing moon phases",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "sequencing stages of a production process",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "sequencing steps in a production process",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "social and economic effects of the black death",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "social effects of the first great awakening",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "social gospel movement goals",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "soil conservation",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "solar system planet properties",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "solving distance problems using speed, time, and distance",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "sources of air pollution",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "sources of dissolved minerals in water",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "sources of light in the solar system",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "soviet political leaders of the 1920s",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "soviet power struggle after lenin's death",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "spanish colonial mission system",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "spanish colonization of california",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "spanish inquisition",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "stalin's leadership of the soviet union",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "strategic purposes of the nazi-soviet nonaggression pact",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "sustainable resource use",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "temperature differences cause convection",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "tennessee valley authority programs",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "thermal equilibrium",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "thunderstorm formation",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "tracing energy flow through food chains",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "tracing matter sources in plant growth",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "treaty of versailles goals toward germany",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "types of forces",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "u.s. citizenship pathways",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "u.s. foreign policy before world war ii",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "u.s. foreign policy goals in east asia before world war ii",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "u.s. foreign policy in latin america in the early 20th century",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "u.s. immigration policy history",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "u.s. motivations for supporting panamanian independence and the panama canal",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "u.s. naturalization requirements",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "u.s. open door policy in asia",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "u.s. protective tariff policy in the gilded age",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "u.s. territorial expansion and statehood",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "understanding chronological order",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "understanding composting as organic waste recycling",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "understanding first amendment freedoms",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "understanding how climate affects crop growing seasons",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "understanding how resource availability affects populations",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "understanding sex chromosome inheritance",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "understanding that nonrenewable resources are depleted by use",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "understanding that viruses require host cells to replicate",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "understanding the aims of the treaty of versailles",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "understanding the lumber supply chain",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "uneven solar heating drives global atmospheric circulation",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "unintended environmental effects of pest control",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "unintended environmental effects of pesticide use",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "union strategy in the civil war",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "urbanization and industrialization",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "using elemental composition to identify organic remains in soil",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "using proportional relationships",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "using the wave equation to relate speed, frequency, and wavelength",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "using the wave equation v = f\u03bb",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "variation in populations",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "voting age requirements",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "water cycle processes",
+      "train_items": 0,
+      "eval_items": 2
+    },
+    {
+      "id": "water movement as runoff and groundwater recharge",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "watershed definition",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "watershed effects on water flow",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "wave speed, frequency, and wavelength relationships",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "ways minors can participate in political campaigns",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "weaknesses of the french directory",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "weathering and decomposition",
+      "train_items": 0,
+      "eval_items": 1
+    },
+    {
+      "id": "weathering and erosion in the water cycle",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "western front geography in world war i",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "world war i political context",
+      "train_items": 1,
+      "eval_items": 0
+    },
+    {
+      "id": "world war i two-front war strategy",
+      "train_items": 1,
+      "eval_items": 0
+    }
+  ],
+  "edges": [
+    {
+      "source": "adjusting solution concentration by evaporation",
+      "target": "conservation of solute in a homogeneous solution",
+      "items": 1
+    },
+    {
+      "source": "agents of metamorphism",
+      "target": "rock cycle processes",
+      "items": 1
+    },
+    {
+      "source": "agricultural land management",
+      "target": "human-environment interaction",
+      "items": 1
+    },
+    {
+      "source": "alexander the great's impact on greek city-states",
+      "target": "political effects of macedonian conquest of greece",
+      "items": 1
+    },
+    {
+      "source": "analyzing colonial grievances about taxation and representation",
+      "target": "identifying causes and chronology of major events in the american revolution",
+      "items": 1
+    },
+    {
+      "source": "analyzing economic factors in historical outcomes",
+      "target": "identifying causes and effects in history",
+      "items": 1
+    },
+    {
+      "source": "analyzing how diet quality affects reproductive success",
+      "target": "interpreting cause-and-effect relationships in ecosystems",
+      "items": 1
+    },
+    {
+      "source": "analyzing relationships among experiments in an informational text",
+      "target": "identifying a shared outcome across multiple events",
+      "items": 1
+    },
+    {
+      "source": "animal dependence on plants",
+      "target": "basic needs of animals",
+      "items": 1
+    },
+    {
+      "source": "applying the inverse-square law of gravitation",
+      "target": "comparing proportional changes in a formula",
+      "items": 1
+    },
+    {
+      "source": "archimedes' principle",
+      "target": "buoyant force and flotation equilibrium",
+      "items": 1
+    },
+    {
+      "source": "balanced and unbalanced forces",
+      "target": "net force and motion",
+      "items": 1
+    },
+    {
+      "source": "biodiversity and ecosystem stability",
+      "target": "roles of producers and decomposers in ecosystems",
+      "items": 1
+    },
+    {
+      "source": "calculating and comparing linear momentum",
+      "target": "multiplying mass by velocity",
+      "items": 1
+    },
+    {
+      "source": "calculating total protons from atomic numbers",
+      "target": "adding whole numbers",
+      "items": 1
+    },
+    {
+      "source": "calculating total protons from atomic numbers",
+      "target": "atomic number as proton count",
+      "items": 1
+    },
+    {
+      "source": "calculating wavelength from wave speed and frequency",
+      "target": "using the wave equation v = f\u03bb",
+      "items": 1
+    },
+    {
+      "source": "carbon cycling between the atmosphere and living organisms",
+      "target": "photosynthesis as carbon transfer from the atmosphere to producers",
+      "items": 1
+    },
+    {
+      "source": "carbon's ability to form covalent chains",
+      "target": "properties of covalent bonding",
+      "items": 1
+    },
+    {
+      "source": "causes and aims of the russian revolution",
+      "target": "world war i political context",
+      "items": 1
+    },
+    {
+      "source": "causes and outcomes of religious dissent in colonial massachusetts",
+      "target": "new england colonial dissent and founding of colonies",
+      "items": 1
+    },
+    {
+      "source": "causes and significance of the whiskey rebellion",
+      "target": "scope of federal authority under the constitution",
+      "items": 1
+    },
+    {
+      "source": "causes of british entry into world war i",
+      "target": "causes and timeline of world war i",
+      "items": 1
+    },
+    {
+      "source": "causes of napoleon's rise to power",
+      "target": "weaknesses of the french directory",
+      "items": 1
+    },
+    {
+      "source": "causes of permanent settlement in early civilizations",
+      "target": "relationship between agriculture and settled life",
+      "items": 1
+    },
+    {
+      "source": "causes of semidiurnal ocean tides",
+      "target": "earth's rotation and daily cycles",
+      "items": 1
+    },
+    {
+      "source": "causes of semidiurnal ocean tides",
+      "target": "gravitational attraction",
+      "items": 1
+    },
+    {
+      "source": "causes of the cold war",
+      "target": "post-world war ii ideological rivalry",
+      "items": 1
+    },
+    {
+      "source": "causes of the decline of feudalism",
+      "target": "features of medieval european feudalism",
+      "items": 1
+    },
+    {
+      "source": "causes of the decline of feudalism",
+      "target": "social and economic effects of the black death",
+      "items": 1
+    },
+    {
+      "source": "causes of the qing dynasty's collapse",
+      "target": "effects of foreign imperialism on china",
+      "items": 1
+    },
+    {
+      "source": "causes of trench warfare stalemate on the western front",
+      "target": "western front geography in world war i",
+      "items": 1
+    },
+    {
+      "source": "cellular respiration",
+      "target": "plant and animal cell organelles",
+      "items": 1
+    },
+    {
+      "source": "characteristics of lakes",
+      "target": "freshwater and saltwater bodies",
+      "items": 1
+    },
+    {
+      "source": "characteristics of living things",
+      "target": "life processes",
+      "items": 1
+    },
+    {
+      "source": "characteristics of planetary orbits",
+      "target": "solar system planet properties",
+      "items": 1
+    },
+    {
+      "source": "chemical reactions form new substances",
+      "target": "elements and compounds",
+      "items": 1
+    },
+    {
+      "source": "classifying elements as metals, nonmetals, or metalloids",
+      "target": "interpreting information in the periodic table",
+      "items": 1
+    },
+    {
+      "source": "cold war interpretations of soviet foreign policy",
+      "target": "stalin's leadership of the soviet union",
+      "items": 1
+    },
+    {
+      "source": "comparing ancient civilizations",
+      "target": "identifying shared characteristics of ancient civilizations",
+      "items": 1
+    },
+    {
+      "source": "comparing changes in kinetic and potential energy",
+      "target": "identifying elastic potential energy",
+      "items": 1
+    },
+    {
+      "source": "comparing characteristics of aztec and incan societies",
+      "target": "major features of pre-columbian civilizations",
+      "items": 1
+    },
+    {
+      "source": "comparing electrical conductivity of conductors and semiconductors",
+      "target": "classifying materials as conductors, semiconductors, and insulators",
+      "items": 1
+    },
+    {
+      "source": "comparing gravitational and electric forces",
+      "target": "attractive and repulsive forces",
+      "items": 1
+    },
+    {
+      "source": "comparing gravitational and electric forces",
+      "target": "inverse-square laws",
+      "items": 1
+    },
+    {
+      "source": "comparing gravitational strength by mass",
+      "target": "gravitational fields",
+      "items": 1
+    },
+    {
+      "source": "comparing heat energy using q = mc\u03b4t",
+      "target": "calculating temperature change",
+      "items": 1
+    },
+    {
+      "source": "comparing heat energy using q = mc\u03b4t",
+      "target": "direct proportional reasoning",
+      "items": 1
+    },
+    {
+      "source": "comparing how electrostatic and gravitational forces depend on distance",
+      "target": "recognizing inverse-distance relationships",
+      "items": 1
+    },
+    {
+      "source": "comparing magnetic attraction when distance is held constant",
+      "target": "identifying magnetic materials",
+      "items": 1
+    },
+    {
+      "source": "comparing physical properties of metals and nonmetals",
+      "target": "physical properties of metals",
+      "items": 1
+    },
+    {
+      "source": "comparing prokaryotic and viral cell structures",
+      "target": "identifying bacteria as prokaryotic cells",
+      "items": 1
+    },
+    {
+      "source": "comparing sizes of bodies of water",
+      "target": "identifying common bodies of water",
+      "items": 1
+    },
+    {
+      "source": "comparing the nitrogenous bases in dna and rna",
+      "target": "identifying the nucleotide components of nucleic acids",
+      "items": 1
+    },
+    {
+      "source": "comparing the political principles of the american and french revolutions",
+      "target": "enlightenment ideas of natural rights and equality",
+      "items": 1
+    },
+    {
+      "source": "comparing the political principles of the american and french revolutions",
+      "target": "representative government",
+      "items": 1
+    },
+    {
+      "source": "components of soil",
+      "target": "weathering and decomposition",
+      "items": 1
+    },
+    {
+      "source": "cultural diffusion through trade routes",
+      "target": "medieval afro-eurasian trade networks",
+      "items": 1
+    },
+    {
+      "source": "defining mass as amount of matter",
+      "target": "distinguishing mass from volume, force, and inertia",
+      "items": 1
+    },
+    {
+      "source": "differences between lakes and rivers",
+      "target": "characteristics of lakes",
+      "items": 1
+    },
+    {
+      "source": "distinguishing cells from viruses by cellular structure",
+      "target": "identifying which organisms have nuclei",
+      "items": 1
+    },
+    {
+      "source": "distinguishing cellular and viral reproduction",
+      "target": "understanding that viruses require host cells to replicate",
+      "items": 1
+    },
+    {
+      "source": "distinguishing chemical changes from physical changes",
+      "target": "identifying evidence of chemical reactions",
+      "items": 1
+    },
+    {
+      "source": "distinguishing chemical changes from physical changes",
+      "target": "recognizing physical changes",
+      "items": 1
+    },
+    {
+      "source": "distinguishing climate from weather",
+      "target": "interpreting long-term weather averages",
+      "items": 1
+    },
+    {
+      "source": "distinguishing ecosystems from food webs",
+      "target": "identifying biotic and abiotic components of ecosystems",
+      "items": 1
+    },
+    {
+      "source": "distinguishing how sound and light travel through a vacuum",
+      "target": "identifying that sound requires a material medium",
+      "items": 1
+    },
+    {
+      "source": "distinguishing independent and controlled variables",
+      "target": "designing fair tests",
+      "items": 1
+    },
+    {
+      "source": "distinguishing inherited traits from acquired characteristics",
+      "target": "recognizing traits passed genetically from parents to offspring",
+      "items": 1
+    },
+    {
+      "source": "distinguishing inherited traits from acquired traits",
+      "target": "recognizing that traits are passed from parents to offspring",
+      "items": 1
+    },
+    {
+      "source": "distinguishing learned behaviors from innate behaviors",
+      "target": "animal behavior: learned versus inherited traits",
+      "items": 1
+    },
+    {
+      "source": "distinguishing living and nonliving components in ecosystems",
+      "target": "identifying characteristics of living things",
+      "items": 1
+    },
+    {
+      "source": "distinguishing natural and human-made water systems",
+      "target": "identifying natural water movement",
+      "items": 1
+    },
+    {
+      "source": "distinguishing objects that emit light from objects that reflect light",
+      "target": "sources of light in the solar system",
+      "items": 1
+    },
+    {
+      "source": "distinguishing organisms by cell walls and feeding methods",
+      "target": "basic characteristics of living organisms",
+      "items": 1
+    },
+    {
+      "source": "distinguishing physical and chemical changes in digestion",
+      "target": "identifying enzyme-catalyzed chemical digestion",
+      "items": 1
+    },
+    {
+      "source": "distinguishing physical and chemical changes in digestion",
+      "target": "identifying mechanical digestion",
+      "items": 1
+    },
+    {
+      "source": "distinguishing position from velocity",
+      "target": "interpreting velocity as speed and direction",
+      "items": 1
+    },
+    {
+      "source": "distinguishing primary and secondary historical goals",
+      "target": "identifying the primary goals of historical leaders",
+      "items": 1
+    },
+    {
+      "source": "distinguishing saltwater and freshwater bodies",
+      "target": "classifying earth\u2019s surface water features",
+      "items": 1
+    },
+    {
+      "source": "distinguishing scientific theories from opinions",
+      "target": "evaluating claims based on evidence",
+      "items": 1
+    },
+    {
+      "source": "distinguishing simple diffusion from osmosis",
+      "target": "passive transport across cell membranes",
+      "items": 1
+    },
+    {
+      "source": "distinguishing the roles of jurors and voters",
+      "target": "identifying civic responsibilities from contextual clues",
+      "items": 1
+    },
+    {
+      "source": "distinguishing x-linked from y-linked traits",
+      "target": "understanding sex chromosome inheritance",
+      "items": 1
+    },
+    {
+      "source": "domestic versus foreign policy conflicts in early u.s. history",
+      "target": "scope of federal authority under the constitution",
+      "items": 1
+    },
+    {
+      "source": "earth's orbital period around the sun",
+      "target": "distinguishing rotation from revolution",
+      "items": 1
+    },
+    {
+      "source": "ecological benefits of periodic fires",
+      "target": "nutrient cycling in ecosystems",
+      "items": 1
+    },
+    {
+      "source": "ecological roles of fungi",
+      "target": "decomposers and nutrient cycling in ecosystems",
+      "items": 1
+    },
+    {
+      "source": "economic and social effects of dust bowl migration",
+      "target": "causes and effects of population migration during the great depression",
+      "items": 1
+    },
+    {
+      "source": "economic effects of the crusades",
+      "target": "medieval european trade and commerce",
+      "items": 1
+    },
+    {
+      "source": "economic motives for immigration policy in the gilded age",
+      "target": "effects of industrialization on labor demand",
+      "items": 1
+    },
+    {
+      "source": "effects of dams on fish migration",
+      "target": "human impacts on river ecosystems",
+      "items": 1
+    },
+    {
+      "source": "effects of expanding the money supply",
+      "target": "inflation and purchasing power",
+      "items": 1
+    },
+    {
+      "source": "effects of foreign imperialism on china",
+      "target": "chinese political history in the early twentieth century",
+      "items": 1
+    },
+    {
+      "source": "effects of jacksonian democracy on voter participation",
+      "target": "political changes during the jacksonian era",
+      "items": 1
+    },
+    {
+      "source": "effects of labor-law exclusions on union organizing",
+      "target": "new deal labor protections and exclusions",
+      "items": 1
+    },
+    {
+      "source": "effects of latin american immigration on u.s. religious demographics",
+      "target": "major religious affiliations in the united states",
+      "items": 1
+    },
+    {
+      "source": "effects of mass production on consumer culture",
+      "target": "economic and social changes of the 1920s",
+      "items": 1
+    },
+    {
+      "source": "effects of ph changes on aquatic ecosystems",
+      "target": "interpreting the ph scale",
+      "items": 1
+    },
+    {
+      "source": "effects of post-1965 u.s. immigration policy on ethnic diversity",
+      "target": "u.s. immigration policy history",
+      "items": 1
+    },
+    {
+      "source": "effects of refrigerated transportation on food availability",
+      "target": "food preservation and distribution methods",
+      "items": 1
+    },
+    {
+      "source": "effects of the copernican heliocentric theory",
+      "target": "conflict between scientific ideas and church teachings during the scientific revolution",
+      "items": 1
+    },
+    {
+      "source": "effects of the fifteenth amendment and southern voting restrictions",
+      "target": "reconstruction-era african american civil rights",
+      "items": 1
+    },
+    {
+      "source": "effects of the fugitive slave act of 1850",
+      "target": "sectional tensions before the civil war",
+      "items": 1
+    },
+    {
+      "source": "effects of the great awakening on colonial society and politics",
+      "target": "relationship between religious revival movements and individualism",
+      "items": 1
+    },
+    {
+      "source": "effects of timber harvesting on habitat availability",
+      "target": "forest succession and wildlife habitat needs",
+      "items": 1
+    },
+    {
+      "source": "effects of vegetation cover and root systems on soil erosion",
+      "target": "soil conservation",
+      "items": 1
+    },
+    {
+      "source": "electrical conductivity of element classes",
+      "target": "classification of elements as metals, nonmetals, semimetals, and noble gases",
+      "items": 1
+    },
+    {
+      "source": "electromagnetic waves in a vacuum",
+      "target": "relating wave speed, frequency, and wavelength",
+      "items": 1
+    },
+    {
+      "source": "energy transfer in symbiotic relationships",
+      "target": "photosynthesis products and reactants",
+      "items": 1
+    },
+    {
+      "source": "energy transformations in vertical motion",
+      "target": "gravitational potential energy and height",
+      "items": 1
+    },
+    {
+      "source": "energy transformations in vertical motion",
+      "target": "kinetic energy and speed",
+      "items": 1
+    },
+    {
+      "source": "english constitutional influences on the u.s. congress",
+      "target": "enlightenment and british influences on the u.s. constitution",
+      "items": 1
+    },
+    {
+      "source": "environmental impacts of coal-fired power plants",
+      "target": "air pollution from chemical emissions",
+      "items": 1
+    },
+    {
+      "source": "environmental influences on gene expression",
+      "target": "genes and inherited traits",
+      "items": 1
+    },
+    {
+      "source": "evaluating the relative historical significance of world war i events",
+      "target": "identifying the factors that led to the allied victory in world war i",
+      "items": 1
+    },
+    {
+      "source": "evaporation and atmospheric water vapor",
+      "target": "phase changes of water",
+      "items": 1
+    },
+    {
+      "source": "explaining causes of religious diversity in the united states",
+      "target": "identifying constitutional protections that support religious freedom",
+      "items": 1
+    },
+    {
+      "source": "explaining photosynthesis",
+      "target": "tracing matter sources in plant growth",
+      "items": 1
+    },
+    {
+      "source": "explaining seasonal food availability through transportation",
+      "target": "understanding how climate affects crop growing seasons",
+      "items": 1
+    },
+    {
+      "source": "export-oriented industrialization",
+      "target": "postwar economic reconstruction",
+      "items": 1
+    },
+    {
+      "source": "factors that weaken hurricanes",
+      "target": "conditions needed for hurricane formation and intensification",
+      "items": 1
+    },
+    {
+      "source": "federalism",
+      "target": "constitutional interpretation",
+      "items": 1
+    },
+    {
+      "source": "fertilization restores the diploid chromosome number",
+      "target": "haploid and diploid chromosome numbers",
+      "items": 1
+    },
+    {
+      "source": "fertilizer runoff causing algal growth",
+      "target": "human impacts on aquatic ecosystems",
+      "items": 1
+    },
+    {
+      "source": "franklin d. roosevelt's immediate response to the 1933 banking crisis",
+      "target": "new deal emergency banking measures",
+      "items": 1
+    },
+    {
+      "source": "freedmen's bureau programs and services",
+      "target": "reconstruction policies and institutions",
+      "items": 1
+    },
+    {
+      "source": "functions of cell organelles",
+      "target": "cellular respiration",
+      "items": 1
+    },
+    {
+      "source": "functions of cell organelles",
+      "target": "photosynthesis",
+      "items": 1
+    },
+    {
+      "source": "functions of circulatory systems",
+      "target": "functions of major body systems",
+      "items": 1
+    },
+    {
+      "source": "functions of respiratory system organs",
+      "target": "air pathway through the respiratory system",
+      "items": 1
+    },
+    {
+      "source": "functions of the skeletal system",
+      "target": "major organ system functions",
+      "items": 1
+    },
+    {
+      "source": "government economic policies and industrialization",
+      "target": "interpretation of historical policy effects",
+      "items": 1
+    },
+    {
+      "source": "gravitational interactions between celestial bodies",
+      "target": "gravitational fields",
+      "items": 1
+    },
+    {
+      "source": "gravity determines orbital motion",
+      "target": "gravitational attraction between masses",
+      "items": 1
+    },
+    {
+      "source": "groundwater recharge through infiltration",
+      "target": "water cycle processes",
+      "items": 1
+    },
+    {
+      "source": "hamiltonian federalist support base",
+      "target": "federalist and democratic-republican political differences",
+      "items": 1
+    },
+    {
+      "source": "haploid and diploid chromosome sets",
+      "target": "meiosis and gamete formation",
+      "items": 1
+    },
+    {
+      "source": "haploid gamete fusion in fertilization",
+      "target": "ploidy of gametes and zygotes",
+      "items": 1
+    },
+    {
+      "source": "harlem renaissance goals and cultural impact",
+      "target": "african american history and culture",
+      "items": 1
+    },
+    {
+      "source": "health effects of air pollution",
+      "target": "sources of air pollution",
+      "items": 1
+    },
+    {
+      "source": "historical use of fuel resources",
+      "target": "identifying renewable and nonrenewable resources",
+      "items": 1
+    },
+    {
+      "source": "homologous structures as evidence of common ancestry",
+      "target": "evolutionary relationships",
+      "items": 1
+    },
+    {
+      "source": "identifying a shared outcome across multiple events",
+      "target": "finding supporting details in an informational text",
+      "items": 1
+    },
+    {
+      "source": "identifying actions that reduce human environmental impact",
+      "target": "recognizing pollution reduction and resource conservation practices",
+      "items": 1
+    },
+    {
+      "source": "identifying air as the primary source of plant biomass carbon",
+      "target": "explaining photosynthesis",
+      "items": 1
+    },
+    {
+      "source": "identifying alloys as mixtures of metals",
+      "target": "distinguishing elements from mixtures",
+      "items": 1
+    },
+    {
+      "source": "identifying aquatic habitats of organisms",
+      "target": "relating organism adaptations to habitats",
+      "items": 1
+    },
+    {
+      "source": "identifying bacterial cell structures",
+      "target": "distinguishing prokaryotic and eukaryotic cell structures",
+      "items": 1
+    },
+    {
+      "source": "identifying body systems involved in voluntary movement",
+      "target": "functions of major human body systems",
+      "items": 1
+    },
+    {
+      "source": "identifying characteristics of ponds",
+      "target": "distinguishing flowing and still water",
+      "items": 1
+    },
+    {
+      "source": "identifying characteristics of ponds",
+      "target": "distinguishing freshwater and saltwater bodies",
+      "items": 1
+    },
+    {
+      "source": "identifying chromosomes as the structures that carry genetic instructions",
+      "target": "relating inherited traits to genetic information",
+      "items": 1
+    },
+    {
+      "source": "identifying climate data",
+      "target": "distinguishing climate from weather",
+      "items": 1
+    },
+    {
+      "source": "identifying closed-loop systems in biogeochemical cycles",
+      "target": "carbon cycling between living and nonliving components",
+      "items": 1
+    },
+    {
+      "source": "identifying conduction as heat transfer through direct contact",
+      "target": "distinguishing conduction, convection, and radiation",
+      "items": 1
+    },
+    {
+      "source": "identifying constitutional protections that support religious freedom",
+      "target": "understanding first amendment freedoms",
+      "items": 1
+    },
+    {
+      "source": "identifying controlled variables in experiments",
+      "target": "distinguishing independent and controlled variables",
+      "items": 1
+    },
+    {
+      "source": "identifying cumulonimbus clouds and their associated weather",
+      "target": "recognizing observable cloud characteristics",
+      "items": 1
+    },
+    {
+      "source": "identifying defining characteristics of oceans",
+      "target": "distinguishing saltwater and freshwater bodies",
+      "items": 1
+    },
+    {
+      "source": "identifying elastic potential energy",
+      "target": "forms of energy",
+      "items": 1
+    },
+    {
+      "source": "identifying electrical devices that convert electrical energy into motion",
+      "target": "forms of energy and energy transformations",
+      "items": 1
+    },
+    {
+      "source": "identifying environmental impacts of transportation infrastructure",
+      "target": "evaluating positive and negative effects of technology",
+      "items": 1
+    },
+    {
+      "source": "identifying environmental impacts of transportation infrastructure",
+      "target": "recognizing habitat fragmentation",
+      "items": 1
+    },
+    {
+      "source": "identifying environmentally beneficial waste-management practices",
+      "target": "understanding composting as organic waste recycling",
+      "items": 1
+    },
+    {
+      "source": "identifying evidence of a chemical reaction",
+      "target": "distinguishing chemical changes from physical changes",
+      "items": 1
+    },
+    {
+      "source": "identifying evidence of policies that promote trade",
+      "target": "interpreting historical evidence",
+      "items": 1
+    },
+    {
+      "source": "identifying evidence that supports a scientific claim",
+      "target": "animals obtain energy from food",
+      "items": 1
+    },
+    {
+      "source": "identifying finishing steps in manufacturing",
+      "target": "distinguishing manufacturing process stages",
+      "items": 1
+    },
+    {
+      "source": "identifying gravity as a force that pulls objects downhill",
+      "target": "recognizing forces that cause motion",
+      "items": 1
+    },
+    {
+      "source": "identifying heat transfer by conduction",
+      "target": "distinguishing conduction, convection, and radiation",
+      "items": 1
+    },
+    {
+      "source": "identifying herbivores as primary consumers",
+      "target": "distinguishing producers from consumers",
+      "items": 1
+    },
+    {
+      "source": "identifying human-made objects",
+      "target": "distinguishing natural and human-made things",
+      "items": 1
+    },
+    {
+      "source": "identifying hydraulic systems as force-multiplying machines",
+      "target": "relating technology tools to their functions",
+      "items": 1
+    },
+    {
+      "source": "identifying inherited traits",
+      "target": "distinguishing inherited traits from acquired traits",
+      "items": 1
+    },
+    {
+      "source": "identifying landforms formed by deposition",
+      "target": "distinguishing erosion, deposition, and glacial landform processes",
+      "items": 1
+    },
+    {
+      "source": "identifying landforms formed by water erosion",
+      "target": "distinguishing erosion from tectonic and volcanic landform formation",
+      "items": 1
+    },
+    {
+      "source": "identifying major civil rights movement groups",
+      "target": "recognizing the united farm workers as a hispanic american labor organization",
+      "items": 1
+    },
+    {
+      "source": "identifying mechanical energy in everyday activities",
+      "target": "classifying forms of energy",
+      "items": 1
+    },
+    {
+      "source": "identifying minerals using physical properties",
+      "target": "interpreting a mineral identification key",
+      "items": 1
+    },
+    {
+      "source": "identifying minerals using physical properties",
+      "target": "mineral hardness testing",
+      "items": 1
+    },
+    {
+      "source": "identifying minerals using physical properties",
+      "target": "mineral luster classification",
+      "items": 1
+    },
+    {
+      "source": "identifying moons as natural satellites that orbit planets",
+      "target": "distinguishing celestial objects by their orbital relationships",
+      "items": 1
+    },
+    {
+      "source": "identifying newton's third-law force pairs",
+      "target": "newton's laws of motion",
+      "items": 1
+    },
+    {
+      "source": "identifying observations possible with a telescope",
+      "target": "distinguishing direct observation from scientific explanation",
+      "items": 1
+    },
+    {
+      "source": "identifying organism-environment interactions",
+      "target": "distinguishing living and nonliving things",
+      "items": 1
+    },
+    {
+      "source": "identifying periodic processes by their time scale",
+      "target": "comparing durations of natural cycles",
+      "items": 1
+    },
+    {
+      "source": "identifying photosynthesis as a source of atmospheric oxygen",
+      "target": "relating organism roles to biogeochemical cycles",
+      "items": 1
+    },
+    {
+      "source": "identifying physical changes in digestion",
+      "target": "distinguishing physical and chemical changes",
+      "items": 1
+    },
+    {
+      "source": "identifying physical properties of common materials",
+      "target": "classifying states of matter",
+      "items": 1
+    },
+    {
+      "source": "identifying physical properties of common materials",
+      "target": "recognizing magnetic materials",
+      "items": 1
+    },
+    {
+      "source": "identifying properties of sandy and gravelly soils",
+      "target": "relating soil particle size to water drainage",
+      "items": 1
+    },
+    {
+      "source": "identifying questions investigable through controlled experiments",
+      "target": "identifying measurable independent and dependent variables",
+      "items": 1
+    },
+    {
+      "source": "identifying questions that can be investigated scientifically through experiments",
+      "target": "distinguishing scientific inquiry from mathematical reasoning or prior knowledge",
+      "items": 1
+    },
+    {
+      "source": "identifying reasons for animal migration",
+      "target": "relating seasonal changes to animal food availability",
+      "items": 1
+    },
+    {
+      "source": "identifying refraction phenomena",
+      "target": "distinguishing refraction from reflection",
+      "items": 1
+    },
+    {
+      "source": "identifying republicanism as representative government",
+      "target": "distinguishing principles of u.s. government",
+      "items": 1
+    },
+    {
+      "source": "identifying river erosion as a cause of canyon formation",
+      "target": "recognizing how flowing water shapes landforms",
+      "items": 1
+    },
+    {
+      "source": "identifying rivers and oceans from descriptions",
+      "target": "distinguishing freshwater and saltwater water systems",
+      "items": 1
+    },
+    {
+      "source": "identifying shared allied goals at the paris peace conference",
+      "target": "understanding the aims of the treaty of versailles",
+      "items": 1
+    },
+    {
+      "source": "identifying shared characteristics of systems",
+      "target": "distinguishing natural and human-made systems",
+      "items": 1
+    },
+    {
+      "source": "identifying sources that release light energy",
+      "target": "forms of energy",
+      "items": 1
+    },
+    {
+      "source": "identifying states' rights issues in u.s. history",
+      "target": "analyzing federalism in u.s. political conflicts",
+      "items": 1
+    },
+    {
+      "source": "identifying sunlight as an energy source in ecosystems",
+      "target": "distinguishing energy from nutrients",
+      "items": 1
+    },
+    {
+      "source": "identifying systems with natural and human-made components",
+      "target": "distinguishing natural from human-made objects",
+      "items": 1
+    },
+    {
+      "source": "identifying temperature as a measure of thermal state",
+      "target": "matching physical quantities to measurement scales",
+      "items": 1
+    },
+    {
+      "source": "identifying temperature change as necessary for melting",
+      "target": "changes of state of matter",
+      "items": 1
+    },
+    {
+      "source": "identifying the cuban missile crisis from its defining events",
+      "target": "distinguishing major cold war crises by date and location",
+      "items": 1
+    },
+    {
+      "source": "identifying the function of an encoder in digital communication systems",
+      "target": "distinguishing communication system components by function",
+      "items": 1
+    },
+    {
+      "source": "identifying the goals of abolitionism",
+      "target": "recognizing major nineteenth-century reform movements",
+      "items": 1
+    },
+    {
+      "source": "identifying the goals of nineteenth-century utopian communities",
+      "target": "interpreting historical comparisons",
+      "items": 1
+    },
+    {
+      "source": "identifying the largest object in the solar system",
+      "target": "comparing sizes of solar system objects",
+      "items": 1
+    },
+    {
+      "source": "identifying the property measured by a balance",
+      "target": "matching measurement tools to physical properties",
+      "items": 1
+    },
+    {
+      "source": "identifying the purpose of social security",
+      "target": "identifying major new deal programs and their goals",
+      "items": 1
+    },
+    {
+      "source": "identifying the source of carbon in plant biomass",
+      "target": "explaining photosynthesis as conversion of atmospheric carbon dioxide into plant matter",
+      "items": 1
+    },
+    {
+      "source": "identifying trisomy as evidence of meiotic nondisjunction",
+      "target": "determining zygote chromosome number from gamete chromosome contributions",
+      "items": 1
+    },
+    {
+      "source": "identifying uses of construction materials",
+      "target": "recognizing common building construction sites",
+      "items": 1
+    },
+    {
+      "source": "identifying weathering caused by rainwater",
+      "target": "recognizing environmental causes of rock weathering",
+      "items": 1
+    },
+    {
+      "source": "identifying which organisms have nuclei",
+      "target": "recognizing basic cell types",
+      "items": 1
+    },
+    {
+      "source": "identifying x-linked inheritance",
+      "target": "distinguishing x-linked from y-linked traits",
+      "items": 1
+    },
+    {
+      "source": "inferring animal habitat dependence from food sources",
+      "target": "identifying animal needs from habitats",
+      "items": 1
+    },
+    {
+      "source": "inferring past environments from fossils",
+      "target": "relating organisms to their habitats",
+      "items": 1
+    },
+    {
+      "source": "international organizations for peaceful dispute resolution",
+      "target": "causes and consequences of world war ii",
+      "items": 1
+    },
+    {
+      "source": "interpreting the impact of supreme court decisions on american indian policy",
+      "target": "analyzing historical cause and effect",
+      "items": 1
+    },
+    {
+      "source": "interpreting the suffix -ion as meaning the act or process of",
+      "target": "identifying suffix meanings",
+      "items": 1
+    },
+    {
+      "source": "japan's postwar economic recovery",
+      "target": "export-oriented industrialization",
+      "items": 1
+    },
+    {
+      "source": "lake-effect snow formation",
+      "target": "evaporation and atmospheric water vapor",
+      "items": 1
+    },
+    {
+      "source": "lenin's goal of international socialist revolution",
+      "target": "causes and aims of the russian revolution",
+      "items": 1
+    },
+    {
+      "source": "levels of organization in the human body",
+      "target": "cells and tissues",
+      "items": 1
+    },
+    {
+      "source": "linking historical events to progressive era financial regulation",
+      "target": "identifying causes of new deal reforms",
+      "items": 1
+    },
+    {
+      "source": "matching weather instruments to the variables they measure",
+      "target": "identifying variables in a scientific investigation",
+      "items": 1
+    },
+    {
+      "source": "medieval european church influence on political authority",
+      "target": "medieval european social and political institutions",
+      "items": 1
+    },
+    {
+      "source": "medieval feudal social classes",
+      "target": "feudalism",
+      "items": 1
+    },
+    {
+      "source": "medieval japanese history",
+      "target": "chinese cultural influence on japan",
+      "items": 1
+    },
+    {
+      "source": "multiplying mass by velocity",
+      "target": "interpreting mass and velocity units",
+      "items": 1
+    },
+    {
+      "source": "natural selection",
+      "target": "cause-and-effect reasoning",
+      "items": 1
+    },
+    {
+      "source": "natural selection",
+      "target": "variation in populations",
+      "items": 1
+    },
+    {
+      "source": "nazi scapegoating of jews and communists",
+      "target": "nazi ideology and propaganda",
+      "items": 1
+    },
+    {
+      "source": "net force and motion",
+      "target": "types of forces",
+      "items": 1
+    },
+    {
+      "source": "new deal debates over public versus private electric power",
+      "target": "new deal economic policy",
+      "items": 1
+    },
+    {
+      "source": "new deal emergency banking measures",
+      "target": "causes and responses to the great depression",
+      "items": 1
+    },
+    {
+      "source": "northwest ordinance provisions",
+      "target": "u.s. territorial expansion and statehood",
+      "items": 1
+    },
+    {
+      "source": "northwest ordinance statehood requirements",
+      "target": "northwest ordinance provisions",
+      "items": 1
+    },
+    {
+      "source": "nullification and states' rights",
+      "target": "federalism",
+      "items": 1
+    },
+    {
+      "source": "nullification crisis and state challenges to federal authority",
+      "target": "antebellum debates over federalism and sectionalism",
+      "items": 1
+    },
+    {
+      "source": "ordering trophic levels in food chains",
+      "target": "identifying herbivores as primary consumers",
+      "items": 1
+    },
+    {
+      "source": "organism-environment interactions",
+      "target": "basic needs of animals",
+      "items": 1
+    },
+    {
+      "source": "origins of checks and balances in the u.s. political system",
+      "target": "roman republican influences on the u.s. constitution",
+      "items": 1
+    },
+    {
+      "source": "passive transport across cell membranes",
+      "target": "concentration gradients",
+      "items": 1
+    },
+    {
+      "source": "pesticide resistance from overuse",
+      "target": "natural selection",
+      "items": 1
+    },
+    {
+      "source": "pesticide resistance through natural selection",
+      "target": "natural selection",
+      "items": 1
+    },
+    {
+      "source": "photoelectric effect: relating photon frequency to emitted electron kinetic energy",
+      "target": "electromagnetic wave properties",
+      "items": 1
+    },
+    {
+      "source": "photosynthesis as carbon transfer from the atmosphere to producers",
+      "target": "roles of producers and consumers in ecosystems",
+      "items": 1
+    },
+    {
+      "source": "photosynthesis products and reactants",
+      "target": "cellular respiration reactants and products",
+      "items": 1
+    },
+    {
+      "source": "photosynthesis reactants and products",
+      "target": "roles of plants and animals in gas exchange",
+      "items": 1
+    },
+    {
+      "source": "physical properties of metals",
+      "target": "classification of elements as metals and nonmetals",
+      "items": 1
+    },
+    {
+      "source": "plant leaf functions",
+      "target": "plant parts and their functions",
+      "items": 1
+    },
+    {
+      "source": "plant responses to environmental stimuli",
+      "target": "environmental influences on gene expression",
+      "items": 1
+    },
+    {
+      "source": "political changes during the jacksonian era",
+      "target": "chronology of u.s. constitutional amendments",
+      "items": 1
+    },
+    {
+      "source": "political effects of macedonian conquest of greece",
+      "target": "greek city-states and macedonian unification",
+      "items": 1
+    },
+    {
+      "source": "political goals of revolutionary movements",
+      "target": "causes and consequences of constitutional government",
+      "items": 1
+    },
+    {
+      "source": "post-world war ii ideological rivalry",
+      "target": "historical cause-and-effect reasoning",
+      "items": 1
+    },
+    {
+      "source": "postwar mass-media history",
+      "target": "historical chronology of communication technologies",
+      "items": 1
+    },
+    {
+      "source": "predicting changes in trait frequencies from differential survival",
+      "target": "natural selection",
+      "items": 1
+    },
+    {
+      "source": "predicting heat flow based on temperature differences",
+      "target": "thermal equilibrium",
+      "items": 1
+    },
+    {
+      "source": "predicting how a scientific development affects storage and distribution",
+      "target": "relating inhibited growth to extended shelf life",
+      "items": 1
+    },
+    {
+      "source": "predicting how habitat loss affects population size",
+      "target": "relating resource availability to survival and reproduction",
+      "items": 1
+    },
+    {
+      "source": "predicting population changes in a food web",
+      "target": "tracing energy flow through food chains",
+      "items": 1
+    },
+    {
+      "source": "predicting weather from falling air pressure and temperature",
+      "target": "interpreting weather-condition indicators",
+      "items": 1
+    },
+    {
+      "source": "products of cellular respiration",
+      "target": "cellular respiration",
+      "items": 1
+    },
+    {
+      "source": "properties of chemical compounds",
+      "target": "chemical reactions form new substances",
+      "items": 1
+    },
+    {
+      "source": "public health and disease prevention",
+      "target": "historical impact of germ theory",
+      "items": 1
+    },
+    {
+      "source": "purpose of the union naval blockade during the civil war",
+      "target": "economic role of cotton exports in the confederacy",
+      "items": 1
+    },
+    {
+      "source": "purpose of the union naval blockade during the civil war",
+      "target": "union strategy in the civil war",
+      "items": 1
+    },
+    {
+      "source": "purpose of the united nations",
+      "target": "international organizations for peaceful dispute resolution",
+      "items": 1
+    },
+    {
+      "source": "purposes of major events in the french revolution",
+      "target": "political goals of revolutionary movements",
+      "items": 1
+    },
+    {
+      "source": "purposes of major u.s. foreign aid programs during the cold war",
+      "target": "cold war u.s. containment policies",
+      "items": 1
+    },
+    {
+      "source": "push and pull factors of immigration",
+      "target": "urbanization and industrialization",
+      "items": 1
+    },
+    {
+      "source": "radical reconstruction policies toward former confederate leaders",
+      "target": "congressional reconstruction restrictions on political participation",
+      "items": 1
+    },
+    {
+      "source": "recognizing evidence of a chemical reaction",
+      "target": "distinguishing chemical changes from physical changes",
+      "items": 1
+    },
+    {
+      "source": "recognizing federalism as divided power between national and state governments",
+      "target": "distinguishing principles of u.s. government",
+      "items": 1
+    },
+    {
+      "source": "recognizing the united farm workers as a hispanic american labor organization",
+      "target": "identifying ethnic groups associated with civil rights era labor movements",
+      "items": 1
+    },
+    {
+      "source": "reconstruction-era african american civil rights",
+      "target": "cause-and-effect relationships in u.s. history",
+      "items": 1
+    },
+    {
+      "source": "refraction at boundaries between media",
+      "target": "wave speed, frequency, and wavelength relationships",
+      "items": 1
+    },
+    {
+      "source": "relating photon energy to frequency",
+      "target": "electromagnetic spectrum properties",
+      "items": 1
+    },
+    {
+      "source": "relating refraction direction to a change in light speed",
+      "target": "refraction at boundaries between media",
+      "items": 1
+    },
+    {
+      "source": "relating temperature to average kinetic energy",
+      "target": "comparing temperatures",
+      "items": 1
+    },
+    {
+      "source": "relating territorial acquisitions to changes in u.s. geography and population",
+      "target": "identifying major united states territorial acquisitions",
+      "items": 1
+    },
+    {
+      "source": "relating wave speed, frequency, and wavelength",
+      "target": "using proportional relationships",
+      "items": 1
+    },
+    {
+      "source": "relationship between religious revival movements and individualism",
+      "target": "colonial american history",
+      "items": 1
+    },
+    {
+      "source": "religious issues in the 1960 u.s. presidential election",
+      "target": "religion in modern u.s. political history",
+      "items": 1
+    },
+    {
+      "source": "religious purposes of ancient egyptian art and architecture",
+      "target": "ancient egyptian beliefs about the afterlife",
+      "items": 1
+    },
+    {
+      "source": "renewable and nonrenewable natural resources",
+      "target": "natural resources",
+      "items": 1
+    },
+    {
+      "source": "resource formation times",
+      "target": "natural resources",
+      "items": 1
+    },
+    {
+      "source": "role of arabian merchants in medieval interregional trade",
+      "target": "cultural diffusion through trade routes",
+      "items": 1
+    },
+    {
+      "source": "roles of decomposition in ecosystems",
+      "target": "carbon cycle processes",
+      "items": 1
+    },
+    {
+      "source": "roles of meiosis and mitosis in chromosome number",
+      "target": "haploid and diploid chromosome numbers",
+      "items": 1
+    },
+    {
+      "source": "roles of plants and animals in gas exchange",
+      "target": "energy and matter in ecosystems",
+      "items": 1
+    },
+    {
+      "source": "roles of precipitation in the water cycle",
+      "target": "forms of precipitation",
+      "items": 1
+    },
+    {
+      "source": "roles of precipitation in the water cycle",
+      "target": "water movement as runoff and groundwater recharge",
+      "items": 1
+    },
+    {
+      "source": "schlieffen plan's strategic purpose",
+      "target": "world war i two-front war strategy",
+      "items": 1
+    },
+    {
+      "source": "scientific contributions of louis pasteur",
+      "target": "historical impact of germ theory",
+      "items": 1
+    },
+    {
+      "source": "seasonal camouflage adaptations",
+      "target": "adaptations and survival",
+      "items": 1
+    },
+    {
+      "source": "seasonal changes as a cause of animal migration",
+      "target": "animal migration as a response to changes in resource availability",
+      "items": 1
+    },
+    {
+      "source": "sectional tensions before the civil war",
+      "target": "major antebellum compromises and court decisions",
+      "items": 1
+    },
+    {
+      "source": "sedimentary rock formation processes",
+      "target": "rock cycle transformations",
+      "items": 1
+    },
+    {
+      "source": "seed dispersal by animals",
+      "target": "plant reproduction and life cycles",
+      "items": 1
+    },
+    {
+      "source": "selecting tools for measuring and recording data",
+      "target": "measuring length with standard units",
+      "items": 1
+    },
+    {
+      "source": "selecting units for liquid volume",
+      "target": "distinguishing units of mass, temperature, volume, and length",
+      "items": 1
+    },
+    {
+      "source": "sequence of digestive system organs",
+      "target": "functions of digestive system organs",
+      "items": 1
+    },
+    {
+      "source": "sequencing moon phases",
+      "target": "identifying waxing and waning moon phases",
+      "items": 1
+    },
+    {
+      "source": "sequencing stages of a production process",
+      "target": "understanding chronological order",
+      "items": 1
+    },
+    {
+      "source": "sequencing steps in a production process",
+      "target": "identifying raw materials and their sources",
+      "items": 1
+    },
+    {
+      "source": "social effects of the first great awakening",
+      "target": "religious revival movements in colonial america",
+      "items": 1
+    },
+    {
+      "source": "social gospel movement goals",
+      "target": "progressive era reform movements",
+      "items": 1
+    },
+    {
+      "source": "soil conservation",
+      "target": "plant adaptations and ecosystem roles",
+      "items": 1
+    },
+    {
+      "source": "solving distance problems using speed, time, and distance",
+      "target": "converting between hours and minutes",
+      "items": 1
+    },
+    {
+      "source": "solving distance problems using speed, time, and distance",
+      "target": "multiplying fractions and decimals",
+      "items": 1
+    },
+    {
+      "source": "sources of dissolved minerals in water",
+      "target": "evaporation and condensation",
+      "items": 1
+    },
+    {
+      "source": "soviet power struggle after lenin's death",
+      "target": "soviet political leaders of the 1920s",
+      "items": 1
+    },
+    {
+      "source": "spanish colonial mission system",
+      "target": "spanish colonization of california",
+      "items": 1
+    },
+    {
+      "source": "spanish colonization of california",
+      "target": "colonial settlement systems",
+      "items": 1
+    },
+    {
+      "source": "spanish inquisition",
+      "target": "religious persecution in early modern europe",
+      "items": 1
+    },
+    {
+      "source": "stalin's leadership of the soviet union",
+      "target": "cold war ideology",
+      "items": 1
+    },
+    {
+      "source": "strategic purposes of the nazi-soviet nonaggression pact",
+      "target": "diplomacy and alliances preceding world war ii",
+      "items": 1
+    },
+    {
+      "source": "sustainable resource use",
+      "target": "human-environment interaction",
+      "items": 1
+    },
+    {
+      "source": "temperature differences cause convection",
+      "target": "latitude affects solar heating",
+      "items": 1
+    },
+    {
+      "source": "tennessee valley authority programs",
+      "target": "new deal debates over public versus private electric power",
+      "items": 1
+    },
+    {
+      "source": "thermal equilibrium",
+      "target": "comparing temperatures",
+      "items": 1
+    },
+    {
+      "source": "thunderstorm formation",
+      "target": "cloud types and formation",
+      "items": 1
+    },
+    {
+      "source": "thunderstorm formation",
+      "target": "convection currents in the atmosphere",
+      "items": 1
+    },
+    {
+      "source": "tracing energy flow through food chains",
+      "target": "understanding how resource availability affects populations",
+      "items": 1
+    },
+    {
+      "source": "treaty of versailles goals toward germany",
+      "target": "post-world war i allied war aims",
+      "items": 1
+    },
+    {
+      "source": "u.s. foreign policy before world war ii",
+      "target": "causes of u.s. neutrality policy in the 1930s",
+      "items": 1
+    },
+    {
+      "source": "u.s. motivations for supporting panamanian independence and the panama canal",
+      "target": "u.s. foreign policy in latin america in the early 20th century",
+      "items": 1
+    },
+    {
+      "source": "u.s. naturalization requirements",
+      "target": "u.s. citizenship pathways",
+      "items": 1
+    },
+    {
+      "source": "u.s. open door policy in asia",
+      "target": "u.s. foreign policy goals in east asia before world war ii",
+      "items": 1
+    },
+    {
+      "source": "u.s. protective tariff policy in the gilded age",
+      "target": "government economic policies and industrialization",
+      "items": 1
+    },
+    {
+      "source": "understanding that nonrenewable resources are depleted by use",
+      "target": "distinguishing renewable and nonrenewable resources",
+      "items": 1
+    },
+    {
+      "source": "uneven solar heating drives global atmospheric circulation",
+      "target": "temperature differences cause convection",
+      "items": 1
+    },
+    {
+      "source": "unintended environmental effects of pesticide use",
+      "target": "pesticide resistance through natural selection",
+      "items": 1
+    },
+    {
+      "source": "urbanization and industrialization",
+      "target": "cause and effect in history",
+      "items": 1
+    },
+    {
+      "source": "using elemental composition to identify organic remains in soil",
+      "target": "distinguishing chemical evidence from physical soil properties",
+      "items": 1
+    },
+    {
+      "source": "using the wave equation to relate speed, frequency, and wavelength",
+      "target": "calculating ratios with division",
+      "items": 1
+    },
+    {
+      "source": "using the wave equation v = f\u03bb",
+      "target": "dividing quantities with units",
+      "items": 1
+    },
+    {
+      "source": "watershed effects on water flow",
+      "target": "water cycle processes",
+      "items": 1
+    },
+    {
+      "source": "watershed effects on water flow",
+      "target": "watershed definition",
+      "items": 1
+    },
+    {
+      "source": "ways minors can participate in political campaigns",
+      "target": "voting age requirements",
+      "items": 1
+    },
+    {
+      "source": "weathering and erosion in the water cycle",
+      "target": "sources of dissolved minerals in water",
+      "items": 1
+    },
+    {
+      "source": "world war i two-front war strategy",
+      "target": "european alliance systems before world war i",
+      "items": 1
+    }
+  ]
+}

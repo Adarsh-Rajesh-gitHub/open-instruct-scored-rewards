@@ -1,0 +1,40 @@
+{
+  "cases": 32,
+  "conditions": {
+    "latest": {
+      "valid_rate": 0.96875,
+      "target_accuracy": 0.2903225806451613,
+      "action_accuracy_given_target": 0.0
+    },
+    "full_history": {
+      "valid_rate": 1.0,
+      "target_accuracy": 0.6875,
+      "action_accuracy_given_target": 0.0
+    },
+    "concept_only": {
+      "valid_rate": 1.0,
+      "target_accuracy": 0.25,
+      "action_accuracy_given_target": 0.0
+    },
+    "graph": {
+      "valid_rate": 1.0,
+      "target_accuracy": 1.0,
+      "action_accuracy_given_target": 0.34375
+    },
+    "shuffled_graph": {
+      "valid_rate": 1.0,
+      "target_accuracy": 0.1875,
+      "action_accuracy_given_target": 0.0
+    }
+  },
+  "shuffled_visible_target_accuracy": 0.53125,
+  "graph_shuffled_target_sensitivity": 0.8461538461538461,
+  "gate_checks": {
+    "valid": true,
+    "target": true,
+    "action": false,
+    "beats_latest": true,
+    "uses_visible_state": false
+  },
+  "gate_passed": false
+}

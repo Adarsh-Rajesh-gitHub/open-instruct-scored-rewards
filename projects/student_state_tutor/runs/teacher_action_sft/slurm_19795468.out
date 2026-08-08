@@ -1,0 +1,32 @@
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 22.27it/s]
+trainable params: 29,933,568 || all params: 3,115,872,256 || trainable%: 0.9607
+Detected kernel version 4.18.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+Warning: The cache directory for DeepSpeed Triton autotune, /home/zsophia/orcd/scratch/triton-cache, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+Traceback (most recent call last):
+  File "/nfs/software001/home/software-r8-x86_64/spack-20230328/opt/spack/linux-rocky8-x86_64/gcc-8.5.0/python-3.10.8-dgzhxpu7ahjyzpdkcfi65rh5nwgp5gxi/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/nfs/software001/home/software-r8-x86_64/spack-20230328/opt/spack/linux-rocky8-x86_64/gcc-8.5.0/python-3.10.8-dgzhxpu7ahjyzpdkcfi65rh5nwgp5gxi/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/orcd/scratch/orcd/013/zsophia/open-instruct/projects/student_state_tutor/teacher_action_sft.py", line 308, in <module>
+    main()
+  File "/orcd/scratch/orcd/013/zsophia/open-instruct/projects/student_state_tutor/teacher_action_sft.py", line 282, in main
+    trainer = Trainer(
+  File "/home/zsophia/venv_test/lib/python3.10/site-packages/transformers/utils/deprecation.py", line 172, in wrapped_func
+    return func(*args, **kwargs)
+  File "/home/zsophia/venv_test/lib/python3.10/site-packages/transformers/trainer.py", line 623, in __init__
+    unwrapped_model = self.accelerator.unwrap_model(model)
+  File "/home/zsophia/venv_test/lib/python3.10/site-packages/accelerate/accelerator.py", line 3246, in unwrap_model
+    return extract_model_from_parallel(model, keep_fp32_wrapper, keep_torch_compile)
+  File "/home/zsophia/venv_test/lib/python3.10/site-packages/accelerate/utils/other.py", line 251, in extract_model_from_parallel
+    from deepspeed import DeepSpeedEngine
+  File "/home/zsophia/venv_test/lib/python3.10/site-packages/deepspeed/__init__.py", line 25, in <module>
+    from . import ops
+  File "/home/zsophia/venv_test/lib/python3.10/site-packages/deepspeed/ops/__init__.py", line 15, in <module>
+    from ..git_version_info import compatible_ops as __compatible_ops__
+  File "/home/zsophia/venv_test/lib/python3.10/site-packages/deepspeed/git_version_info.py", line 29, in <module>
+    op_compatible = builder.is_compatible()
+  File "/home/zsophia/venv_test/lib/python3.10/site-packages/deepspeed/ops/op_builder/fp_quantizer.py", line 35, in is_compatible
+    sys_cuda_major, _ = installed_cuda_version()
+  File "/home/zsophia/venv_test/lib/python3.10/site-packages/deepspeed/ops/op_builder/builder.py", line 51, in installed_cuda_version
+    raise MissingCUDAException("CUDA_HOME does not exist, unable to compile CUDA op(s)")
+deepspeed.ops.op_builder.builder.MissingCUDAException: CUDA_HOME does not exist, unable to compile CUDA op(s)

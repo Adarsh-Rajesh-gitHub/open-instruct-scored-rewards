@@ -1,0 +1,202 @@
+scored 64/383 choices
+scored 128/383 choices
+scored 192/383 choices
+scored 256/383 choices
+scored 320/383 choices
+scored 383/383 choices
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 30.68it/s]
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+generated 16/160 interventions
+generated 32/160 interventions
+generated 48/160 interventions
+generated 64/160 interventions
+generated 80/160 interventions
+generated 96/160 interventions
+generated 112/160 interventions
+generated 128/160 interventions
+generated 144/160 interventions
+generated 160/160 interventions
+scored 64/1183 choices
+scored 128/1183 choices
+scored 192/1183 choices
+scored 256/1183 choices
+scored 320/1183 choices
+scored 384/1183 choices
+scored 448/1183 choices
+scored 512/1183 choices
+scored 576/1183 choices
+scored 640/1183 choices
+scored 704/1183 choices
+scored 768/1183 choices
+scored 832/1183 choices
+scored 896/1183 choices
+scored 960/1183 choices
+scored 1024/1183 choices
+scored 1088/1183 choices
+scored 1152/1183 choices
+scored 1183/1183 choices
+{
+  "n": 32,
+  "screening": {
+    "screened_questions": 70,
+    "baseline_solved": 15,
+    "wrong_by_concept": {
+      "phy1_f_n2lcqelev_100925": 10,
+      "phy1_f_sfmc_09162025": 15,
+      "phy1_f_accac_10082025": 15,
+      "phy1_smh_meshm_12012025": 15
+    },
+    "eligible_concepts": [
+      "phy1_f_accac_10082025",
+      "phy1_f_n2lcqelev_100925",
+      "phy1_f_sfmc_09162025",
+      "phy1_smh_meshm_12012025"
+    ],
+    "transfer_rows": 32
+  },
+  "baseline_transfer_solve_rate": 0.0625,
+  "conditions": {
+    "latest": {
+      "gold_probability": 0.1961699229836783,
+      "solved": 0.1875,
+      "leaked": 0.0
+    },
+    "full_history": {
+      "gold_probability": 0.1946411108188582,
+      "solved": 0.03125,
+      "leaked": 0.0
+    },
+    "concept_only": {
+      "gold_probability": 0.19583483667479457,
+      "solved": 0.0625,
+      "leaked": 0.0
+    },
+    "graph": {
+      "gold_probability": 0.1944570964291305,
+      "solved": 0.0625,
+      "leaked": 0.0
+    },
+    "shuffled_graph": {
+      "gold_probability": 0.19551288129085115,
+      "solved": 0.0625,
+      "leaked": 0.0
+    },
+    "canonical": {
+      "gold_probability": 0.2042789802716126,
+      "solved": 0.1875,
+      "leaked": 0.0
+    }
+  },
+  "paired_comparisons": {
+    "graph_minus_latest": {
+      "gold_probability": {
+        "mean": -0.0017128265545478098,
+        "95_ci": [
+          -0.006203925157881175,
+          0.0018901716970055945
+        ]
+      },
+      "solved": {
+        "mean": -0.125,
+        "95_ci": [
+          -0.28125,
+          0.0
+        ]
+      }
+    },
+    "graph_minus_full_history": {
+      "gold_probability": {
+        "mean": -0.0001840143897277255,
+        "95_ci": [
+          -0.0036387497671375277,
+          0.0032381980788820635
+        ]
+      },
+      "solved": {
+        "mean": 0.03125,
+        "95_ci": [
+          -0.0625,
+          0.125
+        ]
+      }
+    },
+    "graph_minus_concept_only": {
+      "gold_probability": {
+        "mean": -0.0013777402456640786,
+        "95_ci": [
+          -0.0050774915382058305,
+          0.002276437709849218
+        ]
+      },
+      "solved": {
+        "mean": 0.0,
+        "95_ci": [
+          -0.09375,
+          0.09375
+        ]
+      }
+    },
+    "graph_minus_shuffled_graph": {
+      "gold_probability": {
+        "mean": -0.0010557848617206282,
+        "95_ci": [
+          -0.0038925918929164738,
+          0.0016815608258736315
+        ]
+      },
+      "solved": {
+        "mean": 0.0,
+        "95_ci": [
+          -0.09375,
+          0.09375
+        ]
+      }
+    },
+    "graph_minus_canonical": {
+      "gold_probability": {
+        "mean": -0.009821883842482084,
+        "95_ci": [
+          -0.018721564867849434,
+          -0.001285531096636826
+        ]
+      },
+      "solved": {
+        "mean": -0.125,
+        "95_ci": [
+          -0.28125,
+          0.0
+        ]
+      }
+    }
+  },
+  "by_concept": {
+    "phy1_f_accac_10082025": {
+      "n": 8,
+      "graph_gold_probability": 0.1816498546288387,
+      "canonical_gold_probability": 0.19391483287513347
+    },
+    "phy1_f_n2lcqelev_100925": {
+      "n": 8,
+      "graph_gold_probability": 0.2703079696500137,
+      "canonical_gold_probability": 0.30478626066648606
+    },
+    "phy1_f_sfmc_09162025": {
+      "n": 8,
+      "graph_gold_probability": 0.1802332343916065,
+      "canonical_gold_probability": 0.18140789713312322
+    },
+    "phy1_smh_meshm_12012025": {
+      "n": 8,
+      "graph_gold_probability": 0.14563732704606314,
+      "canonical_gold_probability": 0.13700693041170764
+    }
+  },
+  "gate_checks": {
+    "enough_rows": true,
+    "beats_latest": false,
+    "beats_canonical": false,
+    "low_leakage": true,
+    "concept_coverage": true
+  },
+  "gate_passed": false
+}

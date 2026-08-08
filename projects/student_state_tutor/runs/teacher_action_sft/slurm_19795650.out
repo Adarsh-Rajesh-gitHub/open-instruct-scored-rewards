@@ -1,0 +1,89 @@
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 28.55it/s]
+trainable params: 29,933,568 || all params: 3,115,872,256 || trainable%: 0.9607
+epoch=1 step=5/90 loss=0.3169
+epoch=1 step=10/90 loss=0.0156
+epoch=1 step=15/90 loss=0.0012
+epoch=1 step=20/90 loss=0.0001
+epoch=1 step=25/90 loss=0.0001
+epoch=1 step=30/90 loss=0.0001
+/home/zsophia/venv_test/lib/python3.10/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in Qwen/Qwen2.5-3B-Instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+epoch=2 step=35/90 loss=0.0000
+epoch=2 step=40/90 loss=0.0000
+epoch=2 step=45/90 loss=0.0000
+epoch=2 step=50/90 loss=0.0000
+epoch=2 step=55/90 loss=0.0000
+epoch=2 step=60/90 loss=0.0000
+epoch=3 step=65/90 loss=0.0000
+epoch=3 step=70/90 loss=0.0000
+epoch=3 step=75/90 loss=0.0000
+epoch=3 step=80/90 loss=0.0000
+epoch=3 step=85/90 loss=0.0000
+epoch=3 step=90/90 loss=0.0000
+{
+  "train_loss": 0.018563346013459322,
+  "optimizer_steps": 90,
+  "epochs": 3,
+  "examples": 480,
+  "action_counts": {
+    "worked_example": 96,
+    "retrieval_practice": 96,
+    "stop": 96,
+    "contrast_case": 96,
+    "diagnostic": 96
+  },
+  "base_model": "Qwen/Qwen2.5-3B-Instruct",
+  "system_prompt": "You are selecting the next action for a physics tutor.\nReturn exactly one JSON object with keys target_node, action, item_id, and stop.\nUse only the supplied student evidence. Choose one candidate concept and an item\nfrom that concept. Do not solve any physics problem or add explanatory text.\n\nAction policy:\n- diagnostic: no unaided evidence exists for the target.\n- worked_example: repeated unaided failures and posterior mean below 0.30.\n- contrast_case: posterior mean from 0.30 through 0.49.\n- retrieval_practice: posterior mean from 0.50 through 0.74.\n- stop: all concepts have posterior mean at least 0.75.\nTarget the lowest posterior mean; break ties by wider interval."
+}
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 69.87it/s]
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+generated 16/160
+generated 32/160
+generated 48/160
+generated 64/160
+generated 80/160
+generated 96/160
+generated 112/160
+generated 128/160
+generated 144/160
+generated 160/160
+{
+  "cases": 32,
+  "conditions": {
+    "latest": {
+      "valid_rate": 0.96875,
+      "target_accuracy": 0.2903225806451613,
+      "action_accuracy_given_target": 0.0
+    },
+    "full_history": {
+      "valid_rate": 1.0,
+      "target_accuracy": 0.6875,
+      "action_accuracy_given_target": 0.0
+    },
+    "concept_only": {
+      "valid_rate": 1.0,
+      "target_accuracy": 0.25,
+      "action_accuracy_given_target": 0.0
+    },
+    "graph": {
+      "valid_rate": 1.0,
+      "target_accuracy": 1.0,
+      "action_accuracy_given_target": 0.34375
+    },
+    "shuffled_graph": {
+      "valid_rate": 1.0,
+      "target_accuracy": 0.1875,
+      "action_accuracy_given_target": 0.0
+    }
+  },
+  "shuffled_visible_target_accuracy": 0.53125,
+  "graph_shuffled_target_sensitivity": 0.8461538461538461,
+  "gate_checks": {
+    "valid": true,
+    "target": true,
+    "action": false,
+    "beats_latest": true,
+    "uses_visible_state": false
+  },
+  "gate_passed": false
+}

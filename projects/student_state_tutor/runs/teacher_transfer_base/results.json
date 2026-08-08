@@ -1,0 +1,165 @@
+{
+  "n": 32,
+  "screening": {
+    "screened_questions": 70,
+    "baseline_solved": 15,
+    "wrong_by_concept": {
+      "phy1_f_n2lcqelev_100925": 10,
+      "phy1_f_sfmc_09162025": 15,
+      "phy1_f_accac_10082025": 15,
+      "phy1_smh_meshm_12012025": 15
+    },
+    "eligible_concepts": [
+      "phy1_f_accac_10082025",
+      "phy1_f_n2lcqelev_100925",
+      "phy1_f_sfmc_09162025",
+      "phy1_smh_meshm_12012025"
+    ],
+    "transfer_rows": 32
+  },
+  "baseline_transfer_solve_rate": 0.03125,
+  "conditions": {
+    "latest": {
+      "gold_probability": 0.1910021669172623,
+      "solved": 0.125,
+      "leaked": 0.0
+    },
+    "full_history": {
+      "gold_probability": 0.19489651026825527,
+      "solved": 0.0625,
+      "leaked": 0.0
+    },
+    "concept_only": {
+      "gold_probability": 0.19455177220002517,
+      "solved": 0.15625,
+      "leaked": 0.0
+    },
+    "graph": {
+      "gold_probability": 0.19406711848352703,
+      "solved": 0.15625,
+      "leaked": 0.0
+    },
+    "shuffled_graph": {
+      "gold_probability": 0.19493590921547743,
+      "solved": 0.15625,
+      "leaked": 0.0
+    },
+    "canonical": {
+      "gold_probability": 0.20461305339062158,
+      "solved": 0.1875,
+      "leaked": 0.0
+    }
+  },
+  "paired_comparisons": {
+    "graph_minus_latest": {
+      "gold_probability": {
+        "mean": 0.003064951566264698,
+        "95_ci": [
+          -0.0009626445677467153,
+          0.007386660236712209
+        ]
+      },
+      "solved": {
+        "mean": 0.03125,
+        "95_ci": [
+          -0.0625,
+          0.125
+        ]
+      }
+    },
+    "graph_minus_full_history": {
+      "gold_probability": {
+        "mean": -0.0008293917847282824,
+        "95_ci": [
+          -0.004223252300367782,
+          0.0024360472132942956
+        ]
+      },
+      "solved": {
+        "mean": 0.09375,
+        "95_ci": [
+          0.0,
+          0.1875
+        ]
+      }
+    },
+    "graph_minus_concept_only": {
+      "gold_probability": {
+        "mean": -0.00048465371649819,
+        "95_ci": [
+          -0.003945762290463411,
+          0.0029939623292587337
+        ]
+      },
+      "solved": {
+        "mean": 0.0,
+        "95_ci": [
+          -0.125,
+          0.125
+        ]
+      }
+    },
+    "graph_minus_shuffled_graph": {
+      "gold_probability": {
+        "mean": -0.0008687907319504121,
+        "95_ci": [
+          -0.003465736314560978,
+          0.0019338056953727095
+        ]
+      },
+      "solved": {
+        "mean": 0.0,
+        "95_ci": [
+          -0.15625,
+          0.15625
+        ]
+      }
+    },
+    "graph_minus_canonical": {
+      "gold_probability": {
+        "mean": -0.010545934907094576,
+        "95_ci": [
+          -0.019002755259775957,
+          -0.002500170685757582
+        ]
+      },
+      "solved": {
+        "mean": -0.03125,
+        "95_ci": [
+          -0.125,
+          0.0625
+        ]
+      }
+    }
+  },
+  "by_concept": {
+    "phy1_f_accac_10082025": {
+      "n": 8,
+      "graph_gold_probability": 0.18206711910401918,
+      "canonical_gold_probability": 0.19350568558617764
+    },
+    "phy1_f_n2lcqelev_100925": {
+      "n": 8,
+      "graph_gold_probability": 0.26860469073229687,
+      "canonical_gold_probability": 0.3069121174989303
+    },
+    "phy1_f_sfmc_09162025": {
+      "n": 8,
+      "graph_gold_probability": 0.18104989279997566,
+      "canonical_gold_probability": 0.1808175188814214
+    },
+    "phy1_smh_meshm_12012025": {
+      "n": 8,
+      "graph_gold_probability": 0.1445467712978163,
+      "canonical_gold_probability": 0.13721689159595696
+    }
+  },
+  "gate_checks": {
+    "enough_rows": true,
+    "beats_latest": false,
+    "beats_canonical": false,
+    "low_leakage": true,
+    "concept_coverage": true
+  },
+  "gate_passed": false
+}

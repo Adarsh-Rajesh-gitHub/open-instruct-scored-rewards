@@ -1,0 +1,154 @@
+{
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "n_classified": 169,
+  "class_counts": {
+    "correct": 148,
+    "sign_error": 21
+  },
+  "classes_evaluated": [
+    "correct",
+    "sign_error"
+  ],
+  "n_problem_groups": 93,
+  "primary_layer": 12,
+  "results": {
+    "majority": {
+      "accuracy": 0.8757396449704142,
+      "balanced_accuracy": 0.5,
+      "macro_f1": 0.4668769716088328,
+      "per_class": {
+        "correct": {
+          "precision": 0.8757396449704142,
+          "recall": 1.0,
+          "f1": 0.9337539432176656,
+          "support": 148
+        },
+        "sign_error": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 21
+        }
+      }
+    },
+    "surface_simple": {
+      "accuracy": 0.7869822485207101,
+      "balanced_accuracy": 0.7557915057915058,
+      "macro_f1": 0.661096256684492,
+      "per_class": {
+        "correct": {
+          "precision": 0.9516129032258065,
+          "recall": 0.7972972972972973,
+          "f1": 0.8676470588235294,
+          "support": 148
+        },
+        "sign_error": {
+          "precision": 0.3333333333333333,
+          "recall": 0.7142857142857143,
+          "f1": 0.45454545454545453,
+          "support": 21
+        }
+      }
+    },
+    "surface_tfidf": {
+      "accuracy": 0.834319526627219,
+      "balanced_accuracy": 0.6602316602316602,
+      "macro_f1": 0.6477069684335914,
+      "per_class": {
+        "correct": {
+          "precision": 0.9166666666666666,
+          "recall": 0.8918918918918919,
+          "f1": 0.9041095890410958,
+          "support": 148
+        },
+        "sign_error": {
+          "precision": 0.36,
+          "recall": 0.42857142857142855,
+          "f1": 0.391304347826087,
+          "support": 21
+        }
+      }
+    },
+    "hidden_layer_6": {
+      "accuracy": 0.834319526627219,
+      "balanced_accuracy": 0.6602316602316602,
+      "macro_f1": 0.6477069684335914,
+      "per_class": {
+        "correct": {
+          "precision": 0.9166666666666666,
+          "recall": 0.8918918918918919,
+          "f1": 0.9041095890410958,
+          "support": 148
+        },
+        "sign_error": {
+          "precision": 0.36,
+          "recall": 0.42857142857142855,
+          "f1": 0.391304347826087,
+          "support": 21
+        }
+      }
+    },
+    "hidden_layer_12": {
+      "accuracy": 0.8757396449704142,
+      "balanced_accuracy": 0.7043114543114544,
+      "macro_f1": 0.7085489036708549,
+      "per_class": {
+        "correct": {
+          "precision": 0.9261744966442953,
+          "recall": 0.9324324324324325,
+          "f1": 0.9292929292929293,
+          "support": 148
+        },
+        "sign_error": {
+          "precision": 0.5,
+          "recall": 0.47619047619047616,
+          "f1": 0.4878048780487805,
+          "support": 21
+        }
+      },
+      "balanced_accuracy_95_ci": [
+        0.594019668888726,
+        0.8104619967236066
+      ],
+      "gain_over_best_surface": -0.051480051480051414
+    },
+    "hidden_layer_18": {
+      "accuracy": 0.8461538461538461,
+      "balanced_accuracy": 0.6874195624195625,
+      "macro_f1": 0.6728707564026206,
+      "per_class": {
+        "correct": {
+          "precision": 0.9236111111111112,
+          "recall": 0.8986486486486487,
+          "f1": 0.910958904109589,
+          "support": 148
+        },
+        "sign_error": {
+          "precision": 0.4,
+          "recall": 0.47619047619047616,
+          "f1": 0.43478260869565216,
+          "support": 21
+        }
+      }
+    },
+    "hidden_layer_24": {
+      "accuracy": 0.8402366863905325,
+      "balanced_accuracy": 0.6636100386100386,
+      "macro_f1": 0.653924914675768,
+      "per_class": {
+        "correct": {
+          "precision": 0.9172413793103448,
+          "recall": 0.8986486486486487,
+          "f1": 0.9078498293515358,
+          "support": 148
+        },
+        "sign_error": {
+          "precision": 0.375,
+          "recall": 0.42857142857142855,
+          "f1": 0.4,
+          "support": 21
+        }
+      }
+    }
+  }
+}

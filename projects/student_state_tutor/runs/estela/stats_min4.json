@@ -1,0 +1,20 @@
+{
+  "yaml_files_scanned": 33,
+  "unique_bank_ids": 27,
+  "selected_banks": 4,
+  "selected_questions": 70,
+  "units": {
+    "Forces": 2,
+    "Newton's Laws of Motion": 1,
+    "Simple Harmonic Motion": 1
+  },
+  "filter_reasons": {
+    "invalid_document": 4,
+    "unsupported_type": 499,
+    "image_reference": 62,
+    "archive_path": 15,
+    "valid": 70,
+    "yaml_error": 2,
+    "too_few_valid_questions": 23
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "items": {
+    "train": 186,
+    "eval": 84
+  },
+  "subjects": {
+    "eval:ela": 2,
+    "eval:science": 82,
+    "train:science": 99,
+    "train:social_studies": 87
+  },
+  "unmatched": {
+    "train": 0,
+    "eval": 0
+  },
+  "nodes": 618,
+  "edges": 350,
+  "connected_components": 268,
+  "largest_component": 7,
+  "train_nodes_repeated": 11,
+  "train_eval_shared_nodes": 3,
+  "train_exact_transfer_pairs": 17,
+  "train_eval_exact_transfer_pairs": 3,
+  "multi_prerequisite_items": 76,
+  "metadata_gold_overlap_items": 16,
+  "top_train_nodes": [
+    [
+      "distinguishing physical and chemical changes",
+      4
+    ],
+    [
+      "distinguishing chemical changes from physical changes",
+      3
+    ],
+    [
+      "relating wave speed, frequency, and wavelength",
+      3
+    ],
+    [
+      "cellular respiration",
+      2
+    ],
+    [
+      "identifying minerals using physical properties",
+      2
+    ],
+    [
+      "photosynthesis reactants and products",
+      2
+    ],
+    [
+      "nullification crisis and state challenges to federal authority",
+      2
+    ],
+    [
+      "identifying the source of carbon in plant biomass",
+      2
+    ],
+    [
+      "identifying heat transfer by conduction",
+      2
+    ],
+    [
+      "distinguishing conduction, convection, and radiation",
+      2
+    ],
+    [
+      "comparing temperatures",
+      2
+    ],
+    [
+      "recognizing evidence of a chemical reaction",
+      1
+    ],
+    [
+      "recognizing physical changes",
+      1
+    ],
+    [
+      "distinguishing elements from mixtures",
+      1
+    ],
+    [
+      "identifying alloys as mixtures of metals",
+      1
+    ],
+    [
+      "forms of energy and energy transformations",
+      1
+    ],
+    [
+      "identifying electrical devices that convert electrical energy into motion",
+      1
+    ],
+    [
+      "sequence of digestive system organs",
+      1
+    ],
+    [
+      "functions of digestive system organs",
+      1
+    ],
+    [
+      "plant and animal cell organelles",
+      1
+    ]
+  ],
+  "shared_nodes": [
+    "basic needs of animals",
+    "distinguishing inherited traits from acquired traits",
+    "natural selection"
+  ]
+}
