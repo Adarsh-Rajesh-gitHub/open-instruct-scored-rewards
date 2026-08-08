@@ -66,6 +66,8 @@ from open_instruct.dataset_transformation import GROUND_TRUTHS_KEY, RAW_PROMPT_K
 from open_instruct.environments.base import EnvCall, RolloutState, StepResult
 from open_instruct.environments.tools.parsers import ToolParser, create_tool_parser
 from open_instruct.ground_truth_utils import RewardConfig
+from open_instruct.spec_decode import metrics as spec_decode_metrics
+from open_instruct.spec_decode import registration
 
 logger = logger_utils.setup_logger(__name__)
 
@@ -675,6 +677,17 @@ class LLMRayActor:
 
     def _setup_and_start_async_engine(self, args, bundle_indices, kwargs) -> None:
         num_gpus = kwargs.pop("num_gpus")
+        # Popped rather than passed on: AsyncEngineArgs has no such field.
+        collect_spec_decode_stats = kwargs.pop("collect_spec_decode_stats", False)
+        # EAGLE-3 needs a target that emits auxiliary hidden states, and vLLM's OLMoE does not.
+        # Register the replacement before the engine exists: the engine core runs in this
+        # process (VLLM_ENABLE_V1_MULTIPROCESSING=0 is set in the actor's runtime env) and its
+        # workers are forked from it, so a lazy registration made here is the one they resolve
+        # through. Registering for any speculative_config rather than only method="eagle3",
+        # because the replacement is a superset of upstream's class and inert without a drafter.
+        if kwargs.get("speculative_config"):
+            registration.register_olmoe_eagle3()
+            registration.assert_registered()
         if bundle_indices is not None:
             os.environ["VLLM_RAY_PER_WORKER_GPUS"] = str(num_gpus)
             os.environ["VLLM_RAY_BUNDLE_INDICES"] = ",".join(map(str, bundle_indices))
@@ -688,6 +701,13 @@ class LLMRayActor:
         engine_args.disable_log_stats = True
         engine_args.disable_cascade_attn = True
 
+        # A custom stat logger re-enables stats collection for itself despite
+        # disable_log_stats above -- AsyncLLM does `log_stats or has_custom_loggers` -- without
+        # bringing back the periodic throughput logging that flag exists to silence. Attach it
+        # to both arms of a speedup comparison, not just the speculative one: stats cost a
+        # little time per iteration, and time spent in one arm only lands in the measurement.
+        stat_loggers = [spec_decode_metrics.SpecDecodeStatLogger] if collect_spec_decode_stats else None
+
         init_complete = threading.Event()
         self.loop = None
         self.llm_engine = None
@@ -698,7 +718,9 @@ class LLMRayActor:
             running_loop = asyncio.get_running_loop()
             assert running_loop == self.loop, f"Loop mismatch! running={running_loop}, actor.loop={self.loop}"
 
-            engine_client = vllm.AsyncLLMEngine.from_engine_args(engine_args, start_engine_loop=False)
+            engine_client = vllm.AsyncLLMEngine.from_engine_args(
+                engine_args, start_engine_loop=False, stat_loggers=stat_loggers
+            )
 
             tokenizer = engine_client.tokenizer
             inner_tokenizer = getattr(tokenizer, "tokenizer", tokenizer)
@@ -826,6 +848,16 @@ class LLMRayActor:
             self._run_async(self.llm_engine.finish_weight_update())
         if model_step is not None:
             self.current_model_step = model_step
+
+    def drain_spec_decode_metrics(self) -> dict[str, Any]:
+        """Speculative-decoding counters since the last call. Empty dict when not collecting.
+
+        Called once per training step, which is what turns cumulative counters into a per-step
+        series: the accumulator resets on every drain and knows nothing about steps itself.
+        Runs in this process, where the engine's stat loggers also live, so it reads them
+        directly rather than over an RPC.
+        """
+        return spec_decode_metrics.drain_all()
 
     def reset_prefix_cache(self) -> None:
         return self._run_async(self.llm_engine.reset_prefix_cache())
@@ -1241,6 +1273,8 @@ def create_vllm_engines(
     eval_dataset=None,
     trust_remote_code: bool = False,
     vllm_attention_backend: str | None = None,
+    speculative_config: dict[str, Any] | None = None,
+    collect_spec_decode_stats: bool = False,
 ) -> list[ray.actor.ActorHandle]:
     vllm_engines = []
     # Use "mp" (multiprocessing) for TP > 1 when running inside a Ray actor.
@@ -1329,6 +1363,9 @@ def create_vllm_engines(
                 trust_remote_code=trust_remote_code,
                 attention_backend=vllm_attention_backend,
                 language_model_only=True,
+                # None is AsyncEngineArgs' own default, so an unflagged run is unchanged.
+                speculative_config=speculative_config,
+                collect_spec_decode_stats=collect_spec_decode_stats,
             )
         )
 

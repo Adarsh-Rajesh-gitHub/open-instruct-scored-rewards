@@ -117,6 +117,7 @@ from open_instruct.model_utils import (
 from open_instruct.rl_utils import Timer, masked_mean
 from open_instruct.scored_rewards.registry import load_plugins as load_reward_plugins
 from open_instruct.scored_rewards.reward_config import make_reward_config
+from open_instruct.spec_decode import reporting as spec_decode_reporting
 from open_instruct.utils import (
     ArgumentParserPlus,
     BeakerRuntimeConfig,
@@ -1496,6 +1497,8 @@ def create_model_and_optimizer(
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         vllm_attention_backend=vllm_config.vllm_attention_backend,
+        speculative_config=vllm_config.speculative_config(),
+        collect_spec_decode_stats=vllm_config.vllm_collect_spec_decode_stats,
     )
     logger.info("======== ✅ vLLM engines and actor_manager initialized =========")
 
@@ -1654,6 +1657,7 @@ def one_training_step(
     chat_template_name: str,
     model_dims: utils.ModelDims,
     actor_manager: ActorManager | None = None,
+    vllm_engines: list[ray.actor.ActorHandle] | None = None,
 ) -> int:
     """Train the model for one step. Returns the number of tokens processed."""
     update_ref_policy_future = []
@@ -1749,6 +1753,9 @@ def one_training_step(
         **data_thread_metrics,
         **average_metrics,
         **utilization_metrics,
+        **spec_decode_reporting.step_metrics(
+            vllm_engines, vllm_config.vllm_collect_spec_decode_stats, total_generation_time, step_time
+        ),
     }
     # Print only scalar metrics
     scalar_metrics = {k: v for k, v in metrics.items() if isinstance(v, float | int)}
@@ -2106,6 +2113,7 @@ def run_training(
             tc.chat_template_name,
             model_dims,
             actor_manager,
+            vllm_engines=vllm_engines,
         )
         num_total_tokens += num_step_tokens
 

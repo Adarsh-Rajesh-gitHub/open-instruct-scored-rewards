@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 
 ### Added
+- Speculative decoding for the RL rollout engine (fork addition, `open_instruct/spec_decode/`): EAGLE-3 target support for OLMoE registered into vLLM without forking it, four `speculative_config` flags on `VLLMConfig`, and per-step acceptance-length / generation-share / speedup-bound telemetry. Off by default; see `PATCHES.md`.
 - Add tool-schema support to SFT tokenization: the `tools` column is parsed (JSON strings accepted) and passed to `apply_chat_template`, assistant labels are derived from offset mappings, and the tools column is consumed rather than persisted (https://github.com/allenai/open-instruct/pull/1746).
 - Drop stale async rollout results whose generating policy is more than `async_steps` behind the trainer (`max_result_age_steps`), replenishing a fresh prompt and logging a `stale_results_dropped` metric (https://github.com/allenai/open-instruct/pull/1738).
 

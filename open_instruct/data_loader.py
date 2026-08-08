@@ -47,6 +47,7 @@ from open_instruct.environments.tools.utils import EnvStatistics
 from open_instruct.model_utils import Batch
 from open_instruct.rl_utils import PackedSequences, pack_sequences, save_rollout_metadata, save_rollouts_to_disk
 from open_instruct.rubrics import RubricManager
+from open_instruct.spec_decode import config as spec_decode_config
 from open_instruct.utils import combine_reward_metrics
 
 logger = logging.getLogger(__name__)
@@ -400,6 +401,30 @@ class VLLMConfig:
     vllm_gpu_memory_utilization: float = 0.9
     vllm_enable_prefix_caching: bool = False
     vllm_top_p: float = 1.0
+
+    # Speculative decoding for the rollout (fork addition; see open_instruct/spec_decode/).
+    # All four default to off, and with vllm_speculative_method unset the engine is built with
+    # speculative_config=None, which is AsyncEngineArgs' own default. Scalars rather than one
+    # nested dict because a run's command has to survive a JSON payload inside a bash -lc
+    # string, and because these four are exactly the knobs arXiv:2604.26779 varies.
+    vllm_speculative_method: str | None = None
+    vllm_speculative_model: str | None = None
+    vllm_num_speculative_tokens: int = spec_decode_config.DEFAULT_NUM_SPECULATIVE_TOKENS
+    vllm_speculative_draft_tensor_parallel_size: int | None = None
+
+    # Collect acceptance length per step. Independent of whether a draft is configured, and
+    # deliberately so: set it on *both* arms of a speedup comparison. Enabling stats costs a
+    # little time per engine iteration, and anything paid in one arm only shows up as speedup.
+    vllm_collect_spec_decode_stats: bool = False
+
+    def speculative_config(self) -> dict[str, Any] | None:
+        """The dict vLLM takes as ``speculative_config``, or None when unflagged."""
+        return spec_decode_config.build_speculative_config(
+            method=self.vllm_speculative_method,
+            model=self.vllm_speculative_model,
+            num_speculative_tokens=self.vllm_num_speculative_tokens,
+            draft_tensor_parallel_size=self.vllm_speculative_draft_tensor_parallel_size,
+        )
 
 
 @dataclass
