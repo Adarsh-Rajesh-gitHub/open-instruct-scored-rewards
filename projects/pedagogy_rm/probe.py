@@ -89,6 +89,62 @@ def fit_mlp(xtr, ytr, xte, args):
     return best.predict(zte)
 
 
+def nested_score(blob, rows, poolings, layer_choices, stored_layers, y, groups, args) -> tuple[float, dict]:
+    """Pearson r that pays for choosing the pooling and the layer.
+
+    THE PROBLEM THIS SOLVES. The sweep below evaluates 3 poolings x 7 layers, each by grouped
+    cross-validation, and reports the largest of the 21 numbers. Every one of them is a noisy
+    estimate, so their maximum is biased upward: part of what it measures is which cell got the
+    friendliest fold noise. Comparing encoders on that statistic rewards whichever one happened to
+    have the luckiest cell, and the gap between two encoders can be smaller than the bias itself.
+
+    THE FIX IS NESTED SELECTION. The outer folds are the same grouped folds as everywhere else. For
+    each of them, the cell is chosen by an inner grouped cross-validation run *only on that fold's
+    training questions*, and then scored once on the held-out fold, which the choice never saw.
+    Concatenating the outer predictions gives an estimate of what this encoder achieves including
+    the cost of having to pick a layer - which is the quantity that transfers to a new corpus, and
+    the one a deployment decision should rest on.
+
+    Both numbers get printed. The gap between them is the selection bias, and it is worth seeing.
+    """
+    import numpy as np  # noqa: PLC0415
+    from sklearn.linear_model import RidgeCV  # noqa: PLC0415
+    from sklearn.preprocessing import StandardScaler  # noqa: PLC0415
+
+    cells = [(p, li) for p in poolings for li in layer_choices]
+    feats = {p: blob[p].astype(np.float32) for p in poolings}
+    out = np.zeros(len(y))
+    chosen: dict[str, int] = {}
+
+    for test_idx in folds(groups, args.folds, args.seed):
+        test = set(test_idx)
+        train_idx = [i for i in range(len(y)) if i not in test]
+        inner_groups = [groups[i] for i in train_idx]
+
+        best_cell, best_r = None, -2.0
+        for pooling, li in cells:
+            X = feats[pooling][rows[train_idx], li, :]
+            inner = np.zeros(len(train_idx))
+            for j_test in folds(inner_groups, max(2, args.folds - 1), args.seed):
+                j_train = [j for j in range(len(train_idx)) if j not in set(j_test)]
+                sc = StandardScaler().fit(X[j_train])
+                m = RidgeCV(alphas=np.logspace(-1, 4, 12)).fit(sc.transform(X[j_train]), y[train_idx][j_train])
+                inner[j_test] = m.predict(sc.transform(X[j_test]))
+            r = pearson(list(map(float, inner)), list(map(float, y[train_idx])))
+            if r > best_r:
+                best_cell, best_r = (pooling, li), r
+
+        pooling, li = best_cell
+        chosen[f"{pooling}/{stored_layers[li]}"] = chosen.get(f"{pooling}/{stored_layers[li]}", 0) + 1
+        Xtr = feats[pooling][rows[train_idx], li, :]
+        Xte = feats[pooling][rows[np.array(test_idx)], li, :]
+        sc = StandardScaler().fit(Xtr)
+        m = RidgeCV(alphas=np.logspace(-1, 4, 12)).fit(sc.transform(Xtr), y[train_idx])
+        out[test_idx] = m.predict(sc.transform(Xte))
+
+    return pearson(list(map(float, out)), list(map(float, y))), chosen
+
+
 def run_dimension(X, y, groups, args, models: tuple[str, ...] | None = None) -> tuple[dict, dict]:
     import numpy as np  # noqa: PLC0415
     from sklearn.linear_model import RidgeCV  # noqa: PLC0415
@@ -126,6 +182,11 @@ def main() -> None:
     parser.add_argument("--dimensions", default="", help="comma-separated keys; default is DIMENSIONS")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--ceilings", action="store_true", help="also print the agreement bound per dimension")
+    parser.add_argument(
+        "--nested",
+        action="store_true",
+        help="also report an r that pays for choosing the pooling and layer; see nested_score",
+    )
     parser.add_argument("--verbose", action="store_true", help="every pooling x layer cell, not just the best")
     parser.add_argument(
         "--slices",
@@ -162,6 +223,8 @@ def main() -> None:
         header += f" {'mlp':>7}"
     if args.ceilings:
         header += f" {'ceiling':>8}"
+    if args.nested:
+        header += f" {'honest':>8}"
     print(header)
     print("  " + "-" * (len(header) - 2))
 
@@ -196,6 +259,12 @@ def main() -> None:
             line = row(dim.key, len(y), pooling, layer, result, naive)
             if ceiling is not None:
                 line += f" {ceiling:>8.2f}"
+            if args.nested:
+                honest, chosen = nested_score(
+                    blob, rows, poolings, layer_choices, stored_layers, y, groups, args
+                )
+                picked = ", ".join(f"{k} x{v}" for k, v in sorted(chosen.items(), key=lambda kv: -kv[1]))
+                line += f" {honest:>8.2f}  [folds picked {picked}]"
             print(line + ("   <- best cell" if args.verbose else ""))
             if reference:
                 versus_human(dim.key, usable, preds["ridge"], y, reference, agents)

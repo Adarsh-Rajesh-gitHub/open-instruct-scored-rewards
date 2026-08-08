@@ -295,13 +295,17 @@ class PedagogyHead(GroupScorer):
         for i, (_, turn) in enumerate(contexts):
             dims = {d: SIGNS[d] * scored[d][i] for d in self.dims}
             score = float(sum(dims.values()) / len(dims))
-            info = {"raw": {d: scored[d][i] for d in self.dims}, "turn_chars": len(turn)}
+            # Word count is recorded whether or not length is being rewarded. It used to be written
+            # only inside the branch below, which meant the one run that most needs it - an ablation
+            # with the length term switched off, where the expected outcome IS a collapse in length -
+            # was the one run that would not log it. A diagnostic should not appear and disappear
+            # with the objective it happens to be diagnosing.
+            n = len(turn.split())
+            info = {"raw": {d: scored[d][i] for d in self.dims}, "turn_chars": len(turn), "words": n}
             if self.length_weight:
-                n = len(turn.split())
                 fit = self.length_fit(n)
                 score += self.length_weight * fit
                 dims["length"] = fit
-                info["words"] = n
             results.append(ScoreResult(score=score, dimensions=dims, info=info))
         return results
 

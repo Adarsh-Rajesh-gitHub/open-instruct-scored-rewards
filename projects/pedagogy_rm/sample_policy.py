@@ -61,8 +61,26 @@ def generate(args: argparse.Namespace) -> None:
 
     rows = read_prompts(args.prompts, args.limit)
     tokenizer = AutoTokenizer.from_pretrained(args.policy)
+
+    # THE CONTROL THIS FLAG EXISTS FOR. The reward correlates -0.60 with log word count, and the
+    # explicit length term supplies most of the measured gain, so the untested rival explanation for
+    # the whole result is that simply asking the base model for a shorter turn gets you there without
+    # any training. Comparing a trained policy only against an unprompted base cannot rule that out.
+    # Appended to the system message rather than prepended, so it is the last instruction the model
+    # reads and does not displace the tutoring prompt the policies were trained under.
+    messages = []
+    for row in rows:
+        msgs = [dict(m) for m in row["messages"]]
+        if args.append_system:
+            first = next((m for m in msgs if m["role"] == "system"), None)
+            if first is None:
+                msgs.insert(0, {"role": "system", "content": args.append_system})
+            else:
+                first["content"] = first["content"].rstrip() + "\n\n" + args.append_system
+        messages.append(msgs)
+
     prompts = [
-        tokenizer.apply_chat_template(row["messages"], tokenize=False, add_generation_prompt=True) for row in rows
+        tokenizer.apply_chat_template(m, tokenize=False, add_generation_prompt=True) for m in messages
     ]
 
     lora = None
@@ -163,6 +181,11 @@ def main() -> None:
     gen.add_argument("--adapter", default="", help="a PEFT adapter directory, for a LoRA policy")
     gen.add_argument("--lora-rank", type=int, default=32)
     gen.add_argument("--tag", default="base", help="what this policy is, carried into every unit")
+    gen.add_argument(
+        "--append-system",
+        default="",
+        help="text appended to the system message; used for the prompted-baseline control",
+    )
     gen.add_argument("--out", default="data/samples/base.json")
     gen.add_argument("--limit", type=int, default=200)
     gen.add_argument("--samples", type=int, default=2)
