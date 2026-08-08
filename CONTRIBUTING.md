@@ -82,12 +82,9 @@ Three GitHub Actions workflows run on PRs:
 
    There is no GPU job in CI. The `gpu-tests` job this repository inherited from `allenai/open-instruct` ran its tests on Allen AI's Beaker cluster rather than on the runner, and this organization has neither a Beaker account nor the `BEAKER_TOKEN` it needed. GPU work here goes to AWS Batch through `edullm submit`.
 
-3. **Integration Tests** (`beaker-experiment.yml`): Runs in the merge queue (not on every PR push). Launches up to 3 Beaker experiments:
-   - GRPO integration test (always runs)
-   - DPO integration test (runs if DPO-related files changed)
-   - SFT integration test (runs if `finetune.py` changed)
+3. **Docs** (`docs.yml` → `check-diff` job): Builds the documentation from your branch and from the base branch and comments with what your change moves. Runs on `ubuntu-latest`. The `deploy` job in the same file publishes on a push to `main` and is not a PR check.
 
-   Sends a Slack notification on failure.
+   There are no Beaker integration tests. `beaker-experiment.yml`, which launched up to three Beaker experiments — GRPO always, DPO and SFT conditionally — was deleted here on 2026-08-07 and is the fourth entry this list used to have. Do not restore it on the next upstream sync. Both of its jobs asked for `8-Core-XL-Runner-Ubuntu-Latest`, an Allen AI runner label that resolves to nothing in this organization, and both authenticated with `secrets.BEAKER_TOKEN`, which does not exist here. `merge_group:` was its only automatic trigger, so it had never run once and nothing had ever reported it broken — but a job whose labels no runner carries sits pending for 24 hours and is then cancelled, so enabling a merge queue would have put a check that never completes on every entry in it. Integration work of that shape belongs on AWS Batch through `edullm submit`.
 
 ## Launching Experiments on Beaker
 
