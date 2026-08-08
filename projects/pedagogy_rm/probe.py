@@ -134,6 +134,16 @@ def nested_score(blob, rows, poolings, layer_choices, stored_layers, y, groups, 
             if r > best_r:
                 best_cell, best_r = (pooling, li), r
 
+        if best_cell is None:
+            # Every cell scored NaN, which beats nothing: NaN > -2.0 is False. It means the inner
+            # fits were degenerate - a fold whose labels are all one value has no variance to
+            # correlate against - and without this the failure surfaces as a TypeError unpacking
+            # None three lines down, which names neither the dimension nor the cause.
+            raise SystemExit(
+                f"no (pooling, layer) cell produced a usable correlation across {len(cells)} "
+                "cells. The inner folds are probably degenerate - check that this dimension's "
+                "labels vary within each training fold."
+            )
         pooling, li = best_cell
         chosen[f"{pooling}/{stored_layers[li]}"] = chosen.get(f"{pooling}/{stored_layers[li]}", 0) + 1
         Xtr = feats[pooling][rows[train_idx], li, :]
@@ -260,9 +270,7 @@ def main() -> None:
             if ceiling is not None:
                 line += f" {ceiling:>8.2f}"
             if args.nested:
-                honest, chosen = nested_score(
-                    blob, rows, poolings, layer_choices, stored_layers, y, groups, args
-                )
+                honest, chosen = nested_score(blob, rows, poolings, layer_choices, stored_layers, y, groups, args)
                 picked = ", ".join(f"{k} x{v}" for k, v in sorted(chosen.items(), key=lambda kv: -kv[1]))
                 line += f" {honest:>8.2f}  [folds picked {picked}]"
             print(line + ("   <- best cell" if args.verbose else ""))

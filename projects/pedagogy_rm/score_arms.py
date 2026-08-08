@@ -51,8 +51,14 @@ from projects.pedagogy_rm.rubric import BY_KEY, DIMENSIONS
 # too short and half too long averages exactly 2 and looks perfect. Reporting the mean of a
 # non-monotonic dimension is not a rounding error, it is the wrong measurement, and it would
 # have hidden precisely the failure this eval was built to look for.
-BETTER = {"leak": "low", "targeted": "high", "actionable": "high", "elicits": "high",
-          "length_fit": "mid", "correct": "high"}
+BETTER = {
+    "leak": "low",
+    "targeted": "high",
+    "actionable": "high",
+    "elicits": "high",
+    "length_fit": "mid",
+    "correct": "high",
+}
 
 
 def goodness(key: str, value: float) -> float:
@@ -226,14 +232,19 @@ def main() -> None:
         for panel, by_arm in totals.items():
             if args.baseline not in by_arm:
                 continue
-            row = "".join(f"{by_arm[a] - by_arm[args.baseline]:>+12.2f}" for a in arms if a != args.baseline and a in by_arm)
+            row = "".join(
+                f"{by_arm[a] - by_arm[args.baseline]:>+12.2f}" for a in arms if a != args.baseline and a in by_arm
+            )
             print(f"  {panel:<10}{row}")
         print("\n  A probe gain much larger than the rated gain is the reward-hacking signature.")
 
     print("\nRead the two panels against each other. A dimension the probe moved and the")
     print("raters did not is the reward-hacking case, and it is the reason for the blinding.")
     if len(arms) > 2:
-        print(f"Arm pairs other than vs-{args.baseline}: " + ", ".join(f"{a}/{b}" for a, b in itertools.combinations(arms, 2)))
+        print(
+            f"Arm pairs other than vs-{args.baseline}: "
+            + ", ".join(f"{a}/{b}" for a, b in itertools.combinations(arms, 2))
+        )
 
 
 if __name__ == "__main__":

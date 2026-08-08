@@ -58,19 +58,11 @@ def test_moe_checkpoint_round_trip(tmp_path):
     torch.manual_seed(2)
     original = Qwen2ForCausalLM(tiny_config())
     dense_state = copy.deepcopy(original.state_dict())
-    manifest = upcycle_qwen_layers(
-        original, [0, 1], num_experts=3, top_k=2
-    )
+    manifest = upcycle_qwen_layers(original, [0, 1], num_experts=3, top_k=2)
     input_ids = torch.randint(0, 128, (1, 10))
     expected = original(input_ids).logits.detach()
     path = tmp_path / "moe.pt"
-    save_moe_checkpoint(
-        original,
-        path,
-        base_model="tiny",
-        manifest=manifest,
-        extra={"test": True},
-    )
+    save_moe_checkpoint(original, path, base_model="tiny", manifest=manifest, extra={"test": True})
 
     restored = Qwen2ForCausalLM(tiny_config())
     restored.load_state_dict(dense_state)

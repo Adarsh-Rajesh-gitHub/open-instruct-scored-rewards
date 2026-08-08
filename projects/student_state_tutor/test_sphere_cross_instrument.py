@@ -1,5 +1,14 @@
-import numpy as np
+"""Needs sklearn, which the trainer's dependencies do not include.
 
+Without the skip this fails at *collection*, which pytest reports as an error rather than a skip
+and turns the whole run red even though nothing here is broken.
+"""
+
+import pytest
+
+pytest.importorskip("sklearn")
+
+import numpy as np
 from projects.student_state_tutor import sphere_cross_instrument
 
 
@@ -14,12 +23,6 @@ def test_build_features_repeats_student_state_per_target():
         shuffled_state=np.asarray([0.9, 0.4]),
     )
     np.testing.assert_allclose(
-        features["related"],
-        [
-            [0.2, 0.7, 0.9],
-            [0.8, 0.7, 0.9],
-            [0.2, 0.3, 0.4],
-            [0.8, 0.3, 0.4],
-        ],
+        features["related"], [[0.2, 0.7, 0.9], [0.8, 0.7, 0.9], [0.2, 0.3, 0.4], [0.8, 0.3, 0.4]]
     )
     assert features["global"].shape == (4, 2)

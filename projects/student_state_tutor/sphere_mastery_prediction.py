@@ -22,16 +22,10 @@ from pathlib import Path
 import numpy as np
 import pyreadr
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    accuracy_score,
-    brier_score_loss,
-    log_loss,
-    roc_auc_score,
-)
+from sklearn.metrics import accuracy_score, brier_score_loss, log_loss, roc_auc_score
 from sklearn.model_selection import KFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
 
 INSTRUMENTS = ("FCI", "FMCE", "RRMCS", "FMCI", "MWCS", "TCE", "STPFASL")
 MODELS = ("global", "mastery", "shuffled")
@@ -63,11 +57,7 @@ def load_correctness(data_dir: Path) -> tuple[np.ndarray, np.ndarray, list[str]]
         matrices.append((response_values == key_values[None, :]).astype(np.float32))
         domains.extend([domain_index] * response_values.shape[1])
         item_names.extend(responses.columns.astype(str).tolist())
-    return (
-        np.concatenate(matrices, axis=1),
-        np.asarray(domains, dtype=np.int64),
-        item_names,
-    )
+    return (np.concatenate(matrices, axis=1), np.asarray(domains, dtype=np.int64), item_names)
 
 
 def posterior_mean(correct: np.ndarray, axis: int) -> np.ndarray:
@@ -101,14 +91,10 @@ def student_states(
     shuffled = np.empty_like(mastery)
     for column, item in enumerate(target_items):
         same_domain = history_items[domains[history_items] == domains[item]]
-        same_pseudo_domain = history_items[
-            pseudo_domains[history_items] == pseudo_domains[item]
-        ]
+        same_pseudo_domain = history_items[pseudo_domains[history_items] == pseudo_domains[item]]
         mastery[:, column] = posterior_mean(correctness[:, same_domain], axis=1)
         if len(same_pseudo_domain):
-            shuffled[:, column] = posterior_mean(
-                correctness[:, same_pseudo_domain], axis=1
-            )
+            shuffled[:, column] = posterior_mean(correctness[:, same_pseudo_domain], axis=1)
         else:
             shuffled[:, column] = global_state
     return global_state, mastery, shuffled
@@ -129,12 +115,8 @@ def row_features(
     base = np.column_stack([item_feature, global_feature])
     return {
         "global": base,
-        "mastery": np.column_stack(
-            [base, mastery[student_indices].reshape(-1)]
-        ),
-        "shuffled": np.column_stack(
-            [base, shuffled[student_indices].reshape(-1)]
-        ),
+        "mastery": np.column_stack([base, mastery[student_indices].reshape(-1)]),
+        "shuffled": np.column_stack([base, shuffled[student_indices].reshape(-1)]),
     }
 
 
@@ -147,59 +129,28 @@ def evaluate_predictions(labels: np.ndarray, probabilities: np.ndarray) -> dict:
     }
 
 
-def run_seed(
-    correctness: np.ndarray,
-    domains: np.ndarray,
-    seed: int,
-    folds: int,
-) -> dict:
+def run_seed(correctness: np.ndarray, domains: np.ndarray, seed: int, folds: int) -> dict:
     rng = np.random.default_rng(seed)
     history_items, target_items = split_items(domains, rng)
     pseudo_domains = rng.permutation(domains)
-    global_state, mastery, shuffled = student_states(
-        correctness, domains, history_items, target_items, pseudo_domains
-    )
+    global_state, mastery, shuffled = student_states(correctness, domains, history_items, target_items, pseudo_domains)
     labels_matrix = correctness[:, target_items].astype(np.int64)
-    predictions = {
-        model: np.empty(labels_matrix.size, dtype=np.float64) for model in MODELS
-    }
+    predictions = {model: np.empty(labels_matrix.size, dtype=np.float64) for model in MODELS}
     labels = labels_matrix.reshape(-1)
     splitter = KFold(n_splits=folds, shuffle=True, random_state=seed)
 
     for train_students, test_students in splitter.split(correctness):
-        item_difficulty = posterior_mean(
-            correctness[train_students][:, target_items], axis=0
-        )
-        train_features = row_features(
-            train_students,
-            target_items,
-            item_difficulty,
-            global_state,
-            mastery,
-            shuffled,
-        )
-        test_features = row_features(
-            test_students,
-            target_items,
-            item_difficulty,
-            global_state,
-            mastery,
-            shuffled,
-        )
+        item_difficulty = posterior_mean(correctness[train_students][:, target_items], axis=0)
+        train_features = row_features(train_students, target_items, item_difficulty, global_state, mastery, shuffled)
+        test_features = row_features(test_students, target_items, item_difficulty, global_state, mastery, shuffled)
         train_labels = labels_matrix[train_students].reshape(-1)
         test_flat_indices = (
-            test_students[:, None] * len(target_items)
-            + np.arange(len(target_items))[None, :]
+            test_students[:, None] * len(target_items) + np.arange(len(target_items))[None, :]
         ).reshape(-1)
         for model_name in MODELS:
-            classifier = make_pipeline(
-                StandardScaler(),
-                LogisticRegression(C=1.0, max_iter=2000, random_state=seed),
-            )
+            classifier = make_pipeline(StandardScaler(), LogisticRegression(C=1.0, max_iter=2000, random_state=seed))
             classifier.fit(train_features[model_name], train_labels)
-            predictions[model_name][test_flat_indices] = classifier.predict_proba(
-                test_features[model_name]
-            )[:, 1]
+            predictions[model_name][test_flat_indices] = classifier.predict_proba(test_features[model_name])[:, 1]
 
     return {
         "seed": seed,
@@ -216,10 +167,7 @@ def paired_summary(seed_results: list[dict], left: str, right: str) -> dict:
     output = {}
     for metric in ("auc", "log_loss", "brier", "accuracy"):
         differences = np.asarray(
-            [
-                result["metrics"][left][metric] - result["metrics"][right][metric]
-                for result in seed_results
-            ],
+            [result["metrics"][left][metric] - result["metrics"][right][metric] for result in seed_results],
             dtype=np.float64,
         )
         output[metric] = {
@@ -232,40 +180,21 @@ def paired_summary(seed_results: list[dict], left: str, right: str) -> dict:
     return output
 
 
-def summarize(
-    correctness: np.ndarray,
-    domains: np.ndarray,
-    item_names: list[str],
-    seed_results: list[dict],
-) -> dict:
+def summarize(correctness: np.ndarray, domains: np.ndarray, item_names: list[str], seed_results: list[dict]) -> dict:
     mean_metrics = {}
     for model_name in MODELS:
         mean_metrics[model_name] = {
-            metric: float(
-                np.mean(
-                    [
-                        result["metrics"][model_name][metric]
-                        for result in seed_results
-                    ]
-                )
-            )
+            metric: float(np.mean([result["metrics"][model_name][metric] for result in seed_results]))
             for metric in ("auc", "log_loss", "brier", "accuracy")
         }
     return {
         "students": int(correctness.shape[0]),
         "items": len(item_names),
-        "domains": {
-            instrument: int(np.sum(domains == index))
-            for index, instrument in enumerate(INSTRUMENTS)
-        },
+        "domains": {instrument: int(np.sum(domains == index)) for index, instrument in enumerate(INSTRUMENTS)},
         "seeds": len(seed_results),
         "mean_metrics": mean_metrics,
-        "mastery_minus_global": paired_summary(
-            seed_results, "mastery", "global"
-        ),
-        "mastery_minus_shuffled": paired_summary(
-            seed_results, "mastery", "shuffled"
-        ),
+        "mastery_minus_global": paired_summary(seed_results, "mastery", "global"),
+        "mastery_minus_shuffled": paired_summary(seed_results, "mastery", "shuffled"),
         "seed_results": seed_results,
     }
 
@@ -279,10 +208,7 @@ def main() -> None:
     args = parser.parse_args()
 
     correctness, domains, item_names = load_correctness(args.data_dir)
-    seed_results = [
-        run_seed(correctness, domains, seed, args.folds)
-        for seed in range(args.seeds)
-    ]
+    seed_results = [run_seed(correctness, domains, seed, args.folds) for seed in range(args.seeds)]
     result = summarize(correctness, domains, item_names, seed_results)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2) + "\n")

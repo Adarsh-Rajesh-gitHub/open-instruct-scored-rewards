@@ -26,20 +26,16 @@ import json
 import logging
 import math
 import random
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import torch
 import torch.nn.functional as F
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, Dataset
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    get_cosine_schedule_with_warmup,
-)
-
+from transformers import AutoModelForCausalLM, AutoTokenizer, get_cosine_schedule_with_warmup
 
 LOGGER = logging.getLogger("controlled-task-vector-test")
 
@@ -142,10 +138,7 @@ def single_token_codes(tokenizer: Any, count: int) -> list[tuple[str, int]]:
     raise RuntimeError(f"Could not find {count} distinct single-token task codes.")
 
 
-def build_task_rows(
-    templates: Sequence[str],
-    codes: Sequence[tuple[str, int]],
-) -> list[dict[str, int | str]]:
+def build_task_rows(templates: Sequence[str], codes: Sequence[tuple[str, int]]) -> list[dict[str, int | str]]:
     rows: list[dict[str, int | str]] = []
     for template in templates:
         for marker_index, marker in enumerate(MARKERS):
@@ -165,16 +158,9 @@ class TrainingDataset(Dataset[dict[str, list[int]]]):
     def __init__(self, rows: Sequence[dict[str, int | str]], tokenizer: Any) -> None:
         self.items: list[dict[str, list[int]]] = []
         for row in rows:
-            prompt_ids = tokenizer(
-                str(row["prompt"]), add_special_tokens=False
-            )["input_ids"]
+            prompt_ids = tokenizer(str(row["prompt"]), add_special_tokens=False)["input_ids"]
             code_id = int(row["code_id"])
-            self.items.append(
-                {
-                    "input_ids": prompt_ids + [code_id],
-                    "labels": [-100] * len(prompt_ids) + [code_id],
-                }
-            )
+            self.items.append({"input_ids": prompt_ids + [code_id], "labels": [-100] * len(prompt_ids) + [code_id]})
 
     def __len__(self) -> int:
         return len(self.items)
@@ -189,9 +175,7 @@ class PromptDataset(Dataset[dict[str, int | list[int]]]):
         for row in rows:
             self.items.append(
                 {
-                    "input_ids": tokenizer(
-                        str(row["prompt"]), add_special_tokens=False
-                    )["input_ids"],
+                    "input_ids": tokenizer(str(row["prompt"]), add_special_tokens=False)["input_ids"],
                     "code_index": int(row["code_index"]),
                 }
             )
@@ -207,9 +191,7 @@ class PromptDataset(Dataset[dict[str, int | list[int]]]):
 class TrainingCollator:
     pad_token_id: int
 
-    def __call__(
-        self, rows: Sequence[dict[str, list[int]]]
-    ) -> dict[str, torch.Tensor]:
+    def __call__(self, rows: Sequence[dict[str, list[int]]]) -> dict[str, torch.Tensor]:
         width = max(len(row["input_ids"]) for row in rows)
         input_ids = []
         labels = []
@@ -230,9 +212,7 @@ class TrainingCollator:
 class PromptCollator:
     pad_token_id: int
 
-    def __call__(
-        self, rows: Sequence[dict[str, int | list[int]]]
-    ) -> dict[str, torch.Tensor]:
+    def __call__(self, rows: Sequence[dict[str, int | list[int]]]) -> dict[str, torch.Tensor]:
         width = max(len(row["input_ids"]) for row in rows)  # type: ignore[arg-type]
         input_ids = []
         attention_mask = []
@@ -250,19 +230,14 @@ class PromptCollator:
         }
 
 
-def move_batch(
-    batch: dict[str, torch.Tensor], device: torch.device
-) -> dict[str, torch.Tensor]:
+def move_batch(batch: dict[str, torch.Tensor], device: torch.device) -> dict[str, torch.Tensor]:
     return {key: value.to(device) for key, value in batch.items()}
 
 
 def load_model(model_id: str, revision: str, device: torch.device) -> torch.nn.Module:
     LOGGER.info("Loading %s @ %s", model_id, revision)
     model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        revision=revision,
-        dtype=torch.float32,
-        low_cpu_mem_usage=True,
+        model_id, revision=revision, dtype=torch.float32, low_cpu_mem_usage=True
     )
     model.config.use_cache = False
     return model.to(device)
@@ -270,9 +245,7 @@ def load_model(model_id: str, revision: str, device: torch.device) -> torch.nn.M
 
 @torch.inference_mode()
 def evaluate_task(
-    model: torch.nn.Module,
-    dataloader: DataLoader[dict[str, torch.Tensor]],
-    candidate_token_ids: Sequence[int],
+    model: torch.nn.Module, dataloader: DataLoader[dict[str, torch.Tensor]], candidate_token_ids: Sequence[int]
 ) -> dict[str, float]:
     model.eval()
     device = next(model.parameters()).device
@@ -286,49 +259,30 @@ def evaluate_task(
         labels = batch.pop("code_index")
         outputs = model(**batch, use_cache=False)
         last_positions = batch["attention_mask"].sum(dim=1) - 1
-        next_logits = outputs.logits[
-            torch.arange(labels.shape[0], device=device), last_positions
-        ]
+        next_logits = outputs.logits[torch.arange(labels.shape[0], device=device), last_positions]
         task_logits = next_logits.index_select(dim=-1, index=candidate_ids)
-        total_loss += float(
-            F.cross_entropy(task_logits, labels, reduction="sum").item()
-        )
+        total_loss += float(F.cross_entropy(task_logits, labels, reduction="sum").item())
         total_correct += int((task_logits.argmax(dim=-1) == labels).sum().item())
         total_examples += labels.shape[0]
 
-    return {
-        "loss": total_loss / total_examples,
-        "accuracy": total_correct / total_examples,
-    }
+    return {"loss": total_loss / total_examples, "accuracy": total_correct / total_examples}
 
 
 @torch.inference_mode()
-def evaluate_generic_loss(
-    model: torch.nn.Module,
-    tokenizer: Any,
-    pad_token_id: int,
-) -> float:
+def evaluate_generic_loss(model: torch.nn.Module, tokenizer: Any, pad_token_id: int) -> float:
     model.eval()
     device = next(model.parameters()).device
     total_nll = 0.0
     total_tokens = 0
     for start in range(0, len(GENERIC_TEXTS), 4):
         encoded = tokenizer(
-            list(GENERIC_TEXTS[start : start + 4]),
-            add_special_tokens=False,
-            padding=True,
-            return_tensors="pt",
+            list(GENERIC_TEXTS[start : start + 4]), add_special_tokens=False, padding=True, return_tensors="pt"
         )
         input_ids = encoded["input_ids"].to(device)
         attention_mask = encoded["attention_mask"].to(device)
         labels = input_ids.clone()
         labels[attention_mask == 0] = -100
-        outputs = model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            labels=labels,
-            use_cache=False,
-        )
+        outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels, use_cache=False)
         predicted_tokens = int((labels[:, 1:] != -100).sum().item())
         total_nll += float(outputs.loss.item()) * predicted_tokens
         total_tokens += predicted_tokens
@@ -349,18 +303,10 @@ def train_task(
     log_every: int,
 ) -> None:
     generator = torch.Generator().manual_seed(seed)
-    dataloader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        collate_fn=collator,
-        generator=generator,
-    )
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=collator, generator=generator)
     optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=0.0)
     scheduler = get_cosine_schedule_with_warmup(
-        optimizer,
-        num_warmup_steps=min(warmup_steps, steps),
-        num_training_steps=steps,
+        optimizer, num_warmup_steps=min(warmup_steps, steps), num_training_steps=steps
     )
     device = next(model.parameters()).device
     model.train()
@@ -394,10 +340,7 @@ def train_task(
 
 
 @torch.no_grad()
-def compute_delta(
-    post_model: torch.nn.Module,
-    pre_model: torch.nn.Module,
-) -> tuple[dict[str, torch.Tensor], float]:
+def compute_delta(post_model: torch.nn.Module, pre_model: torch.nn.Module) -> tuple[dict[str, torch.Tensor], float]:
     pre_parameters = dict(pre_model.named_parameters())
     delta: dict[str, torch.Tensor] = {}
     squared_norm = 0.0
@@ -412,21 +355,14 @@ def compute_delta(
 
 
 @torch.no_grad()
-def apply_delta(
-    model: torch.nn.Module,
-    delta: dict[str, torch.Tensor],
-    alpha: float,
-) -> None:
+def apply_delta(model: torch.nn.Module, delta: dict[str, torch.Tensor], alpha: float) -> None:
     matched = 0
     for name, parameter in model.named_parameters():
         if name not in delta:
             raise KeyError(f"Target parameter missing from delta: {name}")
         if parameter.shape != delta[name].shape:
             raise ValueError(f"Shape mismatch for {name}.")
-        parameter.add_(
-            delta[name].to(device=parameter.device, dtype=parameter.dtype),
-            alpha=alpha,
-        )
+        parameter.add_(delta[name].to(device=parameter.device, dtype=parameter.dtype), alpha=alpha)
         matched += 1
     if matched != len(delta):
         raise RuntimeError(f"Applied {matched} of {len(delta)} delta tensors.")
@@ -454,11 +390,7 @@ def loss_recovery_ratio(base: float, direct: float, transferred: float) -> float
 
 def main() -> None:
     args = parse_args()
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(message)s",
-        datefmt="%H:%M:%S",
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S")
     targets = args.target_revision or ["step110000", "step143000"]
     alphas = args.alpha or [0.25, 0.5, 1.0]
     if args.steps <= 0 or args.batch_size <= 0 or args.log_every <= 0:
@@ -511,9 +443,7 @@ def main() -> None:
     pre_a = load_model(args.model, args.source_revision, torch.device("cpu"))
     post_a = load_model(args.model, args.source_revision, device)
     source_base_task = evaluate_task(post_a, evaluation_loader, candidate_token_ids)
-    source_base_generic = evaluate_generic_loss(
-        post_a, tokenizer, tokenizer.pad_token_id
-    )
+    source_base_generic = evaluate_generic_loss(post_a, tokenizer, tokenizer.pad_token_id)
     train_task(
         post_a,
         training_dataset,
@@ -526,9 +456,7 @@ def main() -> None:
         args.log_every,
     )
     source_post_task = evaluate_task(post_a, evaluation_loader, candidate_token_ids)
-    source_post_generic = evaluate_generic_loss(
-        post_a, tokenizer, tokenizer.pad_token_id
-    )
+    source_post_generic = evaluate_generic_loss(post_a, tokenizer, tokenizer.pad_token_id)
     delta, delta_norm = compute_delta(post_a, pre_a)
     results["source"] = {
         "base_task": source_base_task,
@@ -554,9 +482,7 @@ def main() -> None:
         LOGGER.info("Direct-oracle run for target %s", target_revision)
         direct_model = load_model(args.model, target_revision, device)
         base_task = evaluate_task(direct_model, evaluation_loader, candidate_token_ids)
-        base_generic = evaluate_generic_loss(
-            direct_model, tokenizer, tokenizer.pad_token_id
-        )
+        base_generic = evaluate_generic_loss(direct_model, tokenizer, tokenizer.pad_token_id)
         train_task(
             direct_model,
             training_dataset,
@@ -568,12 +494,8 @@ def main() -> None:
             args.seed,
             args.log_every,
         )
-        direct_task = evaluate_task(
-            direct_model, evaluation_loader, candidate_token_ids
-        )
-        direct_generic = evaluate_generic_loss(
-            direct_model, tokenizer, tokenizer.pad_token_id
-        )
+        direct_task = evaluate_task(direct_model, evaluation_loader, candidate_token_ids)
+        direct_generic = evaluate_generic_loss(direct_model, tokenizer, tokenizer.pad_token_id)
         del direct_model
         cleanup_memory()
 
@@ -582,31 +504,20 @@ def main() -> None:
             LOGGER.info("Transfer run target=%s alpha=%.3f", target_revision, alpha)
             transferred_model = load_model(args.model, target_revision, device)
             apply_delta(transferred_model, delta, alpha)
-            transfer_task = evaluate_task(
-                transferred_model, evaluation_loader, candidate_token_ids
-            )
-            transfer_generic = evaluate_generic_loss(
-                transferred_model, tokenizer, tokenizer.pad_token_id
-            )
+            transfer_task = evaluate_task(transferred_model, evaluation_loader, candidate_token_ids)
+            transfer_generic = evaluate_generic_loss(transferred_model, tokenizer, tokenizer.pad_token_id)
             transfer_result: dict[str, float | bool] = {
                 "alpha": alpha,
                 "task_accuracy": transfer_task["accuracy"],
                 "task_loss": transfer_task["loss"],
                 "generic_loss": transfer_generic,
                 "accuracy_gain_recovery": recovery_ratio(
-                    base_task["accuracy"],
-                    direct_task["accuracy"],
-                    transfer_task["accuracy"],
+                    base_task["accuracy"], direct_task["accuracy"], transfer_task["accuracy"]
                 ),
                 "loss_reduction_recovery": loss_recovery_ratio(
-                    base_task["loss"],
-                    direct_task["loss"],
-                    transfer_task["loss"],
+                    base_task["loss"], direct_task["loss"], transfer_task["loss"]
                 ),
-                "generic_loss_relative_increase": (
-                    transfer_generic - base_generic
-                )
-                / base_generic,
+                "generic_loss_relative_increase": (transfer_generic - base_generic) / base_generic,
             }
             transfer_result["high_fidelity_criterion_passed"] = (
                 float(transfer_result["accuracy_gain_recovery"]) >= 0.90
@@ -617,17 +528,9 @@ def main() -> None:
             del transferred_model
             cleanup_memory()
 
-        passing_transfers = [
-            row
-            for row in transfers
-            if bool(row["high_fidelity_criterion_passed"])
-        ]
+        passing_transfers = [row for row in transfers if bool(row["high_fidelity_criterion_passed"])]
         best = max(
-            passing_transfers or transfers,
-            key=lambda row: (
-                float(row["task_accuracy"]),
-                -float(row["task_loss"]),
-            ),
+            passing_transfers or transfers, key=lambda row: (float(row["task_accuracy"]), -float(row["task_loss"]))
         )
         passed = bool(passing_transfers)
         target_result = {

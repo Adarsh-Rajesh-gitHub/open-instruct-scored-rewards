@@ -20,23 +20,61 @@ MUTED = "#6b6b6b"
 def box(ax, x, y, w, h, text, face="#ffffff", edge=INK, size=8.0, weight="normal", lw=1.1, radius=0.02):
     from matplotlib.patches import FancyBboxPatch  # noqa: PLC0415
 
-    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0.004,rounding_size={radius}",
-                                linewidth=lw, edgecolor=edge, facecolor=face, zorder=2))
-    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=size,
-            color=INK, weight=weight, zorder=3, linespacing=1.35)
+    ax.add_patch(
+        FancyBboxPatch(
+            (x, y),
+            w,
+            h,
+            boxstyle=f"round,pad=0.004,rounding_size={radius}",
+            linewidth=lw,
+            edgecolor=edge,
+            facecolor=face,
+            zorder=2,
+        )
+    )
+    ax.text(
+        x + w / 2,
+        y + h / 2,
+        text,
+        ha="center",
+        va="center",
+        fontsize=size,
+        color=INK,
+        weight=weight,
+        zorder=3,
+        linespacing=1.35,
+    )
 
 
 def arrow(ax, start, end, text="", style="-|>", colour=INK, size=7.2, lw=1.1, rad=0.0, off=(0, 0), dashed=False):
     from matplotlib.patches import FancyArrowPatch  # noqa: PLC0415
 
-    ax.add_patch(FancyArrowPatch(start, end, arrowstyle=style, mutation_scale=11, linewidth=lw,
-                                 color=colour, zorder=4,
-                                 linestyle="--" if dashed else "-",
-                                 connectionstyle=f"arc3,rad={rad}"))
+    ax.add_patch(
+        FancyArrowPatch(
+            start,
+            end,
+            arrowstyle=style,
+            mutation_scale=11,
+            linewidth=lw,
+            color=colour,
+            zorder=4,
+            linestyle="--" if dashed else "-",
+            connectionstyle=f"arc3,rad={rad}",
+        )
+    )
     if text:
         mx, my = (start[0] + end[0]) / 2 + off[0], (start[1] + end[1]) / 2 + off[1]
-        ax.text(mx, my, text, ha="center", va="center", fontsize=size, color=colour, zorder=5,
-                bbox={"boxstyle": "round,pad=0.15", "facecolor": "white", "edgecolor": "none"})
+        ax.text(
+            mx,
+            my,
+            text,
+            ha="center",
+            va="center",
+            fontsize=size,
+            color=colour,
+            zorder=5,
+            bbox={"boxstyle": "round,pad=0.15", "facecolor": "white", "edgecolor": "none"},
+        )
 
 
 def system(path: str) -> None:
@@ -64,16 +102,13 @@ def system(path: str) -> None:
     # wording fitted, but the figure then printed at 0.68 scale and arrived at 5.4pt. Narrowing it
     # to 7.4in fixed the print size and broke the labels instead - "OLMo-2-7B-Instruct" in bold at
     # 8pt ran straight through its box edge. Both constraints are real, so the text gives way.
-    ax.text(1, 55.5, "ONCE  ·  fit the reward model against human ratings", fontsize=9,
-            weight="bold", color=INK)
+    ax.text(1, 55.5, "ONCE  ·  fit the reward model against human ratings", fontsize=9, weight="bold", color=INK)
     box(ax, 1, 40, 16, 11.5, "600 tutor turns\n300 questions\n4 prompt styles", face="#f2f2f2", size=7.2)
     box(ax, 20.5, 40, 15, 11.5, "human + model\nratings on 5\nqualities, 1–3", face="#fdf0d5", size=7.2)
-    box(ax, 39, 40, 17, 11.5, "OLMo-2-7B\nInstruct, FROZEN\none forward pass", face="#dbe7f3",
-        weight="bold", size=7.2)
+    box(ax, 39, 40, 17, 11.5, "OLMo-2-7B\nInstruct, FROZEN\none forward pass", face="#dbe7f3", weight="bold", size=7.2)
     box(ax, 59.5, 45.6, 17, 5.9, "hidden state,\nlayer 16, mean", face="#ffffff", size=7.0)
     box(ax, 59.5, 39.4, 17, 5.9, "ridge: one head\nper quality", face="#e8f0e4", size=7.0)
-    box(ax, 80, 40, 18, 11.5, "head5.npz\n5 linear heads\n+ length band", face="#ffffff",
-        weight="bold", size=7.2)
+    box(ax, 80, 40, 18, 11.5, "head5.npz\n5 linear heads\n+ length band", face="#ffffff", weight="bold", size=7.2)
 
     arrow(ax, (17.2, 45.7), (20.3, 45.7))
     arrow(ax, (35.7, 45.7), (38.8, 45.7))
@@ -87,8 +122,7 @@ def system(path: str) -> None:
     box(ax, 20.5, 12, 17, 10.5, "policy\nOLMo-2-7B\n+ LoRA, r=32", face="#f6e2e2", weight="bold", size=7.2)
     box(ax, 41, 12, 15, 10.5, "16 candidate\ntutor turns\n(one group)", face="#ffffff", size=7.2)
     box(ax, 59.5, 12, 17, 10.5, "frozen encoder\n+ 5 heads\n→ 5 ratings", face="#dbe7f3", size=7.2)
-    box(ax, 80, 12, 18, 10.5, "reward =\nmean of 5\n+ 2.0 × length", face="#e8f0e4",
-        weight="bold", size=7.2)
+    box(ax, 80, 12, 18, 10.5, "reward =\nmean of 5\n+ 2.0 × length", face="#e8f0e4", weight="bold", size=7.2)
 
     arrow(ax, (17.2, 17.2), (20.3, 17.2))
     arrow(ax, (37.7, 17.2), (40.8, 17.2), "sample", off=(0, 2.0), size=6.6)
@@ -97,17 +131,40 @@ def system(path: str) -> None:
 
     # The reuse arrow lands on the row-2 encoder rather than stopping in the gap, because the
     # single claim this diagram exists to make is that these two boxes are the same weights.
-    arrow(ax, (47.5, 39.6), (68, 22.8), "the same frozen weights,\nnever updated",
-          colour="#b0453f", lw=1.6, rad=-0.16, off=(-9.5, 2.4), size=7.6)
+    arrow(
+        ax,
+        (47.5, 39.6),
+        (68, 22.8),
+        "the same frozen weights,\nnever updated",
+        colour="#b0453f",
+        lw=1.6,
+        rad=-0.16,
+        off=(-9.5, 2.4),
+        size=7.6,
+    )
 
     # the update path, drawn back along the bottom
     arrow(ax, (89, 11.8), (29, 6.2), "", rad=-0.10, colour="#b0453f", lw=1.5)
-    ax.text(58, 4.2, "advantage = reward − group mean   →   update LoRA only   (KL penalty β = 0.02)",
-            ha="center", fontsize=8.2, color="#b0453f", weight="bold")
+    ax.text(
+        58,
+        4.2,
+        "advantage = reward − group mean   →   update LoRA only   (KL penalty β = 0.02)",
+        ha="center",
+        fontsize=8.2,
+        color="#b0453f",
+        weight="bold",
+    )
     arrow(ax, (29, 6.2), (28.9, 11.8), colour="#b0453f", lw=1.5)
 
-    ax.text(99, 0.6, "nothing outside the LoRA adapter is ever updated", ha="right", fontsize=7.4,
-            color=MUTED, style="italic")
+    ax.text(
+        99,
+        0.6,
+        "nothing outside the LoRA adapter is ever updated",
+        ha="right",
+        fontsize=7.4,
+        color=MUTED,
+        style="italic",
+    )
     fig.tight_layout()
     fig.savefig(path, dpi=200, bbox_inches="tight")
     print(f"wrote {path}")
@@ -117,27 +174,55 @@ def system(path: str) -> None:
 # or two long lines and the text ran straight out through the box edges and over its neighbours,
 # which is worse than a diagram with less in it.
 ARMS = [
-    ("A", "first run\nraw mean of\n4 qualities",
-     "does the reward\nmove at all?",
-     "reward 0.83 → 1.62,\nbut turns collapsed\nto 12 words", "#c9d9ea"),
-    ("B", "z-score each\nquality",
-     "do unequal spreads\ndistort it?",
-     "identical to A —\nscalarisation was\nnot the problem", "#c9d9ea"),
-    ("C", "hard length\nband, 30–58\nwords",
-     "can length be\nfixed by a band?",
-     "median 46 words,\nbut 29% now too\nshort: no floor", "#f5dfc0"),
-    ("D", "5th quality\n(correct)\n+ linear ramps",
-     "does a ramp beat\na hard edge?",
-     "crashed at step 46\n(preempted before\nfirst checkpoint)", "#e8e8e8"),
-    ("E", "lr 2e-5,\n200 steps\nband 18–40",
-     "the measured-best\nstep size",
-     "reward 3.84, KL 0.25,\n100% right length,\nhuman prefers 29–11", "#cfe3cd"),
-    ("F", "lr 4e-5",
-     "does 2× lr change\nthe ceiling?",
-     "reward 3.88, KL 0.29 —\nsame place in\nhalf the steps", "#cfe3cd"),
-    ("G", "lr 8e-5",
-     "does 4× lr change\nthe ceiling?",
-     "reward 3.86, KL 0.29 —\nsame place, and no\nfurther drift than F", "#cfe3cd"),
+    (
+        "A",
+        "first run\nraw mean of\n4 qualities",
+        "does the reward\nmove at all?",
+        "reward 0.83 → 1.62,\nbut turns collapsed\nto 12 words",
+        "#c9d9ea",
+    ),
+    (
+        "B",
+        "z-score each\nquality",
+        "do unequal spreads\ndistort it?",
+        "identical to A —\nscalarisation was\nnot the problem",
+        "#c9d9ea",
+    ),
+    (
+        "C",
+        "hard length\nband, 30–58\nwords",
+        "can length be\nfixed by a band?",
+        "median 46 words,\nbut 29% now too\nshort: no floor",
+        "#f5dfc0",
+    ),
+    (
+        "D",
+        "5th quality\n(correct)\n+ linear ramps",
+        "does a ramp beat\na hard edge?",
+        "crashed at step 46\n(preempted before\nfirst checkpoint)",
+        "#e8e8e8",
+    ),
+    (
+        "E",
+        "lr 2e-5,\n200 steps\nband 18–40",
+        "the measured-best\nstep size",
+        "reward 3.84, KL 0.25,\n100% right length,\nhuman prefers 29–11",
+        "#cfe3cd",
+    ),
+    (
+        "F",
+        "lr 4e-5",
+        "does 2× lr change\nthe ceiling?",
+        "reward 3.88, KL 0.29 —\nsame place in\nhalf the steps",
+        "#cfe3cd",
+    ),
+    (
+        "G",
+        "lr 8e-5",
+        "does 4× lr change\nthe ceiling?",
+        "reward 3.86, KL 0.29 —\nsame place, and no\nfurther drift than F",
+        "#cfe3cd",
+    ),
 ]
 
 
@@ -179,10 +264,17 @@ def ablations(path: str) -> None:
 
     # Called out because it is the reason the arms stop here: once the ceiling is known to belong to
     # the reward model, further optimiser tuning cannot move it.
-    ax.text(50, -6.5,
-            "E, F and G land in the same place at 2×, 4× and 8× the step size:\n"
-            "the optimiser sets how fast, the reward model sets how far.",
-            ha="center", fontsize=8.8, color="#b0453f", weight="bold", linespacing=1.4)
+    ax.text(
+        50,
+        -6.5,
+        "E, F and G land in the same place at 2×, 4× and 8× the step size:\n"
+        "the optimiser sets how fast, the reward model sets how far.",
+        ha="center",
+        fontsize=8.8,
+        color="#b0453f",
+        weight="bold",
+        linespacing=1.4,
+    )
     fig.tight_layout()
     fig.savefig(path, dpi=200, bbox_inches="tight")
     print(f"wrote {path}")

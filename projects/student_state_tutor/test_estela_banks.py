@@ -1,7 +1,6 @@
 import json
 
 import yaml
-
 from projects.student_state_tutor import estela_banks
 
 
@@ -39,11 +38,7 @@ def test_catalog_parser_supports_numerical_answer_keys():
             "numerical": {
                 "id": "n-1",
                 "text": "What is the acceleration?",
-                "answer": {
-                    "value": 9.8,
-                    "margin_type": "percent",
-                    "tolerance": 3,
-                },
+                "answer": {"value": 9.8, "margin_type": "percent", "tolerance": 3},
             }
         },
         "bank",
@@ -58,11 +53,7 @@ def test_extract_banks_keeps_ready_canonical_version(tmp_path):
     unit = tmp_path / "PHY I Mechanics" / "3_Forces" / "BANK"
     unit.mkdir(parents=True)
     document = {
-        "bank_info": {
-            "bank_id": "PHY1-F-TEST",
-            "title": "Test bank",
-            "status": "ready",
-        },
+        "bank_info": {"bank_id": "PHY1-F-TEST", "title": "Test bank", "status": "ready"},
         "questions": [question(f"q-{index}") for index in range(6)],
     }
     (unit / "bank.yaml").write_text(yaml.safe_dump(document))
@@ -83,11 +74,7 @@ def test_extract_catalog_uses_canonical_root_bank_files(tmp_path):
     unit = tmp_path / "PHY I Mechanics" / "3_Forces" / "BANK"
     unit.mkdir(parents=True)
     document = {
-        "bank_info": {
-            "bank_id": "metadata-id",
-            "title": "Test bank",
-            "status": "ready",
-        },
+        "bank_info": {"bank_id": "metadata-id", "title": "Test bank", "status": "ready"},
         "questions": [question("q-1"), question("q-2")],
     }
     (unit / "BANK.yaml").write_text(yaml.safe_dump(document))

@@ -60,8 +60,7 @@ def main() -> None:
         es = f"{em:8.3f}" if em is not None else f"{'-':>8}"
         ek = f"{e.get('objective/kl1_avg', 0):7.3f}" if e else f"{'-':>7}"
         hs = f"{hm:8.3f}" if hm is not None else f"{'-':>8}"
-        print(f"{s:>5} | {h['scored/pedagogy/words']:8.1f} {hs} {h.get('objective/kl1_avg', 0):7.3f}"
-              f" | {ew} {es} {ek}")
+        print(f"{s:>5} | {h['scored/pedagogy/words']:8.1f} {hs} {h.get('objective/kl1_avg', 0):7.3f} | {ew} {es} {ek}")
 
     # The comparison the run exists to make: arm E finished with a 5-dim mean of 1.852 while its
     # length band held words at 28. If arm H passes 1.852 with far shorter turns, the band was what

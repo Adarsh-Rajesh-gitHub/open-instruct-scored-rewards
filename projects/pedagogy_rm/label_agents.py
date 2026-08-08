@@ -299,8 +299,7 @@ def main() -> None:
     parser.add_argument("--out-dir", default="data/labels")
     parser.add_argument("--calibration", default="data/calibration.md")
     parser.add_argument("--examples", default="", help="your labels, used as few-shot demonstrations")
-    parser.add_argument("--shot-units", default="",
-                        help="pool the --examples ids refer to, when it is not --units")
+    parser.add_argument("--shot-units", default="", help="pool the --examples ids refer to, when it is not --units")
     parser.add_argument("--holdout", default="data/holdout.json")
     parser.add_argument("--raters", default="", help=f"subset of {sorted(DEFAULT_RATERS)}")
     parser.add_argument("--dimensions", default="", help="re-rate only these, merging into existing files")

@@ -53,8 +53,7 @@ def main() -> None:
     from projects.pedagogy_rm.agreement import pearson  # noqa: PLC0415
     from projects.pedagogy_rm.probe import consensus, folds  # noqa: PLC0415
 
-    by_unit = load_labels(sorted(set(itertools.chain.from_iterable(
-        glob.glob(p) or [p] for p in [args.labels]))))
+    by_unit = load_labels(sorted(set(itertools.chain.from_iterable(glob.glob(p) or [p] for p in [args.labels]))))
     question = {}
     for path in sorted(glob.glob(args.slices)):
         with open(path) as handle:
@@ -111,8 +110,10 @@ def main() -> None:
         for _ in range(args.boot):
             pick = rng.choice(uniq, size=len(uniq), replace=True)
             idx = np.concatenate([by_q[q] for q in pick])
-            diffs.append(pearson(list(map(float, pb[idx])), list(map(float, y[idx])))
-                         - pearson(list(map(float, pa[idx])), list(map(float, y[idx]))))
+            diffs.append(
+                pearson(list(map(float, pb[idx])), list(map(float, y[idx])))
+                - pearson(list(map(float, pa[idx])), list(map(float, y[idx])))
+            )
         lo, hi = np.percentile(diffs, [2.5, 97.5])
         verdict = "distinguishable" if lo > 0 or hi < 0 else "not distinguishable"
         print(f"{dim:<12}{ra:>9.3f}{rb:>9.3f}{rb - ra:>+8.3f}   [{lo:>+6.3f}, {hi:>+6.3f}]  {verdict}")

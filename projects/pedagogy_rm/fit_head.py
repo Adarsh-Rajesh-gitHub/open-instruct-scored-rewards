@@ -116,10 +116,12 @@ def main() -> None:
     parser.add_argument("--model", default="allenai/OLMo-2-1124-7B-Instruct")
     parser.add_argument("--attack-ratio", type=float, default=0.5, help="attacks as a fraction of real rows")
     parser.add_argument("--dimensions", default="", help="comma-separated keys; default is DIMENSIONS")
-    parser.add_argument("--decouple", default="leak",
-                        help="dimensions whose length sensitivity is pulled back to the labels'")
-    parser.add_argument("--slices", default="data/label_slices/slice_*.json",
-                        help="read only for turn lengths, used by --decouple")
+    parser.add_argument(
+        "--decouple", default="leak", help="dimensions whose length sensitivity is pulled back to the labels'"
+    )
+    parser.add_argument(
+        "--slices", default="data/label_slices/slice_*.json", help="read only for turn lengths, used by --decouple"
+    )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
         "--cells",
@@ -200,8 +202,11 @@ def main() -> None:
             slope = float((target.astype(np.float64) @ centred) / max(var, 1e-9))
             X = (X.astype(np.float64) - np.outer(centred, proj)).astype(np.float32)
             target = (target.astype(np.float64) - slope * centred).astype(np.float32)
-            length_meta = {"mean": lw_mean, "slope": round(slope, 4),
-                           "labels_r": round(_corr(np.array(y), lw[: len(y)]), 3)}
+            length_meta = {
+                "mean": lw_mean,
+                "slope": round(slope, 4),
+                "labels_r": round(_corr(np.array(y), lw[: len(y)]), 3),
+            }
 
         scaler = StandardScaler().fit(X)
         model = RidgeCV(alphas=np.logspace(-1, 4, 12)).fit(scaler.transform(X), target)

@@ -79,9 +79,7 @@ def generate(args: argparse.Namespace) -> None:
                 first["content"] = first["content"].rstrip() + "\n\n" + args.append_system
         messages.append(msgs)
 
-    prompts = [
-        tokenizer.apply_chat_template(m, tokenize=False, add_generation_prompt=True) for m in messages
-    ]
+    prompts = [tokenizer.apply_chat_template(m, tokenize=False, add_generation_prompt=True) for m in messages]
 
     lora = None
     # Annotated because the values are a bool and an int: an inferred `dict[str, bool | int]`

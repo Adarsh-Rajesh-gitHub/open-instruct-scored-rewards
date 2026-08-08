@@ -11,28 +11,11 @@ from pathlib import Path
 
 import numpy as np
 import torch
+from projects.student_state_tutor.mastery_state import EvidenceEvent, MasteryGraphState
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from projects.student_state_tutor.mastery_state import (
-    EvidenceEvent,
-    MasteryGraphState,
-)
-
-
-CONDITIONS = (
-    "latest",
-    "full_history",
-    "concept_only",
-    "graph",
-    "shuffled_graph",
-)
-ACTIONS = (
-    "diagnostic",
-    "worked_example",
-    "contrast_case",
-    "retrieval_practice",
-    "stop",
-)
+CONDITIONS = ("latest", "full_history", "concept_only", "graph", "shuffled_graph")
+ACTIONS = ("diagnostic", "worked_example", "contrast_case", "retrieval_practice", "stop")
 SYSTEM = """You are selecting the next action for a physics tutor.
 Return exactly one JSON object with keys target_node, action, item_id, and stop.
 Use only the supplied student evidence. Choose one candidate concept and an item
@@ -48,11 +31,7 @@ Target the lowest posterior mean; break ties by wider interval."""
 
 
 def load_banks(path: Path) -> list[dict]:
-    return [
-        json.loads(line)
-        for line in path.read_text().splitlines()
-        if line.strip()
-    ]
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
 
 def action_for_belief(mean: float, unaided_n: int) -> str:
@@ -68,11 +47,7 @@ def action_for_belief(mean: float, unaided_n: int) -> str:
 
 
 def add_events(
-    graph: MasteryGraphState,
-    concept_id: str,
-    successes: int,
-    failures: int,
-    event_order: list[dict],
+    graph: MasteryGraphState, concept_id: str, successes: int, failures: int, event_order: list[dict]
 ) -> None:
     outcomes = [True] * successes + [False] * failures
     for index, correct in enumerate(outcomes):
@@ -85,12 +60,7 @@ def add_events(
         )
         graph.observe(event)
         event_order.append(
-            {
-                "concept_id": concept_id,
-                "item_id": event.item_id,
-                "correct": correct,
-                "assistance": "unaided",
-            }
+            {"concept_id": concept_id, "item_id": event.item_id, "correct": correct, "assistance": "unaided"}
         )
 
 
@@ -99,29 +69,15 @@ def build_cases(banks: list[dict], replicates: int, seed: int) -> list[dict]:
     concept_ids = [bank["concept_id"] for bank in banks]
     bank_map = {bank["concept_id"]: bank for bank in banks}
     cases = []
-    profiles = (
-        (0, 4),
-        (1, 3),
-        (2, 3),
-        (3, 2),
-    )
+    profiles = ((0, 4), (1, 3), (2, 3), (3, 2))
     for target_index, target in enumerate(concept_ids):
         for replicate in range(replicates):
             graph = MasteryGraphState(
-                learner_id=f"learner_{target_index:02d}_{replicate:03d}",
-                concept_ids=concept_ids,
+                learner_id=f"learner_{target_index:02d}_{replicate:03d}", concept_ids=concept_ids
             )
             events = []
-            target_successes, target_failures = profiles[
-                replicate % len(profiles)
-            ]
-            add_events(
-                graph,
-                target,
-                target_successes,
-                target_failures,
-                events,
-            )
+            target_successes, target_failures = profiles[replicate % len(profiles)]
+            add_events(graph, target, target_successes, target_failures, events)
             for concept_id in concept_ids:
                 if concept_id == target:
                     continue
@@ -144,21 +100,14 @@ def build_cases(banks: list[dict], replicates: int, seed: int) -> list[dict]:
                 shuffled_nodes.append(node)
             shuffled_target = min(
                 shuffled_nodes,
-                key=lambda node: (
-                    node["mean"],
-                    -(node["interval"][1] - node["interval"][0]),
-                    node["concept_id"],
-                ),
+                key=lambda node: (node["mean"], -(node["interval"][1] - node["interval"][0]), node["concept_id"]),
             )["concept_id"]
 
             candidates = [
                 {
                     "concept_id": concept_id,
                     "title": bank_map[concept_id]["title"],
-                    "item_id": (
-                        f"{concept_id}:"
-                        f"{bank_map[concept_id]['questions'][0]['question_id']}"
-                    ),
+                    "item_id": (f"{concept_id}:{bank_map[concept_id]['questions'][0]['question_id']}"),
                 }
                 for concept_id in concept_ids
             ]
@@ -176,9 +125,7 @@ def build_cases(banks: list[dict], replicates: int, seed: int) -> list[dict]:
                         "event_count": len(events),
                     },
                     "oracle_target": actual_target,
-                    "oracle_action": action_for_belief(
-                        actual_belief.mean, actual_belief.unaided_n
-                    ),
+                    "oracle_action": action_for_belief(actual_belief.mean, actual_belief.unaided_n),
                     "shuffled_visible_target": shuffled_target,
                 }
             )
@@ -192,19 +139,12 @@ def candidate_text(case: dict) -> str:
 
 def user_prompt(case: dict, condition: str) -> str:
     if condition == "latest":
-        evidence = {
-            "latest_event": case["latest_event"],
-        }
+        evidence = {"latest_event": case["latest_event"]}
     elif condition == "full_history":
-        evidence = {
-            "history": case["events"],
-        }
+        evidence = {"history": case["events"]}
     elif condition == "concept_only":
         evidence = {
-            "concepts": [
-                {"concept_id": row["concept_id"], "title": row["title"]}
-                for row in case["candidates"]
-            ]
+            "concepts": [{"concept_id": row["concept_id"], "title": row["title"]} for row in case["candidates"]]
         }
     elif condition == "graph":
         evidence = case["graph_view"]
@@ -221,10 +161,7 @@ def user_prompt(case: dict, condition: str) -> str:
 
 def render_prompt(tokenizer, case: dict, condition: str) -> str:
     return tokenizer.apply_chat_template(
-        [
-            {"role": "system", "content": SYSTEM},
-            {"role": "user", "content": user_prompt(case, condition)},
-        ],
+        [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user_prompt(case, condition)}],
         tokenize=False,
         add_generation_prompt=True,
     )
@@ -238,9 +175,7 @@ def parse_decision(text: str, case: dict) -> dict:
         decision = json.loads(match.group(0))
     except json.JSONDecodeError:
         return {"valid": False, "raw": text}
-    concept_to_items = {
-        row["concept_id"]: {row["item_id"]} for row in case["candidates"]
-    }
+    concept_to_items = {row["concept_id"]: {row["item_id"]} for row in case["candidates"]}
     target = decision.get("target_node")
     action = decision.get("action")
     item_id = decision.get("item_id")
@@ -249,19 +184,9 @@ def parse_decision(text: str, case: dict) -> dict:
         target in concept_to_items
         and action in ACTIONS
         and isinstance(stop, bool)
-        and (
-            (action == "stop" and stop)
-            or (action != "stop" and not stop and item_id in concept_to_items[target])
-        )
+        and ((action == "stop" and stop) or (action != "stop" and not stop and item_id in concept_to_items[target]))
     )
-    return {
-        "valid": valid,
-        "target_node": target,
-        "action": action,
-        "item_id": item_id,
-        "stop": stop,
-        "raw": text,
-    }
+    return {"valid": valid, "target_node": target, "action": action, "item_id": item_id, "stop": stop, "raw": text}
 
 
 @torch.inference_mode()
@@ -271,11 +196,10 @@ def generate_decisions(args, cases: list[dict]) -> list[dict]:
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
     model = AutoModelForCausalLM.from_pretrained(
-        args.teacher_model,
-        dtype=torch.bfloat16 if args.device == "cuda" else torch.float32,
+        args.teacher_model, dtype=torch.bfloat16 if args.device == "cuda" else torch.float32
     ).to(args.device)
     if args.teacher_adapter:
-        from peft import PeftModel
+        from peft import PeftModel  # noqa: PLC0415
 
         model = PeftModel.from_pretrained(model, args.teacher_adapter)
     model.eval()
@@ -295,31 +219,18 @@ def generate_decisions(args, cases: list[dict]) -> list[dict]:
             max_length=args.max_input_tokens,
         ).to(args.device)
         generated = model.generate(
-            **encoded,
-            do_sample=False,
-            max_new_tokens=args.max_new_tokens,
-            pad_token_id=tokenizer.pad_token_id,
+            **encoded, do_sample=False, max_new_tokens=args.max_new_tokens, pad_token_id=tokenizer.pad_token_id
         )
         prompt_width = encoded.input_ids.shape[1]
-        decoded = tokenizer.batch_decode(
-            generated[:, prompt_width:], skip_special_tokens=True
-        )
+        decoded = tokenizer.batch_decode(generated[:, prompt_width:], skip_special_tokens=True)
         for (case_index, condition, _), text in zip(batch, decoded, strict=True):
-            outputs[case_index][condition] = parse_decision(
-                text.strip(), cases[case_index]
-            )
-        print(
-            f"generated {min(start + len(batch), len(requests))}/{len(requests)}",
-            flush=True,
-        )
+            outputs[case_index][condition] = parse_decision(text.strip(), cases[case_index])
+        print(f"generated {min(start + len(batch), len(requests))}/{len(requests)}", flush=True)
     del model
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-    return [
-        {**case, "decisions": decisions}
-        for case, decisions in zip(cases, outputs, strict=True)
-    ]
+    return [{**case, "decisions": decisions} for case, decisions in zip(cases, outputs, strict=True)]
 
 
 def mean(values: list[bool]) -> float:
@@ -347,8 +258,7 @@ def summarize(rows: list[dict]) -> dict:
             "action_accuracy_given_target": mean(action_correct),
         }
     shuffled_follow = [
-        row["decisions"]["shuffled_graph"]["target_node"]
-        == row["shuffled_visible_target"]
+        row["decisions"]["shuffled_graph"]["target_node"] == row["shuffled_visible_target"]
         for row in rows
         if row["decisions"]["shuffled_graph"]["valid"]
     ]
@@ -360,21 +270,15 @@ def summarize(rows: list[dict]) -> dict:
         and row["decisions"]["shuffled_graph"]["valid"]
     ]
     sensitivity = [
-        row["decisions"]["graph"]["target_node"]
-        != row["decisions"]["shuffled_graph"]["target_node"]
+        row["decisions"]["graph"]["target_node"] != row["decisions"]["shuffled_graph"]["target_node"]
         for row in changed_cases
     ]
     gate = {
         "valid": conditions["graph"]["valid_rate"] >= 0.95,
         "target": conditions["graph"]["target_accuracy"] >= 0.80,
         "action": conditions["graph"]["action_accuracy_given_target"] >= 0.60,
-        "beats_latest": (
-            conditions["graph"]["target_accuracy"]
-            - conditions["latest"]["target_accuracy"]
-            >= 0.20
-        ),
-        "uses_visible_state": mean(shuffled_follow) >= 0.80
-        and mean(sensitivity) >= 0.70,
+        "beats_latest": (conditions["graph"]["target_accuracy"] - conditions["latest"]["target_accuracy"] >= 0.20),
+        "uses_visible_state": mean(shuffled_follow) >= 0.80 and mean(sensitivity) >= 0.70,
     }
     return {
         "cases": len(rows),
@@ -390,18 +294,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--banks", type=Path, required=True)
     parser.add_argument("--out-dir", type=Path, required=True)
-    parser.add_argument(
-        "--teacher-model", default="Qwen/Qwen2.5-3B-Instruct"
-    )
+    parser.add_argument("--teacher-model", default="Qwen/Qwen2.5-3B-Instruct")
     parser.add_argument("--teacher-adapter")
     parser.add_argument("--replicates", type=int, default=8)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--max-input-tokens", type=int, default=4096)
     parser.add_argument("--max-new-tokens", type=int, default=96)
-    parser.add_argument(
-        "--device", default="cuda" if torch.cuda.is_available() else "cpu"
-    )
+    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
 
     banks = load_banks(args.banks)
@@ -409,12 +309,8 @@ def main() -> None:
     rows = generate_decisions(args, cases)
     summary = summarize(rows)
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    (args.out_dir / "decisions.jsonl").write_text(
-        "".join(json.dumps(row) + "\n" for row in rows)
-    )
-    (args.out_dir / "results.json").write_text(
-        json.dumps(summary, indent=2) + "\n"
-    )
+    (args.out_dir / "decisions.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+    (args.out_dir / "results.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary, indent=2))
 
 

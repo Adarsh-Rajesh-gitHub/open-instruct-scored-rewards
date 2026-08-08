@@ -10,23 +10,10 @@ from pathlib import Path
 
 import torch
 from peft import LoraConfig, get_peft_model
+from projects.student_state_tutor.mastery_state import EvidenceEvent, MasteryGraphState
+from projects.student_state_tutor.teacher_action_ablation import SYSTEM, load_banks, render_prompt
 from torch.utils.data import DataLoader, Dataset
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    get_cosine_schedule_with_warmup,
-)
-
-from projects.student_state_tutor.mastery_state import (
-    EvidenceEvent,
-    MasteryGraphState,
-)
-from projects.student_state_tutor.teacher_action_ablation import (
-    SYSTEM,
-    load_banks,
-    render_prompt,
-)
-
+from transformers import AutoModelForCausalLM, AutoTokenizer, get_cosine_schedule_with_warmup
 
 ACTION_COUNTS = {
     "diagnostic": ((0, 0),),
@@ -37,12 +24,7 @@ ACTION_COUNTS = {
 }
 
 
-def add_count_events(
-    graph: MasteryGraphState,
-    concept_id: str,
-    successes: int,
-    failures: int,
-) -> None:
+def add_count_events(graph: MasteryGraphState, concept_id: str, successes: int, failures: int) -> None:
     for index, correct in enumerate([True] * successes + [False] * failures):
         graph.observe(
             EvidenceEvent(
@@ -56,11 +38,7 @@ def add_count_events(
         )
 
 
-def build_sft_examples(
-    banks: list[dict],
-    examples_per_action: int,
-    seed: int,
-) -> list[dict]:
+def build_sft_examples(banks: list[dict], examples_per_action: int, seed: int) -> list[dict]:
     rng = random.Random(seed)
     concept_ids = [bank["concept_id"] for bank in banks]
     bank_map = {bank["concept_id"]: bank for bank in banks}
@@ -68,10 +46,7 @@ def build_sft_examples(
         {
             "concept_id": concept_id,
             "title": bank_map[concept_id]["title"],
-            "item_id": (
-                f"{concept_id}:"
-                f"{bank_map[concept_id]['questions'][0]['question_id']}"
-            ),
+            "item_id": (f"{concept_id}:{bank_map[concept_id]['questions'][0]['question_id']}"),
         }
         for concept_id in concept_ids
     ]
@@ -80,18 +55,10 @@ def build_sft_examples(
         for index in range(examples_per_action):
             target = concept_ids[index % len(concept_ids)]
             learner_id = f"sft_learner_{rng.getrandbits(64):016x}"
-            graph = MasteryGraphState(
-                learner_id=learner_id,
-                concept_ids=concept_ids,
-            )
+            graph = MasteryGraphState(learner_id=learner_id, concept_ids=concept_ids)
             if action == "stop":
                 for rank, concept_id in enumerate(concept_ids):
-                    add_count_events(
-                        graph,
-                        concept_id,
-                        4 + rank + rng.randint(0, 1),
-                        0,
-                    )
+                    add_count_events(graph, concept_id, 4 + rank + rng.randint(0, 1), 0)
                 target = graph.weakest()
             else:
                 target_counts = rng.choice(target_count_options)
@@ -99,18 +66,9 @@ def build_sft_examples(
                 for concept_id in concept_ids:
                     if concept_id == target:
                         continue
-                    add_count_events(
-                        graph,
-                        concept_id,
-                        4 + rng.randint(0, 2),
-                        rng.randint(0, 1),
-                    )
+                    add_count_events(graph, concept_id, 4 + rng.randint(0, 2), rng.randint(0, 1))
             target = graph.weakest()
-            item_id = next(
-                row["item_id"]
-                for row in candidates
-                if row["concept_id"] == target
-            )
+            item_id = next(row["item_id"] for row in candidates if row["concept_id"] == target)
             decision = {
                 "target_node": target,
                 "action": action,
@@ -129,13 +87,7 @@ def build_sft_examples(
                 "oracle_action": action,
                 "shuffled_visible_target": target,
             }
-            examples.append(
-                {
-                    "case": case,
-                    "condition": "graph",
-                    "decision": decision,
-                }
-            )
+            examples.append({"case": case, "condition": "graph", "decision": decision})
     rng.shuffle(examples)
     return examples
 
@@ -144,27 +96,14 @@ class ActionDataset(Dataset):
     def __init__(self, tokenizer, examples: list[dict], max_length: int):
         self.rows = []
         for example in examples:
-            prompt = render_prompt(
-                tokenizer, example["case"], example["condition"]
-            )
+            prompt = render_prompt(tokenizer, example["case"], example["condition"])
             response = json.dumps(example["decision"], separators=(",", ":"))
-            prompt_ids = tokenizer(
-                prompt, add_special_tokens=False
-            ).input_ids
-            response_ids = tokenizer(
-                response + tokenizer.eos_token,
-                add_special_tokens=False,
-            ).input_ids
+            prompt_ids = tokenizer(prompt, add_special_tokens=False).input_ids
+            response_ids = tokenizer(response + tokenizer.eos_token, add_special_tokens=False).input_ids
             input_ids = (prompt_ids + response_ids)[-max_length:]
             prompt_kept = max(0, len(input_ids) - len(response_ids))
             labels = [-100] * prompt_kept + input_ids[prompt_kept:]
-            self.rows.append(
-                {
-                    "input_ids": input_ids,
-                    "attention_mask": [1] * len(input_ids),
-                    "labels": labels,
-                }
-            )
+            self.rows.append({"input_ids": input_ids, "attention_mask": [1] * len(input_ids), "labels": labels})
 
     def __len__(self) -> int:
         return len(self.rows)
@@ -184,16 +123,12 @@ class ActionCollator:
         labels = []
         for row in rows:
             padding = width - len(row["input_ids"])
-            input_ids.append(
-                row["input_ids"] + [self.pad_token_id] * padding
-            )
+            input_ids.append(row["input_ids"] + [self.pad_token_id] * padding)
             attention_mask.append(row["attention_mask"] + [0] * padding)
             labels.append(row["labels"] + [-100] * padding)
         return {
             "input_ids": torch.tensor(input_ids, dtype=torch.long),
-            "attention_mask": torch.tensor(
-                attention_mask, dtype=torch.long
-            ),
+            "attention_mask": torch.tensor(attention_mask, dtype=torch.long),
             "labels": torch.tensor(labels, dtype=torch.long),
         }
 
@@ -202,9 +137,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--banks", type=Path, required=True)
     parser.add_argument("--out-dir", type=Path, required=True)
-    parser.add_argument(
-        "--teacher-model", default="Qwen/Qwen2.5-3B-Instruct"
-    )
+    parser.add_argument("--teacher-model", default="Qwen/Qwen2.5-3B-Instruct")
     parser.add_argument("--examples-per-action", type=int, default=96)
     parser.add_argument("--epochs", type=float, default=3.0)
     parser.add_argument("--batch-size", type=int, default=4)
@@ -219,18 +152,10 @@ def main() -> None:
     torch.manual_seed(args.seed)
     args.out_dir.mkdir(parents=True, exist_ok=True)
     banks = load_banks(args.banks)
-    examples = build_sft_examples(
-        banks, args.examples_per_action, args.seed
-    )
+    examples = build_sft_examples(banks, args.examples_per_action, args.seed)
     (args.out_dir / "training_examples.jsonl").write_text(
         "".join(
-            json.dumps(
-                {
-                    "prompt_case": example["case"],
-                    "decision": example["decision"],
-                }
-            )
-            + "\n"
+            json.dumps({"prompt_case": example["case"], "decision": example["decision"]}) + "\n"
             for example in examples
         )
     )
@@ -240,10 +165,7 @@ def main() -> None:
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
     dataset = ActionDataset(tokenizer, examples, args.max_length)
-    model = AutoModelForCausalLM.from_pretrained(
-        args.teacher_model,
-        dtype=torch.bfloat16,
-    ).to("cuda")
+    model = AutoModelForCausalLM.from_pretrained(args.teacher_model, dtype=torch.bfloat16).to("cuda")
     model.config.use_cache = False
     lora = LoraConfig(
         r=16,
@@ -251,41 +173,23 @@ def main() -> None:
         lora_dropout=0.0,
         bias="none",
         task_type="CAUSAL_LM",
-        target_modules=[
-            "q_proj",
-            "k_proj",
-            "v_proj",
-            "o_proj",
-            "gate_proj",
-            "up_proj",
-            "down_proj",
-        ],
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
     )
     model = get_peft_model(model, lora)
     model.print_trainable_parameters()
     collator = ActionCollator(tokenizer.pad_token_id)
     generator = torch.Generator().manual_seed(args.seed)
-    loader = DataLoader(
-        dataset,
-        batch_size=args.batch_size,
-        shuffle=True,
-        collate_fn=collator,
-        generator=generator,
-    )
+    loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collator, generator=generator)
     optimizer = torch.optim.AdamW(
         (parameter for parameter in model.parameters() if parameter.requires_grad),
         lr=args.learning_rate,
         weight_decay=0.01,
     )
     epochs = int(args.epochs)
-    optimizer_steps_per_epoch = (
-        len(loader) + args.gradient_accumulation - 1
-    ) // args.gradient_accumulation
+    optimizer_steps_per_epoch = (len(loader) + args.gradient_accumulation - 1) // args.gradient_accumulation
     total_optimizer_steps = optimizer_steps_per_epoch * epochs
     scheduler = get_cosine_schedule_with_warmup(
-        optimizer,
-        num_warmup_steps=max(1, int(0.05 * total_optimizer_steps)),
-        num_training_steps=total_optimizer_steps,
+        optimizer, num_warmup_steps=max(1, int(0.05 * total_optimizer_steps)), num_training_steps=total_optimizer_steps
     )
     model.train()
     optimizer.zero_grad(set_to_none=True)
@@ -297,14 +201,9 @@ def main() -> None:
             loss = model(**batch).loss
             (loss / args.gradient_accumulation).backward()
             losses.append(float(loss.detach().cpu()))
-            should_step = (
-                (batch_index + 1) % args.gradient_accumulation == 0
-                or batch_index + 1 == len(loader)
-            )
+            should_step = (batch_index + 1) % args.gradient_accumulation == 0 or batch_index + 1 == len(loader)
             if should_step:
-                torch.nn.utils.clip_grad_norm_(
-                    model.parameters(), args.max_grad_norm
-                )
+                torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
                 optimizer.step()
                 scheduler.step()
                 optimizer.zero_grad(set_to_none=True)
@@ -328,15 +227,11 @@ def main() -> None:
         "optimizer_steps": optimizer_step,
         "epochs": epochs,
         "examples": len(examples),
-        "action_counts": dict(
-            Counter(example["decision"]["action"] for example in examples)
-        ),
+        "action_counts": dict(Counter(example["decision"]["action"] for example in examples)),
         "base_model": args.teacher_model,
         "system_prompt": SYSTEM,
     }
-    (args.out_dir / "train_results.json").write_text(
-        json.dumps(metrics, indent=2) + "\n"
-    )
+    (args.out_dir / "train_results.json").write_text(json.dumps(metrics, indent=2) + "\n")
     print(json.dumps(metrics, indent=2))
 
 

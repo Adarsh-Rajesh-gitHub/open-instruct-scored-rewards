@@ -12,7 +12,6 @@ from datasets import load_dataset
 from huggingface_hub import HfApi
 from transformers import AutoTokenizer
 
-
 DEFAULT_REPO = "gvlassis/ClimbMix"
 DEFAULT_CLUSTERS = "1,4,7,10,13,16,19,20"
 
@@ -24,9 +23,7 @@ def normalize(text: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument(
-        "--tokenizer", default="Qwen/Qwen2.5-3B-Instruct"
-    )
+    parser.add_argument("--tokenizer", default="Qwen/Qwen2.5-3B-Instruct")
     parser.add_argument("--target-tokens", type=int, default=1_000_000)
     parser.add_argument("--max-document-tokens", type=int, default=4096)
     parser.add_argument("--min-characters", type=int, default=200)
@@ -39,28 +36,14 @@ def main() -> None:
     if args.data_file:
         sources = [("unknown", args.data_file)]
     else:
-        repo_files = HfApi().list_repo_files(
-            args.repo, repo_type="dataset"
-        )
+        repo_files = HfApi().list_repo_files(args.repo, repo_type="dataset")
         sources = []
-        for cluster in [
-            value.strip() for value in args.clusters.split(",")
-            if value.strip()
-        ]:
+        for cluster in [value.strip() for value in args.clusters.split(",") if value.strip()]:
             prefix = f"cluster_id={cluster}/"
-            matches = sorted(
-                path
-                for path in repo_files
-                if path.startswith(prefix) and path.endswith(".parquet")
-            )
+            matches = sorted(path for path in repo_files if path.startswith(prefix) and path.endswith(".parquet"))
             if not matches:
                 raise ValueError(f"no parquet shard for cluster {cluster}")
-            sources.append(
-                (
-                    cluster,
-                    f"hf://datasets/{args.repo}/{matches[0]}",
-                )
-            )
+            sources.append((cluster, f"hf://datasets/{args.repo}/{matches[0]}"))
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     seen = set()
@@ -73,15 +56,8 @@ def main() -> None:
         for cluster, source_file in sources:
             source_files.append(source_file)
             source_tokens = 0
-            file_format = (
-                "parquet" if source_file.endswith(".parquet") else "json"
-            )
-            stream = load_dataset(
-                file_format,
-                data_files=source_file,
-                split="train",
-                streaming=True,
-            )
+            file_format = "parquet" if source_file.endswith(".parquet") else "json"
+            stream = load_dataset(file_format, data_files=source_file, split="train", streaming=True)
             for row in stream:
                 text = normalize(str(row.get("text", "")))
                 if len(text) < args.min_characters:
@@ -91,10 +67,7 @@ def main() -> None:
                     continue
                 seen.add(digest)
                 token_ids = tokenizer(
-                    text,
-                    add_special_tokens=False,
-                    truncation=True,
-                    max_length=args.max_document_tokens,
+                    text, add_special_tokens=False, truncation=True, max_length=args.max_document_tokens
                 ).input_ids
                 if not token_ids:
                     continue
@@ -102,9 +75,7 @@ def main() -> None:
                 output.write(
                     json.dumps(
                         {
-                            "text": tokenizer.decode(
-                                token_ids, skip_special_tokens=True
-                            ),
+                            "text": tokenizer.decode(token_ids, skip_special_tokens=True),
                             "token_count": token_count,
                             "cluster_id": cluster,
                             "source": args.repo,
@@ -118,9 +89,7 @@ def main() -> None:
                 documents += 1
                 token_total += token_count
                 source_tokens += token_count
-                cluster_counts[cluster] = (
-                    cluster_counts.get(cluster, 0) + 1
-                )
+                cluster_counts[cluster] = cluster_counts.get(cluster, 0) + 1
                 if source_tokens >= per_source_target:
                     break
 

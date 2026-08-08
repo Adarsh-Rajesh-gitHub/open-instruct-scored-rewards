@@ -23,20 +23,16 @@ import logging
 import math
 import random
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import cycle
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import torch
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, Dataset
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    get_cosine_schedule_with_warmup,
-)
-
+from transformers import AutoModelForCausalLM, AutoTokenizer, get_cosine_schedule_with_warmup
 
 LOGGER = logging.getLogger("task-vector-transfer")
 
@@ -68,11 +64,7 @@ EVAL_EXAMPLES = [
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pre-a", default="gpt2", help="Early base checkpoint.")
-    parser.add_argument(
-        "--post-a",
-        default="gpt2",
-        help="Full/merged fine-tuned checkpoint descended from --pre-a.",
-    )
+    parser.add_argument("--post-a", default="gpt2", help="Full/merged fine-tuned checkpoint descended from --pre-a.")
     parser.add_argument("--pre-b", default="gpt2", help="Later base checkpoint.")
     parser.add_argument("--alpha", type=float, default=0.5)
     parser.add_argument("--repair-steps", type=int, default=50)
@@ -88,11 +80,7 @@ def parse_args() -> argparse.Namespace:
         default="float32",
         help="Checkpoint parameter dtype. float32 is safest for a 1e-6 repair LR.",
     )
-    parser.add_argument(
-        "--device",
-        default="auto",
-        help="Torch device, such as cuda, cuda:0, mps, or cpu.",
-    )
+    parser.add_argument("--device", default="auto", help="Torch device, such as cuda, cuda:0, mps, or cpu.")
     parser.add_argument(
         "--skip-key-regex",
         action="append",
@@ -128,43 +116,26 @@ def choose_device(requested: str) -> torch.device:
 
 
 def resolve_dtype(name: str) -> torch.dtype:
-    return {
-        "float32": torch.float32,
-        "bfloat16": torch.bfloat16,
-        "float16": torch.float16,
-    }[name]
+    return {"float32": torch.float32, "bfloat16": torch.bfloat16, "float16": torch.float16}[name]
 
 
 class ToySFTDataset(Dataset[dict[str, list[int]]]):
     """Tokenized instruction/response pairs with prompt tokens masked in labels."""
 
-    def __init__(
-        self,
-        examples: Sequence[tuple[str, str]],
-        tokenizer: Any,
-        max_length: int,
-    ) -> None:
+    def __init__(self, examples: Sequence[tuple[str, str]], tokenizer: Any, max_length: int) -> None:
         self.rows: list[dict[str, list[int]]] = []
         eos = tokenizer.eos_token or ""
 
         for instruction, response in examples:
             prompt = f"### Instruction:\n{instruction}\n\n### Response:\n"
-            prompt_ids = tokenizer(
-                prompt, add_special_tokens=False
-            )["input_ids"]
-            response_ids = tokenizer(
-                response + eos, add_special_tokens=False
-            )["input_ids"]
+            prompt_ids = tokenizer(prompt, add_special_tokens=False)["input_ids"]
+            response_ids = tokenizer(response + eos, add_special_tokens=False)["input_ids"]
 
             input_ids = (prompt_ids + response_ids)[:max_length]
             prompt_length = min(len(prompt_ids), len(input_ids))
-            labels = ([-100] * prompt_length + response_ids)[
-                : len(input_ids)
-            ]
+            labels = ([-100] * prompt_length + response_ids)[: len(input_ids)]
             if not any(label != -100 for label in labels):
-                raise ValueError(
-                    "max_length leaves no response tokens; increase --max-length."
-                )
+                raise ValueError("max_length leaves no response tokens; increase --max-length.")
             self.rows.append({"input_ids": input_ids, "labels": labels})
 
     def __len__(self) -> int:
@@ -178,9 +149,7 @@ class ToySFTDataset(Dataset[dict[str, list[int]]]):
 class SFTCollator:
     pad_token_id: int
 
-    def __call__(
-        self, rows: Sequence[dict[str, list[int]]]
-    ) -> dict[str, torch.Tensor]:
+    def __call__(self, rows: Sequence[dict[str, list[int]]]) -> dict[str, torch.Tensor]:
         width = max(len(row["input_ids"]) for row in rows)
         input_ids = []
         labels = []
@@ -199,17 +168,12 @@ class SFTCollator:
         }
 
 
-def move_batch(
-    batch: dict[str, torch.Tensor], device: torch.device
-) -> dict[str, torch.Tensor]:
+def move_batch(batch: dict[str, torch.Tensor], device: torch.device) -> dict[str, torch.Tensor]:
     return {key: value.to(device) for key, value in batch.items()}
 
 
 @torch.inference_mode()
-def eval_loss(
-    model: torch.nn.Module,
-    eval_dataloader: DataLoader[dict[str, torch.Tensor]],
-) -> tuple[float, float]:
+def eval_loss(model: torch.nn.Module, eval_dataloader: DataLoader[dict[str, torch.Tensor]]) -> tuple[float, float]:
     """Return response-token-weighted causal-LM loss and perplexity."""
     model.eval()
     device = next(model.parameters()).device
@@ -234,17 +198,10 @@ def eval_loss(
     return mean_loss, perplexity
 
 
-def load_model(
-    checkpoint: str,
-    dtype: torch.dtype,
-    trust_remote_code: bool,
-) -> torch.nn.Module:
+def load_model(checkpoint: str, dtype: torch.dtype, trust_remote_code: bool) -> torch.nn.Module:
     LOGGER.info("Loading checkpoint: %s", checkpoint)
     return AutoModelForCausalLM.from_pretrained(
-        checkpoint,
-        dtype=dtype,
-        trust_remote_code=trust_remote_code,
-        low_cpu_mem_usage=True,
+        checkpoint, dtype=dtype, trust_remote_code=trust_remote_code, low_cpu_mem_usage=True
     )
 
 
@@ -281,10 +238,7 @@ def apply_task_vector(
 
         pre_parameter = pre_parameters[name]
         post_parameter = post_parameters[name]
-        if (
-            pre_parameter.shape != post_parameter.shape
-            or pre_parameter.shape != target_parameter.shape
-        ):
+        if pre_parameter.shape != post_parameter.shape or pre_parameter.shape != target_parameter.shape:
             skipped_shape += 1
             continue
         if not (
@@ -298,20 +252,10 @@ def apply_task_vector(
         # Compute each tensor's delta in float32 on CPU, then copy only that
         # tensor to the target device. This avoids materializing a full delta
         # model on the GPU.
-        delta = post_parameter.detach().to(
-            device="cpu", dtype=torch.float32
-        )
-        delta.sub_(
-            pre_parameter.detach().to(device="cpu", dtype=torch.float32)
-        )
+        delta = post_parameter.detach().to(device="cpu", dtype=torch.float32)
+        delta.sub_(pre_parameter.detach().to(device="cpu", dtype=torch.float32))
         delta_sq_norm += float(torch.sum(delta * delta).item())
-        target_parameter.add_(
-            delta.to(
-                device=target_parameter.device,
-                dtype=target_parameter.dtype,
-            ),
-            alpha=alpha,
-        )
+        target_parameter.add_(delta.to(device=target_parameter.device, dtype=target_parameter.dtype), alpha=alpha)
         matched_tensors += 1
         matched_elements += target_parameter.numel()
         del delta
@@ -345,26 +289,15 @@ def repair_sft(
         return
 
     device = next(model.parameters()).device
-    optimizer = AdamW(
-        model.parameters(),
-        lr=learning_rate,
-        weight_decay=weight_decay,
-    )
+    optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = get_cosine_schedule_with_warmup(
-        optimizer,
-        num_warmup_steps=min(warmup_steps, steps),
-        num_training_steps=steps,
+        optimizer, num_warmup_steps=min(warmup_steps, steps), num_training_steps=steps
     )
     batches = cycle(train_dataloader)
     model.train()
     optimizer.zero_grad(set_to_none=True)
 
-    LOGGER.info(
-        "Starting repair SFT: steps=%d lr=%.2e warmup=%d",
-        steps,
-        learning_rate,
-        min(warmup_steps, steps),
-    )
+    LOGGER.info("Starting repair SFT: steps=%d lr=%.2e warmup=%d", steps, learning_rate, min(warmup_steps, steps))
     for step in range(1, steps + 1):
         batch = move_batch(next(batches), device)
         outputs = model(**batch, use_cache=False)
@@ -395,11 +328,7 @@ def log_metric(label: str, loss: float, perplexity: float) -> None:
 
 def main() -> None:
     args = parse_args()
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(message)s",
-        datefmt="%H:%M:%S",
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S")
     if args.log_every <= 0:
         raise ValueError("--log-every must be positive.")
     if args.batch_size <= 0:
@@ -420,14 +349,10 @@ def main() -> None:
         )
     if args.pre_a == args.post_a:
         LOGGER.warning(
-            "--pre-a and --post-a are identical, so the task vector should be "
-            "zero. This run only tests the plumbing."
+            "--pre-a and --post-a are identical, so the task vector should be zero. This run only tests the plumbing."
         )
 
-    tokenizer = AutoTokenizer.from_pretrained(
-        args.pre_b,
-        trust_remote_code=args.trust_remote_code,
-    )
+    tokenizer = AutoTokenizer.from_pretrained(args.pre_b, trust_remote_code=args.trust_remote_code)
     if tokenizer.pad_token_id is None:
         if tokenizer.eos_token_id is None:
             raise ValueError("Tokenizer has neither a pad token nor an EOS token.")
@@ -435,24 +360,13 @@ def main() -> None:
     tokenizer.padding_side = "right"
 
     collator = SFTCollator(tokenizer.pad_token_id)
-    train_dataset = ToySFTDataset(
-        TRAIN_EXAMPLES, tokenizer, args.max_length
-    )
+    train_dataset = ToySFTDataset(TRAIN_EXAMPLES, tokenizer, args.max_length)
     eval_dataset = ToySFTDataset(EVAL_EXAMPLES, tokenizer, args.max_length)
     generator = torch.Generator().manual_seed(args.seed)
     train_dataloader = DataLoader(
-        train_dataset,
-        batch_size=args.batch_size,
-        shuffle=True,
-        collate_fn=collator,
-        generator=generator,
+        train_dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collator, generator=generator
     )
-    eval_dataloader = DataLoader(
-        eval_dataset,
-        batch_size=args.batch_size,
-        shuffle=False,
-        collate_fn=collator,
-    )
+    eval_dataloader = DataLoader(eval_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collator)
 
     # Keep only W_pre_B on the accelerator. W_pre_A and W_post_A remain on CPU
     # and are deleted immediately after the transfer.
@@ -466,16 +380,9 @@ def main() -> None:
     pre_a = load_model(args.pre_a, dtype, args.trust_remote_code)
     post_a = load_model(args.post_a, dtype, args.trust_remote_code)
     LOGGER.info("Applying W_target = W_pre_B + %.4f * (W_post_A - W_pre_A)", args.alpha)
-    stats = apply_task_vector(
-        target,
-        pre_a,
-        post_a,
-        args.alpha,
-        args.skip_key_regex,
-    )
+    stats = apply_task_vector(target, pre_a, post_a, args.alpha, args.skip_key_regex)
     LOGGER.info(
-        "Transfer coverage: %.2f%% (%d/%d elements), %d tensors; "
-        "delta L2 norm: %.6g",
+        "Transfer coverage: %.2f%% (%d/%d elements), %d tensors; delta L2 norm: %.6g",
         100.0 * float(stats["coverage"]),
         int(stats["matched_elements"]),
         int(stats["target_elements"]),
@@ -520,11 +427,7 @@ def main() -> None:
     log_metric("W_target_repaired", repaired_loss, repaired_ppl)
 
     LOGGER.info(
-        "SUMMARY | W_pre_B ppl=%.6f | W_target ppl=%.6f | "
-        "W_target_repaired ppl=%.6f",
-        base_ppl,
-        raw_ppl,
-        repaired_ppl,
+        "SUMMARY | W_pre_B ppl=%.6f | W_target ppl=%.6f | W_target_repaired ppl=%.6f", base_ppl, raw_ppl, repaired_ppl
     )
 
     if args.output_dir is not None:

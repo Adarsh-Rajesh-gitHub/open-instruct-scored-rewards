@@ -24,10 +24,13 @@ import json
 import math
 import os
 
-TITLE = {"arc_challenge": "ARC-Challenge\n(science)", "mmlu_stem": "MMLU stem\n(school maths/science)",
-         "gsm8k": "GSM8K\n(grade-school maths)", "pooled": "all three\npooled"}
-SHORT = {"arc_challenge": "ARC-Challenge", "mmlu_stem": "MMLU stem", "gsm8k": "GSM8K",
-         "pooled": "all three pooled"}
+TITLE = {
+    "arc_challenge": "ARC-Challenge\n(science)",
+    "mmlu_stem": "MMLU stem\n(school maths/science)",
+    "gsm8k": "GSM8K\n(grade-school maths)",
+    "pooled": "all three\npooled",
+}
+SHORT = {"arc_challenge": "ARC-Challenge", "mmlu_stem": "MMLU stem", "gsm8k": "GSM8K", "pooled": "all three pooled"}
 COLOUR = {"arm_e": "#4a7ebb", "arm_g": "#c0504d"}
 LABEL = {"arm_e": "arm E (lr 2e-5)", "arm_g": "arm G (lr 8e-5)"}
 
@@ -63,8 +66,7 @@ def main() -> None:
 
     # Stacked rather than side by side so the figure is taller than the text block is wide; laid out
     # in a row it prints at 0.7 scale and the tick labels arrive at 6pt.
-    fig, (top, ax) = plt.subplots(2, 1, figsize=(7.0, 5.9),
-                                  gridspec_kw={"height_ratios": [1.0, 1.15]})
+    fig, (top, ax) = plt.subplots(2, 1, figsize=(7.0, 5.9), gridspec_kw={"height_ratios": [1.0, 1.15]})
 
     # ---- upper panel: where the model actually sits ----
     models = ["base", *arms]
@@ -89,9 +91,11 @@ def main() -> None:
     top.set_ylabel("accuracy (%)")
     # The chance level is explained here rather than beside the line it marks: every gap between bar
     # groups is narrower than the label, so an in-panel annotation ended up printed over the ARC bar.
-    top.set_title("Where the models sit: absolute accuracy, 400 items per benchmark\n"
-                  "dashed line is 25%, what guessing scores on the two multiple-choice sets",
-                  fontsize=8.8)
+    top.set_title(
+        "Where the models sit: absolute accuracy, 400 items per benchmark\n"
+        "dashed line is 25%, what guessing scores on the two multiple-choice sets",
+        fontsize=8.8,
+    )
     top.legend(loc="upper left", fontsize=7.6, framealpha=0.9, ncol=3)
 
     # ---- lower panel: the result ----
@@ -114,8 +118,16 @@ def main() -> None:
         centres.append(len(tasks) + (j - 0.5) * width)
         means.append(mean * 100)
         errs.append(err * 100)
-        ax.bar(centres, means, width, yerr=errs, capsize=3, label=LABEL[arm],
-               color=COLOUR[arm], error_kw={"lw": 1, "ecolor": "#333"})
+        ax.bar(
+            centres,
+            means,
+            width,
+            yerr=errs,
+            capsize=3,
+            label=LABEL[arm],
+            color=COLOUR[arm],
+            error_kw={"lw": 1, "ecolor": "#333"},
+        )
 
     ax.axhline(0, color="#333", lw=1)
     # No "a drop this big would matter" band here, though one was tried. Shading ±2 points covered
@@ -129,19 +141,26 @@ def main() -> None:
     for j, arm in enumerate(arms):
         a, b = runs["base"]["arc_challenge"]["per_item"], runs[arm]["arc_challenge"]["per_item"]
         if sum(1 for x, y in zip(a, b, strict=True) if x != y) == 0:
-            ax.annotate("identical\non all 400", xy=((j - 0.5) * width, 0), xytext=(0, 22),
-                        textcoords="offset points", ha="center", fontsize=7.5, color="#333",
-                        arrowprops={"arrowstyle": "-", "lw": 0.8, "color": "#666"})
+            ax.annotate(
+                "identical\non all 400",
+                xy=((j - 0.5) * width, 0),
+                xytext=(0, 22),
+                textcoords="offset points",
+                ha="center",
+                fontsize=7.5,
+                color="#333",
+                arrowprops={"arrowstyle": "-", "lw": 0.8, "color": "#666"},
+            )
     ax.set_xticks(range(len(columns)))
     # Single-line labels here: four two-line labels collide at this width, and the upper panel has
     # already said what each benchmark is, so repeating the descriptions costs space for nothing.
     ax.set_xticklabels([SHORT[c] for c in columns], fontsize=8.4)
     ax.set_ylabel("change in accuracy vs base (points)")
-    ax.set_title("The result: paired change against base\n"
-                 "(same items for every arm; bars are 95% intervals)", fontsize=9.2)
+    ax.set_title(
+        "The result: paired change against base\n(same items for every arm; bars are 95% intervals)", fontsize=9.2
+    )
     ax.legend(loc="lower left", fontsize=7.6, framealpha=0.9)
-    fig.suptitle("Academic ability after 200 steps of tutoring-shaped RL", fontsize=10.5,
-                 fontweight="bold", y=0.995)
+    fig.suptitle("Academic ability after 200 steps of tutoring-shaped RL", fontsize=10.5, fontweight="bold", y=0.995)
     fig.tight_layout()
     os.makedirs(args.figures, exist_ok=True)
     out = os.path.join(args.figures, "academic_ability.png")

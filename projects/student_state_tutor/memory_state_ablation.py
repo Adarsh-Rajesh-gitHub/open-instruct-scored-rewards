@@ -11,37 +11,26 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
 from projects.student_state_tutor import graph_state_ablation as graph
 from projects.student_state_tutor import oracle_state_ablation as base
-
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 CONDITIONS = ("full_history", "last_only", "last_concept", "last_graph")
 
 
 def dialogue_turns(completion: str) -> list[tuple[str, str]]:
     turns = []
-    for match in re.finditer(
-        r"(?ms)^(Student|Tutor):\s*(.*?)(?=^(?:Student|Tutor):|\Z)",
-        completion,
-    ):
+    for match in re.finditer(r"(?ms)^(Student|Tutor):\s*(.*?)(?=^(?:Student|Tutor):|\Z)", completion):
         text = " ".join(match.group(2).strip().split())
         if text:
             turns.append((match.group(1), text))
     return turns
 
 
-def load_memory_examples(
-    traces_path: Path, graph_path: Path, limit: int
-) -> list[dict]:
+def load_memory_examples(traces_path: Path, graph_path: Path, limit: int) -> list[dict]:
     graph_rows = {
         row["question"]: row
-        for row in (
-            json.loads(line)
-            for line in graph_path.read_text().splitlines()
-            if line.strip()
-        )
+        for row in (json.loads(line) for line in graph_path.read_text().splitlines() if line.strip())
     }
     best_by_question = {}
     for line in traces_path.read_text().splitlines():
@@ -66,39 +55,22 @@ def load_memory_examples(
         previous = best_by_question.get(question)
         if previous is None or candidate["history_student_turns"] > previous["history_student_turns"]:
             best_by_question[question] = candidate
-    examples = sorted(
-        best_by_question.values(),
-        key=lambda row: (-row["history_student_turns"], row["question"]),
-    )
+    examples = sorted(best_by_question.values(), key=lambda row: (-row["history_student_turns"], row["question"]))
     return examples[:limit] if limit > 0 else examples
 
 
 def tutor_prompt(tokenizer, row: dict, condition: str) -> str:
-    question = (
-        f"Question:\n{row['question']}\n"
-        f"{base.format_choices(row['choices'])}\n\n"
-    )
+    question = f"Question:\n{row['question']}\n{base.format_choices(row['choices'])}\n\n"
     if condition == "full_history":
         context = f"Conversation so far:\n{row['full_history']}\n\n"
     else:
         context = f"Student's latest message:\n{row['last_student_turn']}\n\n"
     state = ""
     if condition == "last_concept":
-        state = (
-            "Private persistent student-state memory:\n"
-            f"concept = {row['graph_actual']['concept']}\n\n"
-        )
+        state = f"Private persistent student-state memory:\nconcept = {row['graph_actual']['concept']}\n\n"
     elif condition == "last_graph":
-        state = (
-            "Private persistent student-state memory:\n"
-            f"{graph.state_text(row['graph_actual'])}\n\n"
-        )
-    user = (
-        question
-        + context
-        + state
-        + "Write the tutor's next message. Do not repeat the private memory."
-    )
+        state = f"Private persistent student-state memory:\n{graph.state_text(row['graph_actual'])}\n\n"
+    user = question + context + state + "Write the tutor's next message. Do not repeat the private memory."
     return graph.render_chat(tokenizer, base.TUTOR_SYSTEM, user)
 
 
@@ -108,9 +80,7 @@ def generate_responses(args, rows: list[dict]) -> list[dict]:
     tokenizer.padding_side = "left"
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
-    model = AutoModelForCausalLM.from_pretrained(
-        args.teacher_model, dtype=torch.bfloat16
-    ).to(args.device)
+    model = AutoModelForCausalLM.from_pretrained(args.teacher_model, dtype=torch.bfloat16).to(args.device)
     model.eval()
     requests = [
         (index, condition, tutor_prompt(tokenizer, row, condition))
@@ -118,13 +88,7 @@ def generate_responses(args, rows: list[dict]) -> list[dict]:
         for condition in CONDITIONS
     ]
     outputs = graph.batch_generate(
-        model,
-        tokenizer,
-        requests,
-        args.generation_batch_size,
-        args.max_input_tokens,
-        args.max_new_tokens,
-        args.device,
+        model, tokenizer, requests, args.generation_batch_size, args.max_input_tokens, args.max_new_tokens, args.device
     )
     for row, output_map in zip(rows, outputs, strict=True):
         row["memory_tutor_responses"] = output_map
@@ -144,10 +108,7 @@ def attach_scores(rows: list[dict], score_sets: list[list[float]]) -> None:
         row["memory_baseline"] = {
             "scores": baseline_scores,
             "gold_probability": float(baseline_probabilities[row["gold_idx"]]),
-            "belief_margin": float(
-                baseline_scores[row["gold_idx"]]
-                - baseline_scores[row["belief_idx"]]
-            ),
+            "belief_margin": float(baseline_scores[row["gold_idx"]] - baseline_scores[row["belief_idx"]]),
             "solved": int(np.argmax(baseline_scores) == row["gold_idx"]),
         }
         row["memory_condition_scores"] = {}
@@ -159,9 +120,7 @@ def attach_scores(rows: list[dict], score_sets: list[list[float]]) -> None:
             row["memory_condition_scores"][condition] = {
                 "scores": scores,
                 "gold_probability": float(probabilities[row["gold_idx"]]),
-                "belief_margin": float(
-                    scores[row["gold_idx"]] - scores[row["belief_idx"]]
-                ),
+                "belief_margin": float(scores[row["gold_idx"]] - scores[row["belief_idx"]]),
                 "solved": int(np.argmax(scores) == row["gold_idx"]),
                 "leaked": base.leaks_answer(response, row),
             }
@@ -171,9 +130,7 @@ def summarize(rows: list[dict], seed: int) -> dict:
     result = {
         "n": len(rows),
         "subjects": dict(Counter(row["subject"] for row in rows)),
-        "mean_student_turns": float(
-            np.mean([row["history_student_turns"] for row in rows])
-        ),
+        "mean_student_turns": float(np.mean([row["history_student_turns"] for row in rows])),
         "baseline": {
             name: float(np.mean([row["memory_baseline"][name] for row in rows]))
             for name in ("gold_probability", "belief_margin", "solved")
@@ -183,14 +140,7 @@ def summarize(rows: list[dict], seed: int) -> dict:
     }
     for condition in CONDITIONS:
         result["conditions"][condition] = {
-            name: float(
-                np.mean(
-                    [
-                        row["memory_condition_scores"][condition][name]
-                        for row in rows
-                    ]
-                )
-            )
+            name: float(np.mean([row["memory_condition_scores"][condition][name] for row in rows]))
             for name in ("gold_probability", "belief_margin", "solved", "leaked")
         }
     for left, right in (
@@ -203,16 +153,12 @@ def summarize(rows: list[dict], seed: int) -> dict:
         for name in ("gold_probability", "belief_margin", "solved"):
             differences = np.asarray(
                 [
-                    row["memory_condition_scores"][left][name]
-                    - row["memory_condition_scores"][right][name]
+                    row["memory_condition_scores"][left][name] - row["memory_condition_scores"][right][name]
                     for row in rows
                 ],
                 dtype=np.float64,
             )
-            comparison[name] = {
-                "mean": float(differences.mean()),
-                "95_ci": base.bootstrap_interval(differences, seed),
-            }
+            comparison[name] = {"mean": float(differences.mean()), "95_ci": base.bootstrap_interval(differences, seed)}
         result["paired_comparisons"][f"{left}_minus_{right}"] = comparison
     return result
 
@@ -242,43 +188,21 @@ def main() -> None:
     results_path = args.out_dir / "results.json"
 
     if generations_path.exists() and not args.force_generation:
-        rows = [
-            json.loads(line)
-            for line in generations_path.read_text().splitlines()
-            if line.strip()
-        ]
+        rows = [json.loads(line) for line in generations_path.read_text().splitlines() if line.strip()]
     else:
         rows = load_memory_examples(args.traces, args.graph_input, args.limit)
         if not rows:
             raise ValueError("no unresolved multi-turn examples found")
-        print(
-            f"loaded {len(rows)} examples: "
-            f"{dict(Counter(row['subject'] for row in rows))}",
-            flush=True,
-        )
+        print(f"loaded {len(rows)} examples: {dict(Counter(row['subject'] for row in rows))}", flush=True)
         rows = generate_responses(args, rows)
-        generations_path.write_text(
-            "".join(json.dumps(row) + "\n" for row in rows)
-        )
+        generations_path.write_text("".join(json.dumps(row) + "\n" for row in rows))
 
     score_inputs = []
     for row in rows:
-        score_inputs.append(
-            base.make_score_record(
-                row["question"], row["choices"], row["past_tutor_context"]
-            )
-        )
+        score_inputs.append(base.make_score_record(row["question"], row["choices"], row["past_tutor_context"]))
         for condition in CONDITIONS:
-            combined_hint = (
-                row["past_tutor_context"]
-                + "\n"
-                + row["memory_tutor_responses"][condition]
-            )
-            score_inputs.append(
-                base.make_score_record(
-                    row["question"], row["choices"], combined_hint
-                )
-            )
+            combined_hint = row["past_tutor_context"] + "\n" + row["memory_tutor_responses"][condition]
+            score_inputs.append(base.make_score_record(row["question"], row["choices"], combined_hint))
     score_sets = base.score_records(args, score_inputs)
     attach_scores(rows, score_sets)
     scored_path.write_text("".join(json.dumps(row) + "\n" for row in rows))

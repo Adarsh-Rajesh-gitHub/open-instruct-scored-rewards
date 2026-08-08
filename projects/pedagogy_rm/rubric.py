@@ -267,8 +267,7 @@ V2: tuple[Dimension, ...] = (
             "Includes a leading question that presupposes a wrong operation.",
             2: "Nothing checkable. The turn asserts nothing about this problem that the "
             "reference can confirm or contradict.",
-            3: "No. Every claim this turn makes about the problem checks out against the "
-            "reference.",
+            3: "No. Every claim this turn makes about the problem checks out against the reference.",
         },
     ),
 )
@@ -342,8 +341,7 @@ CONTEXT: tuple[Dimension, ...] = (
         "student_state",
         "What did the STUDENT's last message demonstrate? (Rate the student, not the tutor.)",
         {
-            1: "Nothing to work with. No attempt, says they do not know, asks for help, or "
-            "restates the question.",
+            1: "Nothing to work with. No attempt, says they do not know, asks for help, or restates the question.",
             2: "An attempt. Produces a step, a number, or a claim, with no reasoning shown.",
             3: "An attempt with reasoning. Shows the step or the why that produced the answer, "
             "whether or not it is right.",

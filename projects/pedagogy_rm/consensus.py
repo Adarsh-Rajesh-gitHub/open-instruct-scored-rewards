@@ -75,8 +75,7 @@ TUTOR TURN: {tutor}"""
 def prompt_for(unit: dict, key: str, shots: list[tuple[dict, int]]) -> list[dict]:
     dim = BY_KEY[key]
     anchors = "\n".join(f"{s} = {t}" for s, t in sorted(dim.anchors.items()))
-    messages = [{"role": "system", "content": SYSTEM.format(
-        key=key, question=dim.question, anchors=anchors)}]
+    messages = [{"role": "system", "content": SYSTEM.format(key=key, question=dim.question, anchors=anchors)}]
     for shot, score in shots:
         messages.append({"role": "user", "content": render(shot)})
         messages.append({"role": "assistant", "content": str(score)})
@@ -87,8 +86,12 @@ def prompt_for(unit: dict, key: str, shots: list[tuple[dict, int]]) -> list[dict
 def render(unit: dict) -> str:
     flat = lambda s: " ".join((s or "").split())  # noqa: E731
     ref = f"WORKED SOLUTION: {flat(unit['reference'])}\n" if unit.get("reference") else ""
-    return TASK.format(question=flat(unit["question"]), reference=ref,
-                       student=flat(unit.get("student_before")), tutor=flat(unit["tutor_turn"]))
+    return TASK.format(
+        question=flat(unit["question"]),
+        reference=ref,
+        student=flat(unit.get("student_before")),
+        tutor=flat(unit["tutor_turn"]),
+    )
 
 
 def parse(text: str, key: str) -> int | None:
@@ -136,15 +139,20 @@ async def rate(args) -> None:
                     await asyncio.sleep(1.0)
             return unit["id"], key, None
 
-    print(f"{len(units)} turns x {len(keys)} dimensions x {len(raters)} raters = "
-          f"{len(units) * len(keys) * len(raters)} single-question calls")
+    print(
+        f"{len(units)} turns x {len(keys)} dimensions x {len(raters)} raters = "
+        f"{len(units) * len(keys) * len(raters)} single-question calls"
+    )
     for name, model in raters.items():
         out: dict[str, dict] = collections.defaultdict(dict)
         jobs = []
         for key in keys:
             # Few-shot for THIS dimension only, drawn from outside the holdout.
-            shots = [(by_id[i], r[key]) for i, r in human.items()
-                     if i not in held and i in by_id and isinstance(r.get(key), int)][: args.max_shots]
+            shots = [
+                (by_id[i], r[key])
+                for i, r in human.items()
+                if i not in held and i in by_id and isinstance(r.get(key), int)
+            ][: args.max_shots]
             jobs += [one(model, u, key, shots) for u in units]
         done = await asyncio.gather(*jobs)
         missing = 0
@@ -155,10 +163,18 @@ async def rate(args) -> None:
                 out[uid][key] = value
         path = os.path.join(args.out_dir, f"agent_{name}.json")
         with open(path, "w") as h:
-            json.dump({"schema": "pedagogy-rm/labels-v1", "rater": name, "model": model,
-                       "per_dimension": True,
-                       "shots": {k: sorted({i for i in human if i not in held}) for k in keys},
-                       "labels": [{"id": u, **v} for u, v in out.items()]}, h, indent=1)
+            json.dump(
+                {
+                    "schema": "pedagogy-rm/labels-v1",
+                    "rater": name,
+                    "model": model,
+                    "per_dimension": True,
+                    "shots": {k: sorted({i for i in human if i not in held}) for k in keys},
+                    "labels": [{"id": u, **v} for u, v in out.items()],
+                },
+                h,
+                indent=1,
+            )
         print(f"  {name:<9} {len(out):>4} turns, {missing} calls gave no usable answer -> {path}")
 
 
@@ -179,8 +195,7 @@ def resolve(args) -> None:
     for uid in units:
         row = {"id": uid}
         for key in keys:
-            votes = [r[uid][key] for r in raters.values()
-                     if isinstance(r.get(uid, {}).get(key), int)]
+            votes = [r[uid][key] for r in raters.values() if isinstance(r.get(uid, {}).get(key), int)]
             mine = human.get(uid, {}).get(key)
             if not votes:
                 if isinstance(mine, int):
@@ -191,8 +206,16 @@ def resolve(args) -> None:
                 row[key] = votes[0]
                 tally["unanimous raters override" if mine is not None else "raters only"] += 1
                 if mine is not None:
-                    audit.append({"id": uid, "dimension": key, "human": mine,
-                                  "raters": votes, "took": votes[0], "why": "unanimous"})
+                    audit.append(
+                        {
+                            "id": uid,
+                            "dimension": key,
+                            "human": mine,
+                            "raters": votes,
+                            "took": votes[0],
+                            "why": "unanimous",
+                        }
+                    )
             elif isinstance(mine, int) and mine in votes:
                 row[key] = mine
                 tally["human, corroborated"] += 1
@@ -200,17 +223,33 @@ def resolve(args) -> None:
                 top = collections.Counter(votes).most_common(1)[0][0]
                 row[key] = top
                 tally["human overruled by majority"] += 1
-                audit.append({"id": uid, "dimension": key, "human": mine,
-                              "raters": votes, "took": top, "why": "no rater agreed"})
+                audit.append(
+                    {
+                        "id": uid,
+                        "dimension": key,
+                        "human": mine,
+                        "raters": votes,
+                        "took": top,
+                        "why": "no rater agreed",
+                    }
+                )
             else:
                 row[key] = round(statistics.fmean(votes))
                 tally["raters only"] += 1
         final.append(row)
 
     with open(args.out, "w") as h:
-        json.dump({"schema": "pedagogy-rm/labels-v1", "rater": "resolved",
-                   "rule": "unanimous raters win; else human if any rater agrees; else majority",
-                   "overruled": audit, "labels": final}, h, indent=1)
+        json.dump(
+            {
+                "schema": "pedagogy-rm/labels-v1",
+                "rater": "resolved",
+                "rule": "unanimous raters win; else human if any rater agrees; else majority",
+                "overruled": audit,
+                "labels": final,
+            },
+            h,
+            indent=1,
+        )
 
     print(f"{len(final)} turns resolved over {len(keys)} dimensions, {len(raters)} raters\n")
     for reason, n in tally.most_common():

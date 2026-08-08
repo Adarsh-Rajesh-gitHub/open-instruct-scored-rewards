@@ -138,10 +138,14 @@ async def main_async(args) -> None:
         anchors = "\n".join(f"  {s} = {t}" for s, t in sorted(dim.anchors.items()))
         ref = f"WORKED SOLUTION:\n{unit['reference']}\n" if unit.get("reference") else ""
         prompt = PROMPT.format(
-            key=key, question=dim.question, anchors=anchors,
+            key=key,
+            question=dim.question,
+            anchors=anchors,
             shots=render_shots(labels, units, key, target),
-            instruction=instruction, q=" ".join(unit["question"].split()),
-            reference=ref, student=" ".join((unit.get("student_before") or "").split()),
+            instruction=instruction,
+            q=" ".join(unit["question"].split()),
+            reference=ref,
+            student=" ".join((unit.get("student_before") or "").split()),
             tutor=" ".join(unit["tutor_turn"].split()),
         )
         reply = await client.chat.completions.create(
@@ -150,15 +154,20 @@ async def main_async(args) -> None:
         text = (reply.choices[0].message.content or "").strip().strip('"')
         if not text or text == unit["tutor_turn"].strip():
             return None
-        return dict(unit, id=f"n{key[:4]}{unit['id'][1:9]}", tutor_turn=text,
-                    corrupted=key, intended=target, source_id=unit["id"])
+        return dict(
+            unit,
+            id=f"n{key[:4]}{unit['id'][1:9]}",
+            tutor_turn=text,
+            corrupted=key,
+            intended=target,
+            source_id=unit["id"],
+        )
 
     jobs = []
     for key in wanted:
         target, _ = CORRUPTIONS[key]
         # Corrupt turns that currently sit AWAY from the target, so the edit has somewhere to go.
-        pool = [u for uid, u in units.items()
-                if by_id.get(uid, {}).get(key) is not None and by_id[uid][key] != target]
+        pool = [u for uid, u in units.items() if by_id.get(uid, {}).get(key) is not None and by_id[uid][key] != target]
         rng.shuffle(pool)
         jobs += [(key, u) for u in pool[: args.per_dimension]]
 
@@ -167,13 +176,14 @@ async def main_async(args) -> None:
 
     os.makedirs(args.out, exist_ok=True)
     with open(os.path.join(args.out, "pool.json"), "w") as h:
-        json.dump({"note": "minimally corrupted turns; `intended` is a hypothesis, not a label",
-                   "units": made}, h, indent=1)
+        json.dump(
+            {"note": "minimally corrupted turns; `intended` is a hypothesis, not a label", "units": made}, h, indent=1
+        )
     counts = collections.Counter(r["corrupted"] for r in made)
     print(f"\nwrote {args.out}/pool.json — {len(made)} turns")
     for k in wanted:
         target, _ = CORRUPTIONS[k]
-        print(f"  {k:<12} {counts.get(k,0):>2} turns, intended {k}={target}")
+        print(f"  {k:<12} {counts.get(k, 0):>2} turns, intended {k}={target}")
     print("\nCheck them by hand before trusting `intended` - a corruption that did not corrupt")
     print("is a mislabelled example, which is worse than a missing one.")
 

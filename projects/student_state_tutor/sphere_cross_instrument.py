@@ -7,13 +7,11 @@ import json
 from pathlib import Path
 
 import numpy as np
+from projects.student_state_tutor import sphere_mastery_prediction as sphere
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
-from projects.student_state_tutor import sphere_mastery_prediction as sphere
-
 
 RELATED_DIRECTIONS = (
     ("FCI", "FMCE"),
@@ -40,16 +38,12 @@ def build_features(
     shuffled_state: np.ndarray,
 ) -> dict[str, np.ndarray]:
     n_targets = len(target_items)
-    item_feature = np.tile(
-        item_difficulty[None, :], (len(student_indices), 1)
-    ).reshape(-1)
+    item_feature = np.tile(item_difficulty[None, :], (len(student_indices), 1)).reshape(-1)
     global_feature = np.repeat(global_state[student_indices], n_targets)
     base = np.column_stack([item_feature, global_feature])
 
     def add_state(state):
-        return np.column_stack(
-            [base, np.repeat(state[student_indices], n_targets)]
-        )
+        return np.column_stack([base, np.repeat(state[student_indices], n_targets)])
 
     return {
         "global": base,
@@ -60,78 +54,40 @@ def build_features(
 
 
 def run_direction(
-    correctness: np.ndarray,
-    domains: np.ndarray,
-    donor_name: str,
-    target_name: str,
-    seed: int,
-    folds: int,
+    correctness: np.ndarray, domains: np.ndarray, donor_name: str, target_name: str, seed: int, folds: int
 ) -> dict:
     rng = np.random.default_rng(seed)
     donor_items = domain_items(domains, donor_name)
     target_items = domain_items(domains, target_name)
-    excluded = {
-        sphere.INSTRUMENTS.index(donor_name),
-        sphere.INSTRUMENTS.index(target_name),
-    }
-    unrelated_names = [
-        name
-        for index, name in enumerate(sphere.INSTRUMENTS)
-        if index not in excluded
-    ]
+    excluded = {sphere.INSTRUMENTS.index(donor_name), sphere.INSTRUMENTS.index(target_name)}
+    unrelated_names = [name for index, name in enumerate(sphere.INSTRUMENTS) if index not in excluded]
     unrelated_name = unrelated_names[seed % len(unrelated_names)]
     unrelated_items = domain_items(domains, unrelated_name)
     global_items = np.flatnonzero(~np.isin(domains, list(excluded)))
 
     global_state = sphere.posterior_mean(correctness[:, global_items], axis=1)
     related_state = sphere.posterior_mean(correctness[:, donor_items], axis=1)
-    unrelated_state = sphere.posterior_mean(
-        correctness[:, unrelated_items], axis=1
-    )
+    unrelated_state = sphere.posterior_mean(correctness[:, unrelated_items], axis=1)
     shuffled_state = related_state[rng.permutation(len(related_state))]
     target_labels = correctness[:, target_items].astype(np.int64)
     flat_labels = target_labels.reshape(-1)
-    predictions = {
-        model: np.empty(flat_labels.size, dtype=np.float64) for model in MODELS
-    }
+    predictions = {model: np.empty(flat_labels.size, dtype=np.float64) for model in MODELS}
 
     splitter = KFold(n_splits=folds, shuffle=True, random_state=seed)
     for train_students, test_students in splitter.split(correctness):
-        item_difficulty = sphere.posterior_mean(
-            correctness[train_students][:, target_items], axis=0
-        )
+        item_difficulty = sphere.posterior_mean(correctness[train_students][:, target_items], axis=0)
         train_features = build_features(
-            train_students,
-            target_items,
-            item_difficulty,
-            global_state,
-            related_state,
-            unrelated_state,
-            shuffled_state,
+            train_students, target_items, item_difficulty, global_state, related_state, unrelated_state, shuffled_state
         )
         test_features = build_features(
-            test_students,
-            target_items,
-            item_difficulty,
-            global_state,
-            related_state,
-            unrelated_state,
-            shuffled_state,
+            test_students, target_items, item_difficulty, global_state, related_state, unrelated_state, shuffled_state
         )
         train_labels = target_labels[train_students].reshape(-1)
-        test_indices = (
-            test_students[:, None] * len(target_items)
-            + np.arange(len(target_items))[None, :]
-        ).reshape(-1)
+        test_indices = (test_students[:, None] * len(target_items) + np.arange(len(target_items))[None, :]).reshape(-1)
         for model_name in MODELS:
-            classifier = make_pipeline(
-                StandardScaler(),
-                LogisticRegression(C=1.0, max_iter=2000, random_state=seed),
-            )
+            classifier = make_pipeline(StandardScaler(), LogisticRegression(C=1.0, max_iter=2000, random_state=seed))
             classifier.fit(train_features[model_name], train_labels)
-            predictions[model_name][test_indices] = classifier.predict_proba(
-                test_features[model_name]
-            )[:, 1]
+            predictions[model_name][test_indices] = classifier.predict_proba(test_features[model_name])[:, 1]
 
     return {
         "donor": donor_name,
@@ -149,11 +105,7 @@ def comparison(results: list[dict], left: str, right: str) -> dict:
     output = {}
     for metric in ("auc", "log_loss", "brier", "accuracy"):
         differences = np.asarray(
-            [
-                result["metrics"][left][metric]
-                - result["metrics"][right][metric]
-                for result in results
-            ]
+            [result["metrics"][left][metric] - result["metrics"][right][metric] for result in results]
         )
         output[metric] = {
             "mean": float(differences.mean()),
@@ -168,29 +120,18 @@ def comparison(results: list[dict], left: str, right: str) -> dict:
 def summarize(results: list[dict]) -> dict:
     by_direction = {}
     for donor, target in RELATED_DIRECTIONS:
-        selected = [
-            row for row in results
-            if row["donor"] == donor and row["target"] == target
-        ]
+        selected = [row for row in results if row["donor"] == donor and row["target"] == target]
         by_direction[f"{donor}_to_{target}"] = {
             "related_minus_global": comparison(selected, "related", "global"),
-            "related_minus_unrelated": comparison(
-                selected, "related", "unrelated"
-            ),
-            "related_minus_shuffled": comparison(
-                selected, "related", "shuffled"
-            ),
+            "related_minus_unrelated": comparison(selected, "related", "unrelated"),
+            "related_minus_shuffled": comparison(selected, "related", "shuffled"),
         }
     return {
         "directions": by_direction,
         "pooled": {
             "related_minus_global": comparison(results, "related", "global"),
-            "related_minus_unrelated": comparison(
-                results, "related", "unrelated"
-            ),
-            "related_minus_shuffled": comparison(
-                results, "related", "shuffled"
-            ),
+            "related_minus_unrelated": comparison(results, "related", "unrelated"),
+            "related_minus_shuffled": comparison(results, "related", "shuffled"),
         },
         "runs": results,
     }

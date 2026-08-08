@@ -1,5 +1,14 @@
-import numpy as np
+"""Needs scipy, which the trainer's dependencies do not include.
 
+Without the skip this fails at *collection*, which pytest reports as an error rather than a skip
+and turns the whole run red even though nothing here is broken.
+"""
+
+import pytest
+
+pytest.importorskip("scipy")
+
+import numpy as np
 from projects.student_state_tutor import sphere_curriculum_value
 
 

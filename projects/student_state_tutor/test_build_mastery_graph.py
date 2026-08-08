@@ -20,12 +20,7 @@ def test_join_and_build_mastery_graph(tmp_path):
                 "subject": "science",
                 "grade": 6,
             },
-            {
-                "question": "Math item",
-                "choices": ["1", "2"],
-                "gold_idx": 0,
-                "subject": "math",
-            },
+            {"question": "Math item", "choices": ["1", "2"], "gold_idx": 0, "subject": "math"},
         ],
     )
     write_jsonl(
@@ -40,22 +35,15 @@ def test_join_and_build_mastery_graph(tmp_path):
         ],
     )
 
-    rows, unmatched = build_mastery_graph.join_items(
-        items_path, annotations_path, "train"
-    )
-    graph, summary, pairs = build_mastery_graph.build(
-        rows, {"train": unmatched, "eval": 0}
-    )
+    rows, unmatched = build_mastery_graph.join_items(items_path, annotations_path, "train")
+    graph, summary, pairs = build_mastery_graph.build(rows, {"train": unmatched, "eval": 0})
 
     assert len(rows) == 1
     assert summary["nodes"] == 2
     assert summary["edges"] == 1
     assert summary["items"]["train"] == 1
     assert not pairs
-    assert {node["id"] for node in graph["nodes"]} == {
-        "earth rotation",
-        "cyclic motion",
-    }
+    assert {node["id"] for node in graph["nodes"]} == {"earth rotation", "cyclic motion"}
 
 
 def test_exact_transfer_pairs_cross_split():

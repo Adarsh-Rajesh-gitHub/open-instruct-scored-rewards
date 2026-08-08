@@ -68,28 +68,59 @@ def main() -> None:
         def keep(keys: list[str], have: set = have) -> list[str]:
             return ["_step"] + [k for k in keys if k in have]
 
-        step = keep(["scores", "objective/kl1_avg", "loss/policy_avg", "loss/kl_avg",
-                     "loss/total_avg", "lr", f"scored/{prefix}/reward",
-                     f"scored/{prefix}/words", f"scored/{prefix}/zero_advantage"]
-                    + [f"scored/{prefix}/dim_{d}" for d in DIMS])
-        optim = keep(["optim/grad_norm", "policy/clipfrac_avg", "val/ratio_var",
-                      "val/advantages_mean", "val/stop_rate", "val/sequence_lengths"])
-        ev = keep(["eval/scores", "eval/sequence_lengths", f"eval/scored/{prefix}/reward",
-                   f"eval/scored/{prefix}/words"]
-                  + [f"eval/scored/{prefix}/dim_{d}" for d in DIMS])
+        step = keep(
+            [
+                "scores",
+                "objective/kl1_avg",
+                "loss/policy_avg",
+                "loss/kl_avg",
+                "loss/total_avg",
+                "lr",
+                f"scored/{prefix}/reward",
+                f"scored/{prefix}/words",
+                f"scored/{prefix}/zero_advantage",
+            ]
+            + [f"scored/{prefix}/dim_{d}" for d in DIMS]
+        )
+        optim = keep(
+            [
+                "optim/grad_norm",
+                "policy/clipfrac_avg",
+                "val/ratio_var",
+                "val/advantages_mean",
+                "val/stop_rate",
+                "val/sequence_lengths",
+            ]
+        )
+        ev = keep(
+            ["eval/scores", "eval/sequence_lengths", f"eval/scored/{prefix}/reward", f"eval/scored/{prefix}/words"]
+            + [f"eval/scored/{prefix}/dim_{d}" for d in DIMS]
+        )
 
         blob[label] = {
             "prefix": prefix,
-            "config": {k: v for k, v in run.config.items()
-                       if k in ("learning_rate", "num_samples_per_prompt_rollout", "beta",
-                                "num_unique_prompts_rollout", "total_episodes", "exp_name")},
+            "config": {
+                k: v
+                for k, v in run.config.items()
+                if k
+                in (
+                    "learning_rate",
+                    "num_samples_per_prompt_rollout",
+                    "beta",
+                    "num_unique_prompts_rollout",
+                    "total_episodes",
+                    "exp_name",
+                )
+            },
             "state": run.state,
             "step": list(run.scan_history(keys=step, page_size=2000)),
             "optim": list(run.scan_history(keys=optim, page_size=2000)),
             "eval": list(run.scan_history(keys=ev, page_size=2000)),
         }
-        print(f"{label}: {len(blob[label]['step'])} step rows, "
-              f"{len(blob[label]['optim'])} optim, {len(blob[label]['eval'])} eval")
+        print(
+            f"{label}: {len(blob[label]['step'])} step rows, "
+            f"{len(blob[label]['optim'])} optim, {len(blob[label]['eval'])} eval"
+        )
 
     with open(args.out, "w") as handle:
         json.dump(blob, handle)

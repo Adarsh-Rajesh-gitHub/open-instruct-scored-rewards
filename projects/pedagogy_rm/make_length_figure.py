@@ -41,9 +41,7 @@ def main() -> None:
 
     def accept(w: float) -> float:
         lw = math.log(max(w, 1))
-        return (1 / (1 + math.exp(-(lw - c["a"]) / c["s_short"]))) * (
-            1 / (1 + math.exp(-(c["b"] - lw) / c["s_long"]))
-        )
+        return (1 / (1 + math.exp(-(lw - c["a"]) / c["s_short"]))) * (1 / (1 + math.exp(-(c["b"] - lw) / c["s_long"])))
 
     def binary(w: float) -> float:
         return 1.0 if 30 <= w <= 58 else 0.0
@@ -68,8 +66,16 @@ def main() -> None:
             xs.append(math.sqrt(lo * max(hi, lo + 1)))
             ys.append(statistics.fmean(sel))
             ns.append(len(sel))
-    left.scatter(xs, ys, s=[min(n, 220) for n in ns], color="#2f6db5", alpha=0.55,
-                 edgecolor="#1a3f6b", zorder=3, label="measured (dot size = judgements)")
+    left.scatter(
+        xs,
+        ys,
+        s=[min(n, 220) for n in ns],
+        color="#2f6db5",
+        alpha=0.55,
+        edgecolor="#1a3f6b",
+        zorder=3,
+        label="measured (dot size = judgements)",
+    )
     grid = [1.05**i for i in range(0, 130) if 1.05**i <= 300]
     left.plot(grid, [accept(w) for w in grid], color="#c0392b", lw=2.2, zorder=4, label="fitted curve")
     left.axvspan(21, 58, color="#4c9f70", alpha=0.13, zorder=0)
@@ -96,12 +102,21 @@ def main() -> None:
         right.plot(grid, [v - peak for v in vals], color=colour, lw=2.2, label=name)
         best = max(grid, key=lambda w: combined(fn, w))  # noqa: B023
         right.plot([best], [0], "o", color=colour, ms=8, zorder=5)
-        right.annotate(f"settles at {best:.0f}w", (best, 0), textcoords="offset points",
-                       xytext=nudge, ha="center", fontsize=8.5, color=colour, fontweight="bold")
+        right.annotate(
+            f"settles at {best:.0f}w",
+            (best, 0),
+            textcoords="offset points",
+            xytext=nudge,
+            ha="center",
+            fontsize=8.5,
+            color=colour,
+            fontweight="bold",
+        )
     quality_only = [args.slope * math.log(w) for w in grid]
     peak = max(quality_only)
-    right.plot(grid, [v - peak for v in quality_only], color="#888888", lw=1.8, ls="--",
-               label="no length term (what we ran)")
+    right.plot(
+        grid, [v - peak for v in quality_only], color="#888888", lw=1.8, ls="--", label="no length term (what we ran)"
+    )
     for w, label, colour in ((17, "arm A sits here", "#888888"), (34, "base", "#888888")):
         right.axvline(w, color=colour, lw=1, ls=":", alpha=0.7)
         right.text(w, -2.55, label, rotation=90, fontsize=7.5, color="#555555", va="bottom", ha="right")

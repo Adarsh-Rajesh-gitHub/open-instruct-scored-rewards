@@ -1,10 +1,5 @@
 import pytest
-
-from projects.student_state_tutor.mastery_state import (
-    ConceptBelief,
-    EvidenceEvent,
-    MasteryGraphState,
-)
+from projects.student_state_tutor.mastery_state import ConceptBelief, EvidenceEvent, MasteryGraphState
 
 
 def event(concept_id, correct, assistance="unaided"):

@@ -21,10 +21,8 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
 from projects.student_state_tutor import oracle_state_ablation as base
-
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 GRAPH_CONDITIONS = ("graph_actual", "graph_counterfactual")
 DIAGNOSTIC_SYSTEM = """You label conceptual student misconceptions.
@@ -50,9 +48,7 @@ def diagnostic_prompt(row: dict, belief_key: str) -> str:
 
 def parse_graph_state(text: str) -> dict | None:
     concept = re.search(r"(?im)^\s*CONCEPT\s*:\s*(.+?)\s*$", text)
-    relation = re.search(
-        r"(?im)^\s*MISTAKEN_RELATION\s*:\s*(.+?)\s*$", text
-    )
+    relation = re.search(r"(?im)^\s*MISTAKEN_RELATION\s*:\s*(.+?)\s*$", text)
     if not concept or not relation:
         return None
     return {
@@ -63,21 +59,14 @@ def parse_graph_state(text: str) -> dict | None:
 
 
 def state_text(state: dict) -> str:
-    return (
-        f"concept = {state['concept']}\n"
-        f"student_belief_relation = {state['mistaken_relation']}"
-    )
+    return f"concept = {state['concept']}\nstudent_belief_relation = {state['mistaken_relation']}"
 
 
 def has_option_overlap(state: dict | None, row: dict) -> bool:
     if state is None:
         return True
     normalized_state = base.normalize_text(state_text(state))
-    for choice_index in (
-        row["gold_idx"],
-        row["belief_idx"],
-        row["counterfactual_idx"],
-    ):
+    for choice_index in (row["gold_idx"], row["belief_idx"], row["counterfactual_idx"]):
         choice = base.normalize_text(row["choices"][choice_index])
         if len(choice) >= 8 and choice in normalized_state:
             return True
@@ -86,10 +75,7 @@ def has_option_overlap(state: dict | None, row: dict) -> bool:
 
 def render_chat(tokenizer, system: str, user: str) -> str:
     return tokenizer.apply_chat_template(
-        [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
+        [{"role": "system", "content": system}, {"role": "user", "content": user}],
         tokenize=False,
         add_generation_prompt=True,
     )
@@ -116,21 +102,13 @@ def batch_generate(
             max_length=max_input_tokens,
         ).to(device)
         generated = model.generate(
-            **encoded,
-            do_sample=False,
-            max_new_tokens=max_new_tokens,
-            pad_token_id=tokenizer.pad_token_id,
+            **encoded, do_sample=False, max_new_tokens=max_new_tokens, pad_token_id=tokenizer.pad_token_id
         )
         prompt_width = encoded.input_ids.shape[1]
-        decoded = tokenizer.batch_decode(
-            generated[:, prompt_width:], skip_special_tokens=True
-        )
+        decoded = tokenizer.batch_decode(generated[:, prompt_width:], skip_special_tokens=True)
         for (row_index, key, _), response in zip(batch, decoded, strict=True):
             responses[row_index][key] = response.strip()
-        print(
-            f"generated {min(start + len(batch), len(requests))}/{len(requests)}",
-            flush=True,
-        )
+        print(f"generated {min(start + len(batch), len(requests))}/{len(requests)}", flush=True)
     return responses
 
 
@@ -153,22 +131,13 @@ def generate_graphs_and_tutors(args, rows: list[dict]) -> list[dict]:
     tokenizer.padding_side = "left"
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
-    model = AutoModelForCausalLM.from_pretrained(
-        args.teacher_model, dtype=torch.bfloat16
-    ).to(args.device)
+    model = AutoModelForCausalLM.from_pretrained(args.teacher_model, dtype=torch.bfloat16).to(args.device)
     model.eval()
 
     diagnostic_requests = []
     for index, row in enumerate(rows):
-        for key, belief_key in (
-            ("actual", "belief"),
-            ("counterfactual", "counterfactual_belief"),
-        ):
-            prompt = render_chat(
-                tokenizer,
-                DIAGNOSTIC_SYSTEM,
-                diagnostic_prompt(row, belief_key),
-            )
+        for key, belief_key in (("actual", "belief"), ("counterfactual", "counterfactual_belief")):
+            prompt = render_chat(tokenizer, DIAGNOSTIC_SYSTEM, diagnostic_prompt(row, belief_key))
             diagnostic_requests.append((index, key, prompt))
     diagnostic_outputs = batch_generate(
         model,
@@ -189,9 +158,7 @@ def generate_graphs_and_tutors(args, rows: list[dict]) -> list[dict]:
             "graph_actual": graph_actual,
             "graph_counterfactual": graph_counterfactual,
             "graph_actual_overlap": has_option_overlap(graph_actual, row),
-            "graph_counterfactual_overlap": has_option_overlap(
-                graph_counterfactual, row
-            ),
+            "graph_counterfactual_overlap": has_option_overlap(graph_counterfactual, row),
         }
         if (
             graph_actual is not None
@@ -201,23 +168,14 @@ def generate_graphs_and_tutors(args, rows: list[dict]) -> list[dict]:
         ):
             valid_rows.append(enriched)
 
-    print(
-        f"valid graph pairs {len(valid_rows)}/{len(rows)}",
-        flush=True,
-    )
+    print(f"valid graph pairs {len(valid_rows)}/{len(rows)}", flush=True)
     if not valid_rows:
         raise ValueError("no valid graph-state pairs")
 
     tutor_requests = []
     for index, row in enumerate(valid_rows):
         for condition in GRAPH_CONDITIONS:
-            tutor_requests.append(
-                (
-                    index,
-                    condition,
-                    graph_tutor_prompt(tokenizer, row, row[condition]),
-                )
-            )
+            tutor_requests.append((index, condition, graph_tutor_prompt(tokenizer, row, row[condition])))
     tutor_outputs = batch_generate(
         model,
         tokenizer,
@@ -247,9 +205,7 @@ def attach_graph_scores(rows: list[dict], score_sets: list[list[float]]) -> None
             row["graph_condition_scores"][condition] = {
                 "scores": scores,
                 "gold_probability": float(probabilities[row["gold_idx"]]),
-                "belief_margin": float(
-                    scores[row["gold_idx"]] - scores[row["belief_idx"]]
-                ),
+                "belief_margin": float(scores[row["gold_idx"]] - scores[row["belief_idx"]]),
                 "solved": int(np.argmax(scores) == row["gold_idx"]),
                 "leaked": base.leaks_answer(response, row),
             }
@@ -262,10 +218,7 @@ def metric(row: dict, condition: str, name: str) -> float:
 
 
 def paired(rows: list[dict], left: str, right: str, name: str) -> np.ndarray:
-    return np.asarray(
-        [metric(row, left, name) - metric(row, right, name) for row in rows],
-        dtype=np.float64,
-    )
+    return np.asarray([metric(row, left, name) - metric(row, right, name) for row in rows], dtype=np.float64)
 
 
 def summarize(rows: list[dict], seed: int) -> dict:
@@ -281,17 +234,11 @@ def summarize(rows: list[dict], seed: int) -> dict:
             name: float(np.mean([metric(row, condition, name) for row in rows]))
             for name in ("gold_probability", "belief_margin", "solved", "leaked")
         }
-    for left, right in (
-        ("graph_actual", "transcript"),
-        ("graph_actual", "graph_counterfactual"),
-    ):
+    for left, right in (("graph_actual", "transcript"), ("graph_actual", "graph_counterfactual")):
         comparison = {}
         for name in ("gold_probability", "belief_margin", "solved"):
             differences = paired(rows, left, right, name)
-            comparison[name] = {
-                "mean": float(differences.mean()),
-                "95_ci": base.bootstrap_interval(differences, seed),
-            }
+            comparison[name] = {"mean": float(differences.mean()), "95_ci": base.bootstrap_interval(differences, seed)}
         result["paired_comparisons"][f"{left}_minus_{right}"] = comparison
     return result
 
@@ -320,32 +267,18 @@ def main() -> None:
     results_path = args.out_dir / "results.json"
 
     if generations_path.exists() and not args.force_generation:
-        rows = [
-            json.loads(line)
-            for line in generations_path.read_text().splitlines()
-            if line.strip()
-        ]
+        rows = [json.loads(line) for line in generations_path.read_text().splitlines() if line.strip()]
         print(f"loaded {len(rows)} graph generations", flush=True)
     else:
-        source_rows = [
-            json.loads(line)
-            for line in args.input.read_text().splitlines()
-            if line.strip()
-        ]
+        source_rows = [json.loads(line) for line in args.input.read_text().splitlines() if line.strip()]
         rows = generate_graphs_and_tutors(args, source_rows)
-        generations_path.write_text(
-            "".join(json.dumps(row) + "\n" for row in rows)
-        )
+        generations_path.write_text("".join(json.dumps(row) + "\n" for row in rows))
 
     score_inputs = []
     for row in rows:
         for condition in GRAPH_CONDITIONS:
             score_inputs.append(
-                base.make_score_record(
-                    row["question"],
-                    row["choices"],
-                    row["graph_tutor_responses"][condition],
-                )
+                base.make_score_record(row["question"], row["choices"], row["graph_tutor_responses"][condition])
             )
     score_sets = base.score_records(args, score_inputs)
     attach_graph_scores(rows, score_sets)

@@ -23,11 +23,19 @@ import collections
 # Name -> the domain it belongs to, for the report. Anything registered but absent here still
 # passes; this is for grouping, not validation.
 DOMAIN = {
-    "gsm8k": "maths", "math": "maths", "strict_math": "maths",
-    "code": "code", "code_stdio": "code",
-    "string_f1": "factual", "string_matcher": "factual", "re_search_f1": "factual",
-    "ifeval": "instruction following", "ifeval_old": "instruction following",
-    "max_length": "length", "up_to_max_length": "length", "passthrough": "none",
+    "gsm8k": "maths",
+    "math": "maths",
+    "strict_math": "maths",
+    "code": "code",
+    "code_stdio": "code",
+    "string_f1": "factual",
+    "string_matcher": "factual",
+    "re_search_f1": "factual",
+    "ifeval": "instruction following",
+    "ifeval_old": "instruction following",
+    "max_length": "length",
+    "up_to_max_length": "length",
+    "passthrough": "none",
 }
 
 MIXES = {
@@ -35,9 +43,7 @@ MIXES = {
     # gsm8k, math and ifeval rows, which means one download exercises three verifiers.
     "math": ["allenai/RLVR-GSM-MATH-IF-Mixed-Constraints"],
     "math_only": ["allenai/RLVR-MATH", "allenai/RLVR-GSM"],
-    "code": [
-        "allenai/rlvr-code-data-python-r1-format-filtered-keyword-filtered-filter-datecutoff-ngram-filtered"
-    ],
+    "code": ["allenai/rlvr-code-data-python-r1-format-filtered-keyword-filtered-filter-datecutoff-ngram-filtered"],
     # Ai2's general mix. Whether it is usable for the factual domain depends on which verifiers its
     # rows name - run with --report and read the breakdown before trusting it.
     "general": ["allenai/rlvr_general_mix-keyword-filtered"],
@@ -104,13 +110,14 @@ def main() -> None:
             print(f"  verifiers named, in the first {min(args.sample, len(ds))} rows:")
             for verifier, n in counts.most_common():
                 mark = "ok " if verifier in known else "NOT REGISTERED"
-                print(f"    {verifier:<24} {n:>6} ({n/total:>5.1%})  {mark}"
-                      f"  {DOMAIN.get(verifier, '')}")
+                print(f"    {verifier:<24} {n:>6} ({n / total:>5.1%})  {mark}  {DOMAIN.get(verifier, '')}")
             unknown = sum(n for v, n in counts.items() if v not in known)
             if unknown:
-                print(f"  WARNING: {unknown/total:.1%} of rows name a verifier that is not "
-                      f"registered; those rows would be silently skipped and score zero")
-                problems.append((name, f"{unknown/total:.0%} unregistered"))
+                print(
+                    f"  WARNING: {unknown / total:.1%} of rows name a verifier that is not "
+                    f"registered; those rows would be silently skipped and score zero"
+                )
+                problems.append((name, f"{unknown / total:.0%} unregistered"))
 
     print("\n" + "=" * 60)
     if problems:

@@ -87,8 +87,10 @@ def main() -> None:
             lo, hi = interval(a, b)
             delta = sum(b) / len(b) - sum(a) / len(a)
             verdict = "changed" if p < 0.05 else "no detectable change"
-            print(f"    {task:<14} {delta:+.1%}  [{lo:+.1%}, {hi:+.1%}]  "
-                  f"won {gained} / lost {lost}  p={p:.3f}  {verdict}")
+            print(
+                f"    {task:<14} {delta:+.1%}  [{lo:+.1%}, {hi:+.1%}]  "
+                f"won {gained} / lost {lost}  p={p:.3f}  {verdict}"
+            )
 
     # The headline is the aggregate: three tasks each underpowered on their own are jointly
     # informative, and forgetting from a narrow objective would not politely confine itself to one.
@@ -105,8 +107,7 @@ def main() -> None:
         gained, lost, p = mcnemar(pa, pb)
         lo, hi = interval(pa, pb)
         delta = sum(pb) / len(pb) - sum(pa) / len(pa)
-        print(f"  {tag:<8} n={len(pa)}  {delta:+.1%}  [{lo:+.1%}, {hi:+.1%}]  "
-              f"won {gained} / lost {lost}  p={p:.3f}")
+        print(f"  {tag:<8} n={len(pa)}  {delta:+.1%}  [{lo:+.1%}, {hi:+.1%}]  won {gained} / lost {lost}  p={p:.3f}")
 
 
 if __name__ == "__main__":

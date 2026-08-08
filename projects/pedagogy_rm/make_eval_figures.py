@@ -142,15 +142,15 @@ def main() -> None:
         shares = {}
         for arm in ARMS:
             vals = [
-                v
-                for u, e in key.items()
-                if e["arm"] == arm and (v := consensus(raters, u, "length_fit")) is not None
+                v for u, e in key.items() if e["arm"] == arm and (v := consensus(raters, u, "length_fit")) is not None
             ]
             if vals:
                 shares[arm] = [sum(1 for v in vals if round(v) == s) / len(vals) for s in (1, 2, 3)]
         names = [a for a in ARMS if a in shares]
         bottom = [0.0] * len(names)
-        for idx, (band, colour) in enumerate((("too short", "#e8a33d"), ("right", "#4c9f70"), ("too long", "#a2559c"))):
+        for idx, (band, colour) in enumerate(
+            (("too short", "#e8a33d"), ("right", "#4c9f70"), ("too long", "#a2559c"))
+        ):
             vals = [shares[a][idx] for a in names]
             ax.bar([LABEL[a] for a in names], vals, 0.55, bottom=bottom, label=band, color=colour)
             for x, (v, b) in enumerate(zip(vals, bottom, strict=True)):
@@ -182,8 +182,16 @@ def main() -> None:
                     errs.append(half)
                     rows.append(i + (offset * 2 + (arm == "arm_b")) * 0.17 - 0.26)
             ax.errorbar(
-                means, rows, xerr=errs, fmt=marker, ms=4, lw=0, elinewidth=1.1, capsize=2,
-                color=colour, alpha=1.0 if arm == "arm_a" else 0.55,
+                means,
+                rows,
+                xerr=errs,
+                fmt=marker,
+                ms=4,
+                lw=0,
+                elinewidth=1.1,
+                capsize=2,
+                color=colour,
+                alpha=1.0 if arm == "arm_a" else 0.55,
                 label=f"{panel}, {LABEL[arm]}",
             )
     ax.axvline(0, color="#333", lw=1)

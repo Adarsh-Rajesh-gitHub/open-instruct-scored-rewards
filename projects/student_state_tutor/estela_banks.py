@@ -11,7 +11,6 @@ from typing import Any
 
 import yaml
 
-
 ARCHIVE_PARTS = {
     "archive",
     "draft",
@@ -24,10 +23,7 @@ ARCHIVE_PARTS = {
     "templates",
     "version with alternate numbers",
 }
-IMAGE_PATTERN = re.compile(
-    r"(?:<img\b|!\[[^\]]*\]\(|\.(?:png|jpe?g|gif|svg|webp)\b)",
-    re.IGNORECASE,
-)
+IMAGE_PATTERN = re.compile(r"(?:<img\b|!\[[^\]]*\]\(|\.(?:png|jpe?g|gif|svg|webp)\b)", re.IGNORECASE)
 HTML_PATTERN = re.compile(r"<[^>]+>")
 
 
@@ -58,11 +54,7 @@ def has_image_reference(value: Any) -> bool:
 
 
 def unwrap_question(row: dict) -> tuple[str, dict] | None:
-    supported = {
-        "multiple_choice",
-        "multiple-choice",
-        "multiple choice",
-    }
+    supported = {"multiple_choice", "multiple-choice", "multiple choice"}
     for question_type, payload in row.items():
         if question_type.strip().lower() in supported and isinstance(payload, dict):
             return "multiple_choice", payload
@@ -99,24 +91,11 @@ def parse_catalog_answer(question_type: str, payload: dict) -> dict | None:
         if not isinstance(answer, dict):
             return None
         if answer.get("value") is None and not (
-            answer.get("range_start") is not None
-            and answer.get("range_end") is not None
+            answer.get("range_start") is not None and answer.get("range_end") is not None
         ):
             return None
-        fields = (
-            "value",
-            "range_start",
-            "range_end",
-            "margin_type",
-            "tolerance",
-            "precision_type",
-            "precision",
-        )
-        return {
-            key: answer[key]
-            for key in fields
-            if answer.get(key) is not None
-        }
+        fields = ("value", "range_start", "range_end", "margin_type", "tolerance", "precision_type", "precision")
+        return {key: answer[key] for key in fields if answer.get(key) is not None}
     if question_type == "multiple_answers":
         choices = []
         correct_indices = []
@@ -140,43 +119,26 @@ def parse_catalog_answer(question_type: str, payload: dict) -> dict | None:
             if not isinstance(category, dict):
                 return None
             description = clean_text(category.get("description"))
-            answers = [
-                clean_text(answer)
-                for answer in (category.get("answers") or [])
-                if clean_text(answer)
-            ]
+            answers = [clean_text(answer) for answer in (category.get("answers") or []) if clean_text(answer)]
             if not description:
                 return None
-            categories.append(
-                {"description": description, "answers": answers}
-            )
-        if not categories or not any(
-            category["answers"] for category in categories
-        ):
+            categories.append({"description": description, "answers": answers})
+        if not categories or not any(category["answers"] for category in categories):
             return None
         return {
             "categories": categories,
-            "distractors": [
-                clean_text(value)
-                for value in payload.get("distractors", [])
-                if clean_text(value)
-            ],
+            "distractors": [clean_text(value) for value in payload.get("distractors", []) if clean_text(value)],
         }
     return None
 
 
-def parse_catalog_question(
-    row: dict, bank_id: str, index: int
-) -> tuple[dict | None, str]:
+def parse_catalog_question(row: dict, bank_id: str, index: int) -> tuple[dict | None, str]:
     if len(row) != 1:
         return None, "invalid_question_wrapper"
     question_type, payload = next(iter(row.items()))
-    if question_type not in {
-        "numerical",
-        "multiple_choice",
-        "multiple_answers",
-        "categorization",
-    } or not isinstance(payload, dict):
+    if question_type not in {"numerical", "multiple_choice", "multiple_answers", "categorization"} or not isinstance(
+        payload, dict
+    ):
         return None, "unsupported_type"
     if has_image_reference(payload):
         return None, "image_reference"
@@ -193,11 +155,7 @@ def parse_catalog_question(
         "question": text,
         "question_type": question_type,
         "answer_key": answer_key,
-        "feedback": (
-            clean_text(feedback.get("general"))
-            if isinstance(feedback, dict)
-            else ""
-        ),
+        "feedback": (clean_text(feedback.get("general")) if isinstance(feedback, dict) else ""),
     }
     if question_type == "multiple_choice":
         question.update(answer_key)
@@ -219,11 +177,7 @@ def parse_question(row: dict, bank_id: str, index: int) -> tuple[dict | None, st
         return None, "invalid_answers"
     choices, gold_idx = parsed_answers
     feedback = payload.get("feedback", {})
-    general_feedback = (
-        clean_text(feedback.get("general"))
-        if isinstance(feedback, dict)
-        else ""
-    )
+    general_feedback = clean_text(feedback.get("general")) if isinstance(feedback, dict) else ""
     return (
         {
             "question_id": clean_text(payload.get("id")) or f"{bank_id}_q{index:03d}",
@@ -345,11 +299,7 @@ def canonical_bank_paths(root: Path) -> list[Path]:
         grouped.setdefault(path.parent, []).append(path)
     selected = []
     for folder, paths in grouped.items():
-        preferred = [
-            path
-            for path in paths
-            if path.stem.lower() == folder.name.lower()
-        ]
+        preferred = [path for path in paths if path.stem.lower() == folder.name.lower()]
         selected.append(sorted(preferred or paths)[0])
     return sorted(selected)
 
@@ -364,9 +314,7 @@ def extract_catalog(root: Path, min_questions: int = 2) -> tuple[list[dict], dic
         except Exception:
             reasons["yaml_error"] += 1
             continue
-        if not isinstance(document, dict) or not isinstance(
-            document.get("questions"), list
-        ):
+        if not isinstance(document, dict) or not isinstance(document.get("questions"), list):
             reasons["invalid_document"] += 1
             continue
         info = document.get("bank_info", {})
@@ -383,9 +331,7 @@ def extract_catalog(root: Path, min_questions: int = 2) -> tuple[list[dict], dic
             if not isinstance(row, dict):
                 bank_reasons["invalid_question"] += 1
                 continue
-            question, reason = parse_catalog_question(
-                row, bank_id, index
-            )
+            question, reason = parse_catalog_question(row, bank_id, index)
             bank_reasons[reason] += 1
             if question is not None:
                 questions.append(question)
@@ -402,9 +348,7 @@ def extract_catalog(root: Path, min_questions: int = 2) -> tuple[list[dict], dic
         selected.append(
             {
                 "bank_id": bank_id,
-                "concept_id": re.sub(
-                    r"[^a-z0-9]+", "_", bank_id.lower()
-                ).strip("_"),
+                "concept_id": re.sub(r"[^a-z0-9]+", "_", bank_id.lower()).strip("_"),
                 "title": clean_text(info.get("title")) or path.parent.name,
                 "description": clean_text(info.get("description")),
                 "status": status,
@@ -418,11 +362,7 @@ def extract_catalog(root: Path, min_questions: int = 2) -> tuple[list[dict], dic
         "selected_banks": len(selected),
         "selected_questions": sum(len(bank["questions"]) for bank in selected),
         "question_types": dict(
-            Counter(
-                question["question_type"]
-                for bank in selected
-                for question in bank["questions"]
-            )
+            Counter(question["question_type"] for bank in selected for question in bank["questions"])
         ),
         "units": dict(Counter(bank["unit"] for bank in selected)),
         "filter_reasons": dict(reasons),
@@ -441,11 +381,7 @@ def main() -> None:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--stats-out", type=Path)
     parser.add_argument("--min-questions", type=int, default=6)
-    parser.add_argument(
-        "--mode",
-        choices=("choice_scoring", "catalog"),
-        default="choice_scoring",
-    )
+    parser.add_argument("--mode", choices=("choice_scoring", "catalog"), default="choice_scoring")
     args = parser.parse_args()
 
     if args.mode == "catalog":

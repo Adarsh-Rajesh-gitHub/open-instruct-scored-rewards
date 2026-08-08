@@ -139,7 +139,11 @@ def main() -> None:
         pairs.append({"id": f"p{len(pairs):04d}", "moment": m, "left": left, "right": right})
     out = args.out or os.path.join(os.path.dirname(args.pool), f"pairs_{new_arm}_vs_{reference}.json")
     with open(out, "w") as handle:
-        json.dump({"note": f"{new_arm} against {reference}, blinded, one turn each per moment", "pairs": pairs}, handle, indent=1)
+        json.dump(
+            {"note": f"{new_arm} against {reference}, blinded, one turn each per moment", "pairs": pairs},
+            handle,
+            indent=1,
+        )
 
     sides = collections.Counter(key[p["left"]]["arm"] for p in pairs)
     print(f"\nHUMAN TASK: {len(pairs)} pairs, {new_arm} vs {reference}")

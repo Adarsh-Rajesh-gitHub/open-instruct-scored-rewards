@@ -10,11 +10,9 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
 from projects.student_state_tutor import graph_state_ablation as graph
 from projects.student_state_tutor import oracle_state_ablation as base
-
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 NEW_CONDITIONS = ("concept_only", "shuffled_concept")
 
@@ -38,43 +36,19 @@ def generate_controls(args, rows: list[dict]) -> list[dict]:
     tokenizer.padding_side = "left"
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
-    model = AutoModelForCausalLM.from_pretrained(
-        args.teacher_model, dtype=torch.bfloat16
-    ).to(args.device)
+    model = AutoModelForCausalLM.from_pretrained(args.teacher_model, dtype=torch.bfloat16).to(args.device)
     model.eval()
 
     concepts = [row["graph_actual"]["concept"] for row in rows]
     shifted_concepts = concepts[1:] + concepts[:1]
     requests = []
-    for index, (row, shifted_concept) in enumerate(
-        zip(rows, shifted_concepts, strict=True)
-    ):
-        requests.append(
-            (
-                index,
-                "concept_only",
-                concept_tutor_prompt(tokenizer, row, row["graph_actual"]["concept"]),
-            )
-        )
-        requests.append(
-            (
-                index,
-                "shuffled_concept",
-                concept_tutor_prompt(tokenizer, row, shifted_concept),
-            )
-        )
+    for index, (row, shifted_concept) in enumerate(zip(rows, shifted_concepts, strict=True)):
+        requests.append((index, "concept_only", concept_tutor_prompt(tokenizer, row, row["graph_actual"]["concept"])))
+        requests.append((index, "shuffled_concept", concept_tutor_prompt(tokenizer, row, shifted_concept)))
     outputs = graph.batch_generate(
-        model,
-        tokenizer,
-        requests,
-        args.generation_batch_size,
-        args.max_input_tokens,
-        args.max_new_tokens,
-        args.device,
+        model, tokenizer, requests, args.generation_batch_size, args.max_input_tokens, args.max_new_tokens, args.device
     )
-    for row, output_map, shifted_concept in zip(
-        rows, outputs, shifted_concepts, strict=True
-    ):
+    for row, output_map, shifted_concept in zip(rows, outputs, shifted_concepts, strict=True):
         row["concept_control_responses"] = output_map
         row["shuffled_concept"] = shifted_concept
 
@@ -95,9 +69,7 @@ def attach_scores(rows: list[dict], score_sets: list[list[float]]) -> None:
             row["concept_control_scores"][condition] = {
                 "scores": scores,
                 "gold_probability": float(probabilities[row["gold_idx"]]),
-                "belief_margin": float(
-                    scores[row["gold_idx"]] - scores[row["belief_idx"]]
-                ),
+                "belief_margin": float(scores[row["gold_idx"]] - scores[row["belief_idx"]]),
                 "solved": int(np.argmax(scores) == row["gold_idx"]),
                 "leaked": base.leaks_answer(response, row),
             }
@@ -132,11 +104,7 @@ def summarize(rows: list[dict], seed: int) -> dict:
         result["paired_comparisons"][f"{left}_minus_{right}"] = {}
         for name in ("gold_probability", "belief_margin", "solved"):
             differences = np.asarray(
-                [
-                    metric(row, left, name) - metric(row, right, name)
-                    for row in rows
-                ],
-                dtype=np.float64,
+                [metric(row, left, name) - metric(row, right, name) for row in rows], dtype=np.float64
             )
             result["paired_comparisons"][f"{left}_minus_{right}"][name] = {
                 "mean": float(differences.mean()),
@@ -168,28 +136,14 @@ def main() -> None:
     results_path = args.out_dir / "results.json"
 
     if generations_path.exists() and not args.force_generation:
-        rows = [
-            json.loads(line)
-            for line in generations_path.read_text().splitlines()
-            if line.strip()
-        ]
+        rows = [json.loads(line) for line in generations_path.read_text().splitlines() if line.strip()]
     else:
-        rows = [
-            json.loads(line)
-            for line in args.input.read_text().splitlines()
-            if line.strip()
-        ]
+        rows = [json.loads(line) for line in args.input.read_text().splitlines() if line.strip()]
         rows = generate_controls(args, rows)
-        generations_path.write_text(
-            "".join(json.dumps(row) + "\n" for row in rows)
-        )
+        generations_path.write_text("".join(json.dumps(row) + "\n" for row in rows))
 
     score_inputs = [
-        base.make_score_record(
-            row["question"],
-            row["choices"],
-            row["concept_control_responses"][condition],
-        )
+        base.make_score_record(row["question"], row["choices"], row["concept_control_responses"][condition])
         for row in rows
         for condition in NEW_CONDITIONS
     ]

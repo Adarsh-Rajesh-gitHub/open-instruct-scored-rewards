@@ -136,8 +136,7 @@ class PedagogyHead(GroupScorer):
             self.length_zero_hi = int(zhi) if zhi else self.length_hi
             if not self.length_zero_lo <= self.length_lo < self.length_hi <= self.length_zero_hi:
                 raise ValueError(
-                    f"length_ramp must bracket length_band: got ramp {length_ramp!r} "
-                    f"around band {length_band!r}"
+                    f"length_ramp must bracket length_band: got ramp {length_ramp!r} around band {length_band!r}"
                 )
         elif self.length_weight:
             raise ValueError("length_weight without length_band would reward every turn equally")

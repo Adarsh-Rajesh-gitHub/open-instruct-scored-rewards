@@ -21,7 +21,6 @@ import re
 from collections import Counter
 from pathlib import Path
 
-
 LABELS = ("correct", "sign_error", "operation_error", "off_by_one")
 STUDENT_SYSTEM = """You are a student solving a short math multiple-choice problem.
 Try the problem yourself. Explain your thinking briefly, then finish with
@@ -42,28 +41,13 @@ def make_problem(rng: random.Random, index: int) -> dict:
         b = rng.randint(2, 12)
         if family == 0:
             stem = f"Evaluate {a} + (-{b})."
-            values = {
-                "correct": a - b,
-                "sign_error": a + b,
-                "operation_error": a * b,
-                "off_by_one": a - b + 1,
-            }
+            values = {"correct": a - b, "sign_error": a + b, "operation_error": a * b, "off_by_one": a - b + 1}
         elif family == 1:
             stem = f"Evaluate {a} - (-{b})."
-            values = {
-                "correct": a + b,
-                "sign_error": a - b,
-                "operation_error": a * b,
-                "off_by_one": a + b + 1,
-            }
+            values = {"correct": a + b, "sign_error": a - b, "operation_error": a * b, "off_by_one": a + b + 1}
         elif family == 2:
             stem = f"Evaluate (-{a}) × (-{b})."
-            values = {
-                "correct": a * b,
-                "sign_error": -(a * b),
-                "operation_error": a + b,
-                "off_by_one": a * b + 1,
-            }
+            values = {"correct": a * b, "sign_error": -(a * b), "operation_error": a + b, "off_by_one": a * b + 1}
         else:
             stem = f"Evaluate (-{a}) × {b}."
             values = {
@@ -92,10 +76,7 @@ def make_problem(rng: random.Random, index: int) -> dict:
 
 def parse_choice(response: str, problem: dict) -> str | None:
     """Return the selected option letter without using a model judge."""
-    matches = re.findall(
-        r"(?i)(?:(?:correct\s+)?answer|choice)\s*(?:is\s*)?[:=-]?\s*\(?([A-D])\)?",
-        response,
-    )
+    matches = re.findall(r"(?i)(?:(?:correct\s+)?answer|choice)\s*(?:is\s*)?[:=-]?\s*\(?([A-D])\)?", response)
     if matches:
         return matches[-1].upper()
 
@@ -120,8 +101,8 @@ def option_label(problem: dict, letter: str | None) -> str | None:
 
 
 def load_model(model_name: str, requested_device: str = "auto"):
-    import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    import torch  # noqa: PLC0415
+    from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: PLC0415
 
     if requested_device == "auto":
         device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
@@ -145,7 +126,7 @@ def batched(items: list, size: int):
 
 
 def generate_rows(args, model, tokenizer, device, problems: list[dict]) -> list[dict]:
-    import torch
+    import torch  # noqa: PLC0415
 
     prompts = []
     for problem in problems:
@@ -155,10 +136,7 @@ def generate_rows(args, model, tokenizer, device, problems: list[dict]) -> list[
         else:
             system = STUDENT_SYSTEM
             question = problem["question"]
-        messages = [
-            {"role": "system", "content": system},
-            {"role": "user", "content": question},
-        ]
+        messages = [{"role": "system", "content": system}, {"role": "user", "content": question}]
         rendered = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         for sample_index in range(args.samples_per_problem):
             prompts.append((problem, question, sample_index, rendered))
@@ -168,11 +146,7 @@ def generate_rows(args, model, tokenizer, device, problems: list[dict]) -> list[
     for batch_index, batch in enumerate(batched(prompts, args.generation_batch_size)):
         texts = [rendered for _, _, _, rendered in batch]
         encoded = tokenizer(
-            texts,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=args.max_input_tokens,
+            texts, return_tensors="pt", padding=True, truncation=True, max_length=args.max_input_tokens
         )
         encoded = {key: value.to(device) for key, value in encoded.items()}
         with torch.inference_mode():
@@ -208,8 +182,8 @@ def observer_text(row: dict) -> str:
 
 
 def extract_hidden(args, model, tokenizer, device, rows: list[dict], out_path: Path) -> None:
-    import numpy as np
-    import torch
+    import numpy as np  # noqa: PLC0415
+    import torch  # noqa: PLC0415
 
     usable = [row for row in rows if row["label"] in LABELS]
     n_layers = model.config.num_hidden_layers
@@ -219,21 +193,14 @@ def extract_hidden(args, model, tokenizer, device, rows: list[dict], out_path: P
     for batch_index, batch in enumerate(batched(usable, args.extraction_batch_size)):
         rendered = [
             tokenizer.apply_chat_template(
-                [
-                    {"role": "system", "content": OBSERVER_SYSTEM},
-                    {"role": "user", "content": observer_text(row)},
-                ],
+                [{"role": "system", "content": OBSERVER_SYSTEM}, {"role": "user", "content": observer_text(row)}],
                 tokenize=False,
                 add_generation_prompt=True,
             )
             for row in batch
         ]
         encoded = tokenizer(
-            rendered,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=args.max_input_tokens,
+            rendered, return_tensors="pt", padding=True, truncation=True, max_length=args.max_input_tokens
         )
         encoded = {key: value.to(device) for key, value in encoded.items()}
         with torch.inference_mode():
@@ -274,21 +241,29 @@ def simple_features(text: str) -> list[float]:
 
 
 def make_folds(labels, groups, class_names, seed: int):
-    import numpy as np
-    from sklearn.model_selection import StratifiedGroupKFold
+    import numpy as np  # noqa: PLC0415
+    from sklearn.model_selection import StratifiedGroupKFold  # noqa: PLC0415
 
     class_group_counts = [
-        len(set(groups[index] for index, label in enumerate(labels) if label == class_name)) for class_name in class_names
+        len(set(groups[index] for index, label in enumerate(labels) if label == class_name))
+        for class_name in class_names
     ]
     n_splits = min(5, min(class_group_counts))
     if n_splits < 2:
-        raise ValueError(f"need at least two problem groups per class, got {dict(zip(class_names, class_group_counts))}")
+        raise ValueError(
+            f"need at least two problem groups per class, got {dict(zip(class_names, class_group_counts))}"
+        )
     splitter = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
     return list(splitter.split(np.zeros(len(labels)), labels, groups))
 
 
 def score_predictions(labels, predictions, class_names) -> dict:
-    from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, precision_recall_fscore_support
+    from sklearn.metrics import (  # noqa: PLC0415
+        accuracy_score,
+        balanced_accuracy_score,
+        f1_score,
+        precision_recall_fscore_support,
+    )
 
     precision, recall, f1, support = precision_recall_fscore_support(
         labels, predictions, labels=class_names, zero_division=0
@@ -311,16 +286,15 @@ def score_predictions(labels, predictions, class_names) -> dict:
 
 
 def fit_dense(features, labels, folds):
-    import numpy as np
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.pipeline import make_pipeline
-    from sklearn.preprocessing import StandardScaler
+    import numpy as np  # noqa: PLC0415
+    from sklearn.linear_model import LogisticRegression  # noqa: PLC0415
+    from sklearn.pipeline import make_pipeline  # noqa: PLC0415
+    from sklearn.preprocessing import StandardScaler  # noqa: PLC0415
 
     predictions = np.empty(len(labels), dtype=object)
     for train, test in folds:
         classifier = make_pipeline(
-            StandardScaler(),
-            LogisticRegression(C=1.0, class_weight="balanced", max_iter=3000, random_state=0),
+            StandardScaler(), LogisticRegression(C=1.0, class_weight="balanced", max_iter=3000, random_state=0)
         )
         classifier.fit(features[train], labels[train])
         predictions[test] = classifier.predict(features[test])
@@ -328,10 +302,10 @@ def fit_dense(features, labels, folds):
 
 
 def fit_tfidf(texts, labels, folds):
-    import numpy as np
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.pipeline import FeatureUnion, make_pipeline
+    import numpy as np  # noqa: PLC0415
+    from sklearn.feature_extraction.text import TfidfVectorizer  # noqa: PLC0415
+    from sklearn.linear_model import LogisticRegression  # noqa: PLC0415
+    from sklearn.pipeline import FeatureUnion, make_pipeline  # noqa: PLC0415
 
     predictions = np.empty(len(labels), dtype=object)
     for train, test in folds:
@@ -342,8 +316,7 @@ def fit_tfidf(texts, labels, folds):
             ]
         )
         classifier = make_pipeline(
-            vectorizer,
-            LogisticRegression(C=2.0, class_weight="balanced", max_iter=3000, random_state=0),
+            vectorizer, LogisticRegression(C=2.0, class_weight="balanced", max_iter=3000, random_state=0)
         )
         classifier.fit(texts[train], labels[train])
         predictions[test] = classifier.predict(texts[test])
@@ -353,8 +326,8 @@ def fit_tfidf(texts, labels, folds):
 def cluster_bootstrap_balanced_accuracy(
     labels, predictions, groups, class_names, seed: int, samples: int = 2000
 ) -> list[float]:
-    import numpy as np
-    from sklearn.metrics import balanced_accuracy_score
+    import numpy as np  # noqa: PLC0415
+    from sklearn.metrics import balanced_accuracy_score  # noqa: PLC0415
 
     rng = np.random.default_rng(seed)
     unique_groups = np.unique(groups)
@@ -369,7 +342,7 @@ def cluster_bootstrap_balanced_accuracy(
 
 
 def evaluate(args, hidden_path: Path, out_path: Path) -> dict:
-    import numpy as np
+    import numpy as np  # noqa: PLC0415
 
     blob = np.load(hidden_path, allow_pickle=False)
     hidden = blob["hidden"].astype(np.float32)

@@ -15,7 +15,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 ARMS = ("dense", "engram")
 ARM_LABELS = {"dense": "Dense", "engram": "Engram"}
 COLORS = {"dense": "tab:orange", "engram": "tab:blue"}
@@ -34,10 +33,7 @@ def load_reports(input_dir: Path) -> dict[str, list[dict[str, Any]]]:
         paths = sorted(input_dir.glob(f"{arm}_step*.json"))
         if not paths:
             raise FileNotFoundError(f"No {arm} reports found under {input_dir}.")
-        reports[arm] = sorted(
-            [json.loads(path.read_text()) for path in paths],
-            key=lambda row: row["source_step"],
-        )
+        reports[arm] = sorted([json.loads(path.read_text()) for path in paths], key=lambda row: row["source_step"])
     return reports
 
 
@@ -61,19 +57,13 @@ def save_figure(fig: plt.Figure, output: Path) -> None:
     plt.close(fig)
 
 
-def plot_accuracy_by_checkpoint(
-    reports: dict[str, list[dict[str, Any]]],
-    output_dir: Path,
-) -> None:
+def plot_accuracy_by_checkpoint(reports: dict[str, list[dict[str, Any]]], output_dir: Path) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.8), sharey=True)
     for axis, arm in zip(axes, ARMS):
         rows = reports[arm]
         steps = [row["source_step"] for row in rows]
         axis.plot(
-            steps,
-            [task_accuracy(row["source_before"]) for row in rows],
-            marker="o",
-            label="Early checkpoint, untuned",
+            steps, [task_accuracy(row["source_before"]) for row in rows], marker="o", label="Early checkpoint, untuned"
         )
         axis.plot(
             steps,
@@ -103,10 +93,7 @@ def plot_accuracy_by_checkpoint(
     save_figure(fig, output_dir / "accuracy_by_source_checkpoint.png")
 
 
-def plot_alpha_sweep(
-    reports: dict[str, list[dict[str, Any]]],
-    output_dir: Path,
-) -> None:
+def plot_alpha_sweep(reports: dict[str, list[dict[str, Any]]], output_dir: Path) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.8), sharey=True)
     for axis, arm in zip(axes, ARMS):
         for report in reports[arm]:
@@ -134,33 +121,15 @@ def plot_alpha_sweep(
     save_figure(fig, output_dir / "transfer_accuracy_vs_alpha.png")
 
 
-def plot_alpha_heatmaps(
-    reports: dict[str, list[dict[str, Any]]],
-    output_dir: Path,
-) -> None:
+def plot_alpha_heatmaps(reports: dict[str, list[dict[str, Any]]], output_dir: Path) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.8), sharey=True)
     for axis, arm in zip(axes, ARMS):
         rows = reports[arm]
         alphas = [item["alpha"] for item in rows[0]["task_vector_sweep"]]
-        matrix = np.array(
-            [
-                [task_accuracy(item["metrics"]) for item in row["task_vector_sweep"]]
-                for row in rows
-            ]
-        )
-        image = axis.imshow(
-            matrix,
-            aspect="auto",
-            origin="lower",
-            vmin=0,
-            vmax=100,
-            cmap="viridis",
-        )
+        matrix = np.array([[task_accuracy(item["metrics"]) for item in row["task_vector_sweep"]] for row in rows])
+        image = axis.imshow(matrix, aspect="auto", origin="lower", vmin=0, vmax=100, cmap="viridis")
         axis.set_xticks(range(len(alphas)), [str(value) for value in alphas])
-        axis.set_yticks(
-            range(len(rows)),
-            [str(row["source_step"]) for row in rows],
-        )
+        axis.set_yticks(range(len(rows)), [str(row["source_step"]) for row in rows])
         axis.set_xlabel("Task-vector scale α")
         axis.set_ylabel("Source checkpoint step")
         axis.set_title(ARM_LABELS[arm])
@@ -180,36 +149,15 @@ def plot_alpha_heatmaps(
     save_figure(fig, output_dir / "transfer_accuracy_heatmap.png")
 
 
-def plot_best_transfer_by_age(
-    reports: dict[str, list[dict[str, Any]]],
-    output_dir: Path,
-) -> None:
+def plot_best_transfer_by_age(reports: dict[str, list[dict[str, Any]]], output_dir: Path) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.8))
     for arm in ARMS:
         rows = reports[arm]
         ages = [row["checkpoint_age_steps"] for row in rows]
-        accuracies = [
-            task_accuracy(best_transfer(row)["metrics"])
-            for row in rows
-        ]
-        recoveries = [
-            gain_recovery(row, accuracy)
-            for row, accuracy in zip(rows, accuracies)
-        ]
-        axes[0].plot(
-            ages,
-            accuracies,
-            marker="o",
-            label=ARM_LABELS[arm],
-            color=COLORS[arm],
-        )
-        axes[1].plot(
-            ages,
-            recoveries,
-            marker="o",
-            label=ARM_LABELS[arm],
-            color=COLORS[arm],
-        )
+        accuracies = [task_accuracy(best_transfer(row)["metrics"]) for row in rows]
+        recoveries = [gain_recovery(row, accuracy) for row, accuracy in zip(rows, accuracies)]
+        axes[0].plot(ages, accuracies, marker="o", label=ARM_LABELS[arm], color=COLORS[arm])
+        axes[1].plot(ages, recoveries, marker="o", label=ARM_LABELS[arm], color=COLORS[arm])
     axes[0].set_title("Best transferred accuracy")
     axes[0].set_xlabel("Checkpoint age gap (pretraining steps)")
     axes[0].set_ylabel("Held-out routing accuracy (%)")
@@ -224,10 +172,7 @@ def plot_best_transfer_by_age(
     save_figure(fig, output_dir / "best_transfer_vs_checkpoint_age.png")
 
 
-def plot_interpolation(
-    reports: dict[str, list[dict[str, Any]]],
-    output_dir: Path,
-) -> None:
+def plot_interpolation(reports: dict[str, list[dict[str, Any]]], output_dir: Path) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.8), sharey=True)
     for axis, arm in zip(axes, ARMS):
         for report in reports[arm]:
@@ -249,11 +194,7 @@ def plot_interpolation(
 
 
 def plot_repair(
-    reports: dict[str, list[dict[str, Any]]],
-    output_dir: Path,
-    mode: str,
-    title: str,
-    filename: str,
+    reports: dict[str, list[dict[str, Any]]], output_dir: Path, mode: str, title: str, filename: str
 ) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.8), sharey=True)
     for axis, arm in zip(axes, ARMS):
@@ -275,10 +216,7 @@ def plot_repair(
     save_figure(fig, output_dir / filename)
 
 
-def plot_forgetting(
-    reports: dict[str, list[dict[str, Any]]],
-    output_dir: Path,
-) -> None:
+def plot_forgetting(reports: dict[str, list[dict[str, Any]]], output_dir: Path) -> None:
     fig, axes = plt.subplots(1, 3, figsize=(16, 4.6))
     metric_specs = (
         ("climbmix_loss_relative_change", "ClimbMix loss change (%)"),
@@ -309,10 +247,7 @@ def plot_forgetting(
     save_figure(fig, output_dir / "catastrophic_forgetting.png")
 
 
-def plot_forgetting_by_variant(
-    reports: dict[str, list[dict[str, Any]]],
-    output_dir: Path,
-) -> None:
+def plot_forgetting_by_variant(reports: dict[str, list[dict[str, Any]]], output_dir: Path) -> None:
     metric_specs = (
         ("climbmix_loss_relative_change", "ClimbMix loss change (%)"),
         ("wikitext_loss_relative_change", "WikiText-103 loss change (%)"),
@@ -330,37 +265,23 @@ def plot_forgetting_by_variant(
     for arm_index, arm in enumerate(ARMS):
         rows = reports[arm]
         steps = [row["source_step"] for row in rows]
-        variant_rows: dict[str, list[dict[str, float]]] = {
-            variant: [] for variant in variants
-        }
+        variant_rows: dict[str, list[dict[str, float]]] = {variant: [] for variant in variants}
         for report in rows:
             variant_rows["Early direct post-train"].append(
-                relative_forgetting_for_plot(
-                    report["source_before"]["general"],
-                    report["source_after"]["general"],
-                )
+                relative_forgetting_for_plot(report["source_before"]["general"], report["source_after"]["general"])
             )
             variant_rows["Final direct post-train"].append(
                 relative_forgetting_for_plot(
-                    report["final_before"]["general"],
-                    report["final_after_direct"]["general"],
+                    report["final_before"]["general"], report["final_after_direct"]["general"]
                 )
             )
-            variant_rows["Task-vector transfer"].append(
-                report["best_task_vector"]["forgetting_vs_final"]
-            )
-            variant_rows["Weight interpolation"].append(
-                report["best_interpolation"]["forgetting_vs_final"]
-            )
+            variant_rows["Task-vector transfer"].append(report["best_task_vector"]["forgetting_vs_final"])
+            variant_rows["Weight interpolation"].append(report["best_interpolation"]["forgetting_vs_final"])
             variant_rows["Task vector + 80 repair"].append(
-                report["repair"]["task_vector"]["curve"][-1][
-                    "forgetting_vs_final"
-                ]
+                report["repair"]["task_vector"]["curve"][-1]["forgetting_vs_final"]
             )
             variant_rows["Interpolation + 80 repair"].append(
-                report["repair"]["interpolation"]["curve"][-1][
-                    "forgetting_vs_final"
-                ]
+                report["repair"]["interpolation"]["curve"][-1]["forgetting_vs_final"]
             )
         for metric_index, (metric, title) in enumerate(metric_specs):
             axis = axes[arm_index, metric_index]
@@ -383,29 +304,17 @@ def plot_forgetting_by_variant(
     save_figure(fig, output_dir / "catastrophic_forgetting_by_variant.png")
 
 
-def relative_forgetting_for_plot(
-    baseline: dict[str, float],
-    candidate: dict[str, float],
-) -> dict[str, float]:
+def relative_forgetting_for_plot(baseline: dict[str, float], candidate: dict[str, float]) -> dict[str, float]:
     return {
-        "climbmix_loss_relative_change": (
-            candidate["climbmix_loss"] - baseline["climbmix_loss"]
-        )
+        "climbmix_loss_relative_change": (candidate["climbmix_loss"] - baseline["climbmix_loss"])
         / baseline["climbmix_loss"],
-        "wikitext_loss_relative_change": (
-            candidate["wikitext_loss"] - baseline["wikitext_loss"]
-        )
+        "wikitext_loss_relative_change": (candidate["wikitext_loss"] - baseline["wikitext_loss"])
         / baseline["wikitext_loss"],
-        "lambada_accuracy_change": (
-            candidate["lambada_accuracy"] - baseline["lambada_accuracy"]
-        ),
+        "lambada_accuracy_change": (candidate["lambada_accuracy"] - baseline["lambada_accuracy"]),
     }
 
 
-def write_summary_csv(
-    reports: dict[str, list[dict[str, Any]]],
-    output_dir: Path,
-) -> None:
+def write_summary_csv(reports: dict[str, list[dict[str, Any]]], output_dir: Path) -> None:
     fields = (
         "arm",
         "source_step",
@@ -446,23 +355,16 @@ def write_summary_csv(
                         "final_direct_accuracy": task_accuracy(report["final_after_direct"]),
                         "best_alpha": transfer["alpha"],
                         "best_transfer_accuracy": transfer_accuracy,
-                        "accuracy_gain_recovery": gain_recovery(
-                            report,
-                            transfer_accuracy,
-                        ),
+                        "accuracy_gain_recovery": gain_recovery(report, transfer_accuracy),
                         "climbmix_loss_relative_change": transfer["forgetting_vs_final"][
                             "climbmix_loss_relative_change"
                         ],
                         "wikitext_loss_relative_change": transfer["forgetting_vs_final"][
                             "wikitext_loss_relative_change"
                         ],
-                        "lambada_accuracy_change": transfer["forgetting_vs_final"][
-                            "lambada_accuracy_change"
-                        ],
+                        "lambada_accuracy_change": transfer["forgetting_vs_final"]["lambada_accuracy_change"],
                         "best_lambda": interpolation["lambda"],
-                        "best_interpolation_accuracy": task_accuracy(
-                            interpolation["metrics"]
-                        ),
+                        "best_interpolation_accuracy": task_accuracy(interpolation["metrics"]),
                         "repaired_accuracy_80_steps": task_accuracy(repair_curve[-1]),
                     }
                 )
@@ -494,9 +396,7 @@ def main() -> None:
     plot_forgetting(reports, args.output_dir)
     plot_forgetting_by_variant(reports, args.output_dir)
     write_summary_csv(reports, args.output_dir)
-    (args.output_dir / "combined_results.json").write_text(
-        json.dumps(reports, indent=2) + "\n"
-    )
+    (args.output_dir / "combined_results.json").write_text(json.dumps(reports, indent=2) + "\n")
     print(f"wrote plots and summaries to {args.output_dir}")
 
 

@@ -46,8 +46,7 @@ def load_arc(limit: int) -> list[dict]:
         texts = item["choices"]["text"]
         if item["answerKey"] not in labels:
             continue
-        rows.append({"question": item["question"], "options": texts,
-                     "gold": labels.index(item["answerKey"])})
+        rows.append({"question": item["question"], "options": texts, "gold": labels.index(item["answerKey"])})
         if len(rows) >= limit:
             break
     return rows
@@ -58,14 +57,18 @@ def load_mmlu_stem(limit: int) -> list[dict]:
 
     # A stem slice rather than all 57 subjects: the training questions were maths and science at
     # school level, so this is where a change is most likely to show and cheapest to detect.
-    subjects = ["high_school_mathematics", "high_school_biology", "high_school_chemistry",
-                "high_school_physics", "elementary_mathematics"]
+    subjects = [
+        "high_school_mathematics",
+        "high_school_biology",
+        "high_school_chemistry",
+        "high_school_physics",
+        "elementary_mathematics",
+    ]
     rows = []
     for subject in subjects:
         data = load_dataset("cais/mmlu", subject, split="test")
         for item in data:
-            rows.append({"question": item["question"], "options": item["choices"],
-                         "gold": int(item["answer"])})
+            rows.append({"question": item["question"], "options": item["choices"], "gold": int(item["answer"])})
             if len(rows) >= limit:
                 return rows
     return rows
@@ -95,11 +98,11 @@ def prompt_for(row: dict) -> str:
     # was a property of the harness, not the model. Asking for the answer on a final line, with
     # room to reach it, measures the model instead.
     if row["options"] is None:
-        return (f"{row['question']}\n\n"
-                "Reason briefly, then end with a final line of the form 'Answer: <number>'.")
+        return f"{row['question']}\n\nReason briefly, then end with a final line of the form 'Answer: <number>'."
     options = "\n".join(f"{LETTERS[i]}. {t}" for i, t in enumerate(row["options"]))
-    return (f"{row['question']}\n\n{options}\n\n"
-            "Reason briefly, then end with a final line of the form 'Answer: <letter>'.")
+    return (
+        f"{row['question']}\n\n{options}\n\nReason briefly, then end with a final line of the form 'Answer: <letter>'."
+    )
 
 
 NUMBER = r"-?\d[\d,]*\.?\d*"
@@ -118,8 +121,7 @@ def parse(text: str, row: dict) -> str | None:
         return None
     if row["options"] is None:
         body = text.replace("$", "").replace("\\", "")
-        for pattern in (rf"(?:answer|total|result)\s*(?:is|:|=)\s*\**\s*({NUMBER})",
-                        rf"boxed\{{\s*({NUMBER})"):
+        for pattern in (rf"(?:answer|total|result)\s*(?:is|:|=)\s*\**\s*({NUMBER})", rf"boxed\{{\s*({NUMBER})"):
             found = re.findall(pattern, body, re.IGNORECASE)
             if found:
                 return found[-1].replace(",", "").rstrip(".")
@@ -127,8 +129,11 @@ def parse(text: str, row: dict) -> str | None:
         return found[-1].replace(",", "").rstrip(".") if found else None
 
     valid = LETTERS[: len(row["options"])]
-    for pattern in (rf"answer\s*(?:is|:|=)\s*\**\s*\(?([{valid}])\b",
-                    rf"^\**\(?([{valid}])[.):]", rf"\*\*([{valid}])\*\*"):
+    for pattern in (
+        rf"answer\s*(?:is|:|=)\s*\**\s*\(?([{valid}])\b",
+        rf"^\**\(?([{valid}])[.):]",
+        rf"\*\*([{valid}])\*\*",
+    ):
         found = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
         if found:
             return found[-1].upper()
@@ -138,10 +143,13 @@ def parse(text: str, row: dict) -> str | None:
     # question as readily as the conclusion. Requiring exactly one option in the closing words
     # is what makes this safe for short options rather than only for long ones.
     tail = text[-120:].lower()
-    named = [i for i, o in enumerate(row["options"])
-             # Boundaries that let a sentence-final "12." match while "12.5" and "120" do not:
-             # a trailing full stop is punctuation, a trailing digit is a different number.
-             if o and re.search(rf"(?<![\w.]){re.escape(o.lower())}(?!\w)(?!\.\d)", tail)]
+    named = [
+        i
+        for i, o in enumerate(row["options"])
+        # Boundaries that let a sentence-final "12." match while "12.5" and "120" do not:
+        # a trailing full stop is punctuation, a trailing digit is a different number.
+        if o and re.search(rf"(?<![\w.]){re.escape(o.lower())}(?!\w)(?!\.\d)", tail)
+    ]
     if len(named) == 1:
         return LETTERS[named[0]]
     hit = re.search(rf"\b([{valid}])\b", text[:60])
@@ -174,9 +182,15 @@ def score_by_loglikelihood(llm, tokenizer, rows: list[dict], lora, args, task: s
     for row in rows:
         options = "\n".join(f"{LETTERS[i]}. {t}" for i, t in enumerate(row["options"]))
         context = tokenizer.apply_chat_template(
-            [{"role": "user", "content": f"{row['question']}\n\n{options}\n\n"
-                                         "Answer with the letter of the correct option."}],
-            tokenize=False, add_generation_prompt=True)
+            [
+                {
+                    "role": "user",
+                    "content": f"{row['question']}\n\n{options}\n\nAnswer with the letter of the correct option.",
+                }
+            ],
+            tokenize=False,
+            add_generation_prompt=True,
+        )
         ctx_ids = tokenizer(context, add_special_tokens=False).input_ids
         for i in range(len(row["options"])):
             full = tokenizer(context + LETTERS[i], add_special_tokens=False).input_ids
@@ -184,8 +198,9 @@ def score_by_loglikelihood(llm, tokenizer, rows: list[dict], lora, args, task: s
             spans.append(len(ctx_ids))
 
     # max_tokens=1 because nothing is being generated; the scores come from prompt_logprobs.
-    outputs = llm.generate(prompts, SamplingParams(temperature=0.0, max_tokens=1, prompt_logprobs=0),
-                           lora_request=lora)
+    outputs = llm.generate(
+        prompts, SamplingParams(temperature=0.0, max_tokens=1, prompt_logprobs=0), lora_request=lora
+    )
 
     right, k, per_item = 0, 0, []
     for row in rows:
@@ -204,9 +219,16 @@ def score_by_loglikelihood(llm, tokenizer, rows: list[dict], lora, args, task: s
         right += hit
         per_item.append(int(hit))
 
-    print(f"  {task:<15} {right}/{len(rows)} = {right/len(rows):.1%}   (loglikelihood, 0 unparseable)")
-    return {"n": len(rows), "correct": right, "accuracy": right / len(rows), "unparseable": 0,
-            "truncated": 0, "mode": "loglikelihood", "per_item": per_item}
+    print(f"  {task:<15} {right}/{len(rows)} = {right / len(rows):.1%}   (loglikelihood, 0 unparseable)")
+    return {
+        "n": len(rows),
+        "correct": right,
+        "accuracy": right / len(rows),
+        "unparseable": 0,
+        "truncated": 0,
+        "mode": "loglikelihood",
+        "per_item": per_item,
+    }
 
 
 def main() -> None:
@@ -218,8 +240,12 @@ def main() -> None:
     parser.add_argument("--tasks", default="arc_challenge,mmlu_stem,gsm8k")
     parser.add_argument("--limit", type=int, default=400, help="items per task")
     parser.add_argument("--max-tokens", type=int, default=512)
-    parser.add_argument("--mc-mode", choices=["loglikelihood", "generate"], default="loglikelihood",
-                        help="how to answer multiple-choice items; gsm8k always generates")
+    parser.add_argument(
+        "--mc-mode",
+        choices=["loglikelihood", "generate"],
+        default="loglikelihood",
+        help="how to answer multiple-choice items; gsm8k always generates",
+    )
     parser.add_argument("--vllm-util", type=float, default=0.70)
     parser.add_argument("--out", default="data/benchmarks")
     args = parser.parse_args()
@@ -244,8 +270,7 @@ def main() -> None:
         lora = LoRARequest("policy", 1, args.adapter)
 
     tokenizer = AutoTokenizer.from_pretrained(args.policy)
-    llm = LLM(model=args.policy, gpu_memory_utilization=args.vllm_util,
-              max_model_len=2048, **engine_kwargs)
+    llm = LLM(model=args.policy, gpu_memory_utilization=args.vllm_util, max_model_len=2048, **engine_kwargs)
     # Greedy: this is a capability measurement, and sampling would add variance that has nothing
     # to do with the thing being compared.
     sampling = SamplingParams(temperature=0.0, max_tokens=args.max_tokens)
@@ -255,9 +280,12 @@ def main() -> None:
         if rows and rows[0]["options"] is not None and args.mc_mode == "loglikelihood":
             results[task] = score_by_loglikelihood(llm, tokenizer, rows, lora, args, task)
             continue
-        prompts = [tokenizer.apply_chat_template(
-            [{"role": "user", "content": prompt_for(r)}], tokenize=False, add_generation_prompt=True)
-            for r in rows]
+        prompts = [
+            tokenizer.apply_chat_template(
+                [{"role": "user", "content": prompt_for(r)}], tokenize=False, add_generation_prompt=True
+            )
+            for r in rows
+        ]
         outputs = llm.generate(prompts, sampling, lora_request=lora)
         right = unparseable = truncated = 0
         raw, per_item = [], []
@@ -273,13 +301,20 @@ def main() -> None:
             # A generation stopped by the token budget rather than by the model is the signature
             # of the harness bug this replaced, so it is counted rather than left to be inferred.
             truncated += out.outputs[0].finish_reason == "length"
-            raw.append({"got": got, "want": want, "finish": out.outputs[0].finish_reason,
-                        "text": text[:600]})
-        results[task] = {"n": len(rows), "correct": right, "accuracy": right / len(rows),
-                         "unparseable": unparseable, "truncated": truncated,
-                         "mode": "generate", "per_item": per_item}
-        print(f"  {task:<15} {right}/{len(rows)} = {right/len(rows):.1%}"
-              f"   ({unparseable} unparseable, {truncated} hit the token limit)")
+            raw.append({"got": got, "want": want, "finish": out.outputs[0].finish_reason, "text": text[:600]})
+        results[task] = {
+            "n": len(rows),
+            "correct": right,
+            "accuracy": right / len(rows),
+            "unparseable": unparseable,
+            "truncated": truncated,
+            "mode": "generate",
+            "per_item": per_item,
+        }
+        print(
+            f"  {task:<15} {right}/{len(rows)} = {right / len(rows):.1%}"
+            f"   ({unparseable} unparseable, {truncated} hit the token limit)"
+        )
         os.makedirs(args.out, exist_ok=True)
         with open(os.path.join(args.out, f"{args.tag}.{task}.raw.jsonl"), "w") as handle:
             for item in raw:
@@ -288,8 +323,11 @@ def main() -> None:
     os.makedirs(args.out, exist_ok=True)
     path = os.path.join(args.out, f"{args.tag}.json")
     with open(path, "w") as handle:
-        json.dump({"tag": args.tag, "policy": args.policy, "adapter": args.adapter,
-                   "limit": args.limit, "results": results}, handle, indent=1)
+        json.dump(
+            {"tag": args.tag, "policy": args.policy, "adapter": args.adapter, "limit": args.limit, "results": results},
+            handle,
+            indent=1,
+        )
     print(f"\nwrote {path}")
 
 

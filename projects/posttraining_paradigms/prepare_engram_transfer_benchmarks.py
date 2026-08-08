@@ -8,7 +8,6 @@ from pathlib import Path
 
 import torch
 from datasets import load_dataset
-
 from train.tokenizer import get_tok
 
 
@@ -25,11 +24,7 @@ def main() -> None:
     args = parse_args()
     tokenizer = get_tok()
 
-    wiki = load_dataset(
-        "Salesforce/wikitext",
-        "wikitext-103-raw-v1",
-        split="test",
-    )
+    wiki = load_dataset("Salesforce/wikitext", "wikitext-103-raw-v1", split="test")
     wiki_ids: list[int] = []
     for text in wiki["text"]:
         if not text.strip():
@@ -38,10 +33,7 @@ def main() -> None:
         wiki_ids.append(tokenizer.EOT)
         if len(wiki_ids) >= args.wikitext_tokens:
             break
-    wiki_tensor = torch.tensor(
-        wiki_ids[: args.wikitext_tokens],
-        dtype=torch.int32,
-    )
+    wiki_tensor = torch.tensor(wiki_ids[: args.wikitext_tokens], dtype=torch.int32)
 
     lambada = load_dataset("EleutherAI/lambada_openai", "en", split="test")
     contexts: list[torch.Tensor] = []
@@ -50,12 +42,7 @@ def main() -> None:
         token_ids = tokenizer.encode(text)
         if len(token_ids) < 2:
             continue
-        contexts.append(
-            torch.tensor(
-                token_ids[-(args.lambada_context + 1) : -1],
-                dtype=torch.int32,
-            )
-        )
+        contexts.append(torch.tensor(token_ids[-(args.lambada_context + 1) : -1], dtype=torch.int32))
         targets.append(token_ids[-1])
         if len(contexts) >= args.lambada_examples:
             break

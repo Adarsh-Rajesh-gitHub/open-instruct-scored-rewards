@@ -9,8 +9,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
 from projects.student_state_tutor.oracle_state_ablation import (
     bootstrap_interval,
     leaks_answer,
@@ -19,7 +17,7 @@ from projects.student_state_tutor.oracle_state_ablation import (
     softmax,
 )
 from projects.student_state_tutor.teacher_action_ablation import CONDITIONS
-
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 GENERATION_SYSTEM = """You are a patient physics tutor.
 Realize the supplied structured action as one concise intervention of at most
@@ -30,11 +28,7 @@ faithful to that selected action rather than silently changing it."""
 
 
 def load_jsonl(path: Path) -> list[dict]:
-    return [
-        json.loads(line)
-        for line in path.read_text().splitlines()
-        if line.strip()
-    ]
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
 
 def flatten_questions(banks: list[dict]) -> list[dict]:
@@ -66,10 +60,7 @@ def attach_baseline_scores(questions: list[dict], scores: list[list[float]]) -> 
 
 def screen_questions(args, banks: list[dict]) -> list[dict]:
     questions = flatten_questions(banks)
-    records = [
-        make_score_record(row["question"], row["choices"], "")
-        for row in questions
-    ]
+    records = [make_score_record(row["question"], row["choices"], "") for row in questions]
     scores = score_records(args, records)
     attach_baseline_scores(questions, scores)
     gc.collect()
@@ -79,24 +70,15 @@ def screen_questions(args, banks: list[dict]) -> list[dict]:
 
 
 def build_transfer_rows(
-    banks: list[dict],
-    action_rows: list[dict],
-    screened_questions: list[dict],
-    limit: int,
+    banks: list[dict], action_rows: list[dict], screened_questions: list[dict], limit: int
 ) -> tuple[list[dict], dict]:
     bank_map = {bank["concept_id"]: bank for bank in banks}
     wrong_by_concept: dict[str, list[dict]] = {}
     for concept_id in bank_map:
         wrong_by_concept[concept_id] = [
-            row
-            for row in screened_questions
-            if row["concept_id"] == concept_id and not row["baseline"]["solved"]
+            row for row in screened_questions if row["concept_id"] == concept_id and not row["baseline"]["solved"]
         ]
-    eligible = {
-        concept_id
-        for concept_id, rows in wrong_by_concept.items()
-        if len(rows) >= 2
-    }
+    eligible = {concept_id for concept_id, rows in wrong_by_concept.items() if len(rows) >= 2}
     output = []
     for action_row in action_rows:
         concept_id = action_row["oracle_target"]
@@ -133,13 +115,8 @@ def build_transfer_rows(
             break
     stats = {
         "screened_questions": len(screened_questions),
-        "baseline_solved": sum(
-            row["baseline"]["solved"] for row in screened_questions
-        ),
-        "wrong_by_concept": {
-            concept_id: len(rows)
-            for concept_id, rows in wrong_by_concept.items()
-        },
+        "baseline_solved": sum(row["baseline"]["solved"] for row in screened_questions),
+        "wrong_by_concept": {concept_id: len(rows) for concept_id, rows in wrong_by_concept.items()},
         "eligible_concepts": sorted(eligible),
         "transfer_rows": len(output),
     }
@@ -181,11 +158,10 @@ def generate_interventions(args, rows: list[dict]) -> None:
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
     model = AutoModelForCausalLM.from_pretrained(
-        args.teacher_model,
-        dtype=torch.bfloat16 if args.device == "cuda" else torch.float32,
+        args.teacher_model, dtype=torch.bfloat16 if args.device == "cuda" else torch.float32
     ).to(args.device)
     if args.teacher_adapter:
-        from peft import PeftModel
+        from peft import PeftModel  # noqa: PLC0415
 
         model = PeftModel.from_pretrained(model, args.teacher_adapter)
     model.eval()
@@ -206,21 +182,13 @@ def generate_interventions(args, rows: list[dict]) -> None:
             max_length=args.max_input_tokens,
         ).to(args.device)
         generated = model.generate(
-            **encoded,
-            do_sample=False,
-            max_new_tokens=args.max_new_tokens,
-            pad_token_id=tokenizer.pad_token_id,
+            **encoded, do_sample=False, max_new_tokens=args.max_new_tokens, pad_token_id=tokenizer.pad_token_id
         )
         prompt_width = encoded.input_ids.shape[1]
-        decoded = tokenizer.batch_decode(
-            generated[:, prompt_width:], skip_special_tokens=True
-        )
+        decoded = tokenizer.batch_decode(generated[:, prompt_width:], skip_special_tokens=True)
         for (row_index, condition, _), text in zip(batch, decoded, strict=True):
             rows[row_index]["interventions"][condition] = text.strip()
-        print(
-            f"generated {min(start + len(batch), len(requests))}/{len(requests)} interventions",
-            flush=True,
-        )
+        print(f"generated {min(start + len(batch), len(requests))}/{len(requests)} interventions", flush=True)
     del model
     gc.collect()
     if torch.cuda.is_available():
@@ -241,25 +209,13 @@ def score_transfer(args, rows: list[dict]) -> None:
     records = []
     for row in rows:
         transfer = row["transfer"]
-        records.append(
-            make_score_record(transfer["question"], transfer["choices"], "")
-        )
+        records.append(make_score_record(transfer["question"], transfer["choices"], ""))
         for condition in CONDITIONS:
             records.append(
-                make_score_record(
-                    transfer["question"],
-                    transfer["choices"],
-                    row["interventions"][condition],
-                )
+                make_score_record(transfer["question"], transfer["choices"], row["interventions"][condition])
             )
         row["interventions"]["canonical"] = canonical_intervention(row)
-        records.append(
-            make_score_record(
-                transfer["question"],
-                transfer["choices"],
-                row["interventions"]["canonical"],
-            )
-        )
+        records.append(make_score_record(transfer["question"], transfer["choices"], row["interventions"]["canonical"]))
     score_sets = score_records(args, records)
     cursor = 0
     for row in rows:
@@ -269,12 +225,8 @@ def score_transfer(args, rows: list[dict]) -> None:
         baseline_probabilities = softmax(baseline_values)
         row["transfer_baseline"] = {
             "scores": baseline_values,
-            "gold_probability": float(
-                baseline_probabilities[transfer["gold_idx"]]
-            ),
-            "solved": int(
-                np.argmax(baseline_values) == transfer["gold_idx"]
-            ),
+            "gold_probability": float(baseline_probabilities[transfer["gold_idx"]]),
+            "solved": int(np.argmax(baseline_values) == transfer["gold_idx"]),
         }
         row["transfer_scores"] = {}
         for condition in (*CONDITIONS, "canonical"):
@@ -282,15 +234,10 @@ def score_transfer(args, rows: list[dict]) -> None:
             cursor += 1
             probabilities = softmax(values)
             response = row["interventions"][condition]
-            leak_example = {
-                "choices": transfer["choices"],
-                "gold_idx": transfer["gold_idx"],
-            }
+            leak_example = {"choices": transfer["choices"], "gold_idx": transfer["gold_idx"]}
             row["transfer_scores"][condition] = {
                 "scores": values,
-                "gold_probability": float(
-                    probabilities[transfer["gold_idx"]]
-                ),
+                "gold_probability": float(probabilities[transfer["gold_idx"]]),
                 "solved": int(np.argmax(values) == transfer["gold_idx"]),
                 "leaked": leaks_answer(response, leak_example),
             }
@@ -298,11 +245,7 @@ def score_transfer(args, rows: list[dict]) -> None:
 
 def paired(rows: list[dict], left: str, right: str, metric: str) -> np.ndarray:
     return np.asarray(
-        [
-            row["transfer_scores"][left][metric]
-            - row["transfer_scores"][right][metric]
-            for row in rows
-        ],
+        [row["transfer_scores"][left][metric] - row["transfer_scores"][right][metric] for row in rows],
         dtype=np.float64,
     )
 
@@ -311,14 +254,7 @@ def summarize(rows: list[dict], screen_stats: dict, seed: int) -> dict:
     conditions = {}
     for condition in (*CONDITIONS, "canonical"):
         conditions[condition] = {
-            metric: float(
-                np.mean(
-                    [
-                        row["transfer_scores"][condition][metric]
-                        for row in rows
-                    ]
-                )
-            )
+            metric: float(np.mean([row["transfer_scores"][condition][metric] for row in rows]))
             for metric in ("gold_probability", "solved", "leaked")
         }
     comparisons = {}
@@ -327,38 +263,24 @@ def summarize(rows: list[dict], screen_stats: dict, seed: int) -> dict:
         comparisons[name] = {}
         for metric in ("gold_probability", "solved"):
             values = paired(rows, "graph", right, metric)
-            comparisons[name][metric] = {
-                "mean": float(values.mean()),
-                "95_ci": bootstrap_interval(values, seed),
-            }
+            comparisons[name][metric] = {"mean": float(values.mean()), "95_ci": bootstrap_interval(values, seed)}
     graph_by_concept = {}
     for concept_id in sorted({row["concept_id"] for row in rows}):
         selected = [row for row in rows if row["concept_id"] == concept_id]
         graph_by_concept[concept_id] = {
             "n": len(selected),
             "graph_gold_probability": float(
-                np.mean(
-                    [
-                        row["transfer_scores"]["graph"]["gold_probability"]
-                        for row in selected
-                    ]
-                )
+                np.mean([row["transfer_scores"]["graph"]["gold_probability"] for row in selected])
             ),
             "canonical_gold_probability": float(
-                np.mean(
-                    [
-                        row["transfer_scores"]["canonical"]["gold_probability"]
-                        for row in selected
-                    ]
-                )
+                np.mean([row["transfer_scores"]["canonical"]["gold_probability"] for row in selected])
             ),
         }
     graph_vs_latest = comparisons["graph_minus_latest"]["gold_probability"]
     graph_vs_canonical = comparisons["graph_minus_canonical"]["gold_probability"]
     gate = {
         "enough_rows": len(rows) >= 16,
-        "beats_latest": graph_vs_latest["mean"] > 0.0
-        and graph_vs_latest["95_ci"][0] >= 0.0,
+        "beats_latest": graph_vs_latest["mean"] > 0.0 and graph_vs_latest["95_ci"][0] >= 0.0,
         "beats_canonical": graph_vs_canonical["mean"] > 0.0,
         "low_leakage": conditions["graph"]["leaked"] <= 0.05,
         "concept_coverage": len(graph_by_concept) >= 3,
@@ -366,9 +288,7 @@ def summarize(rows: list[dict], screen_stats: dict, seed: int) -> dict:
     return {
         "n": len(rows),
         "screening": screen_stats,
-        "baseline_transfer_solve_rate": float(
-            np.mean([row["transfer_baseline"]["solved"] for row in rows])
-        ),
+        "baseline_transfer_solve_rate": float(np.mean([row["transfer_baseline"]["solved"] for row in rows])),
         "conditions": conditions,
         "paired_comparisons": comparisons,
         "by_concept": graph_by_concept,
@@ -382,13 +302,9 @@ def main() -> None:
     parser.add_argument("--banks", type=Path, required=True)
     parser.add_argument("--action-rows", type=Path, required=True)
     parser.add_argument("--out-dir", type=Path, required=True)
-    parser.add_argument(
-        "--teacher-model", default="Qwen/Qwen2.5-3B-Instruct"
-    )
+    parser.add_argument("--teacher-model", default="Qwen/Qwen2.5-3B-Instruct")
     parser.add_argument("--teacher-adapter")
-    parser.add_argument(
-        "--student-model", default="Qwen/Qwen2.5-0.5B-Instruct"
-    )
+    parser.add_argument("--student-model", default="Qwen/Qwen2.5-0.5B-Instruct")
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int, default=32)
     parser.add_argument("--seed", type=int, default=0)
@@ -401,23 +317,15 @@ def main() -> None:
     banks = load_jsonl(args.banks)
     action_rows = load_jsonl(args.action_rows)
     screened = screen_questions(args, banks)
-    rows, screen_stats = build_transfer_rows(
-        banks, action_rows, screened, args.limit
-    )
+    rows, screen_stats = build_transfer_rows(banks, action_rows, screened, args.limit)
     if not rows:
-        raise ValueError(
-            "no transfer rows: student needs at least two baseline errors per bank"
-        )
+        raise ValueError("no transfer rows: student needs at least two baseline errors per bank")
     generate_interventions(args, rows)
     score_transfer(args, rows)
     results = summarize(rows, screen_stats, args.seed)
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    (args.out_dir / "scored.jsonl").write_text(
-        "".join(json.dumps(row) + "\n" for row in rows)
-    )
-    (args.out_dir / "results.json").write_text(
-        json.dumps(results, indent=2) + "\n"
-    )
+    (args.out_dir / "scored.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+    (args.out_dir / "results.json").write_text(json.dumps(results, indent=2) + "\n")
     print(json.dumps(results, indent=2))
 
 

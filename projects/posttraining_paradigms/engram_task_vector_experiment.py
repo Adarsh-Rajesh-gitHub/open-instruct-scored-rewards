@@ -15,20 +15,19 @@ import json
 import logging
 import math
 import random
+from collections.abc import Sequence
 from dataclasses import fields
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, Dataset
-
 from engram_dense.config import EngramConfig
 from engram_dense.transformer import DenseEngramDecoder, engram_param_groups
+from torch.utils.data import DataLoader, Dataset
 from train.model import GPT, GPTConfig
 from train.tokenizer import get_tok
-
 
 LOGGER = logging.getLogger("engram-task-vector-test")
 
@@ -99,10 +98,7 @@ def load_snapshot(path: Path, device: torch.device) -> torch.nn.Module:
     snapshot = torch.load(path, map_location="cpu", weights_only=False)
     model_cfg = from_dict(GPTConfig, snapshot["model_cfg"])
     if "engram_cfg" in snapshot:
-        model = DenseEngramDecoder(
-            model_cfg,
-            from_dict(EngramConfig, snapshot["engram_cfg"]),
-        )
+        model = DenseEngramDecoder(model_cfg, from_dict(EngramConfig, snapshot["engram_cfg"]))
     else:
         model = GPT(model_cfg)
     model.load_state_dict(snapshot["model"])
@@ -117,11 +113,7 @@ def validate_arm(model: torch.nn.Module, arm: str) -> None:
         raise ValueError(f"Snapshot architecture does not match --arm={arm}.")
 
 
-def build_rows(
-    templates: Sequence[str],
-    tokenizer: Any,
-    code_token_ids: Sequence[int],
-) -> list[dict[str, Any]]:
+def build_rows(templates: Sequence[str], tokenizer: Any, code_token_ids: Sequence[int]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for template in templates:
         for marker_index, marker in enumerate(MARKERS):
@@ -146,10 +138,7 @@ class TrainingDataset(Dataset[dict[str, Any]]):
     def __getitem__(self, index: int) -> dict[str, Any]:
         row = self.rows[index]
         prompt_ids = list(row["prompt_ids"])
-        return {
-            "input_ids": prompt_ids,
-            "labels": [-100] * (len(prompt_ids) - 1) + [row["code_id"]],
-        }
+        return {"input_ids": prompt_ids, "labels": [-100] * (len(prompt_ids) - 1) + [row["code_id"]]}
 
 
 class PromptDataset(Dataset[dict[str, Any]]):
@@ -171,10 +160,7 @@ def collate_training(rows: Sequence[dict[str, Any]]) -> dict[str, torch.Tensor]:
         padding = width - len(row["input_ids"])
         input_ids.append(row["input_ids"] + [50256] * padding)
         labels.append(row["labels"] + [-100] * padding)
-    return {
-        "input_ids": torch.tensor(input_ids, dtype=torch.long),
-        "labels": torch.tensor(labels, dtype=torch.long),
-    }
+    return {"input_ids": torch.tensor(input_ids, dtype=torch.long), "labels": torch.tensor(labels, dtype=torch.long)}
 
 
 def collate_prompts(rows: Sequence[dict[str, Any]]) -> dict[str, torch.Tensor]:
@@ -200,9 +186,7 @@ def autocast_context():
 
 @torch.inference_mode()
 def evaluate_task(
-    model: torch.nn.Module,
-    dataloader: DataLoader[dict[str, torch.Tensor]],
-    code_token_ids: Sequence[int],
+    model: torch.nn.Module, dataloader: DataLoader[dict[str, torch.Tensor]], code_token_ids: Sequence[int]
 ) -> dict[str, float]:
     model.eval()
     device = next(model.parameters()).device
@@ -216,27 +200,16 @@ def evaluate_task(
         labels = batch["code_indices"].to(device)
         with autocast_context():
             logits, _ = model(input_ids)
-        next_logits = logits[
-            torch.arange(labels.shape[0], device=device),
-            lengths - 1,
-        ].float()
+        next_logits = logits[torch.arange(labels.shape[0], device=device), lengths - 1].float()
         task_logits = next_logits.index_select(-1, candidate_ids)
-        total_loss += float(
-            F.cross_entropy(task_logits, labels, reduction="sum").item()
-        )
+        total_loss += float(F.cross_entropy(task_logits, labels, reduction="sum").item())
         total_correct += int((task_logits.argmax(-1) == labels).sum().item())
         total_examples += labels.shape[0]
-    return {
-        "loss": total_loss / total_examples,
-        "accuracy": total_correct / total_examples,
-    }
+    return {"loss": total_loss / total_examples, "accuracy": total_correct / total_examples}
 
 
 def fixed_retention_batches(
-    path: Path,
-    batches: int,
-    batch_size: int,
-    context: int,
+    path: Path, batches: int, batch_size: int, context: int
 ) -> list[tuple[torch.Tensor, torch.Tensor]]:
     tokens = np.memmap(path, dtype=np.uint16, mode="r")
     span = batch_size * (context + 1)
@@ -245,20 +218,12 @@ def fixed_retention_batches(
         start = batch_index * span
         values = np.asarray(tokens[start : start + span]).astype(np.int64)
         values = values.reshape(batch_size, context + 1)
-        result.append(
-            (
-                torch.from_numpy(values[:, :-1].copy()),
-                torch.from_numpy(values[:, 1:].copy()),
-            )
-        )
+        result.append((torch.from_numpy(values[:, :-1].copy()), torch.from_numpy(values[:, 1:].copy())))
     return result
 
 
 @torch.inference_mode()
-def evaluate_retention(
-    model: torch.nn.Module,
-    batches: Sequence[tuple[torch.Tensor, torch.Tensor]],
-) -> float:
+def evaluate_retention(model: torch.nn.Module, batches: Sequence[tuple[torch.Tensor, torch.Tensor]]) -> float:
     model.eval()
     device = next(model.parameters()).device
     total_nll = 0.0
@@ -269,26 +234,15 @@ def evaluate_retention(
         with autocast_context():
             logits, _ = model(x)
         total_nll += float(
-            F.cross_entropy(
-                logits.float().reshape(-1, logits.shape[-1]),
-                y.reshape(-1),
-                reduction="sum",
-            ).item()
+            F.cross_entropy(logits.float().reshape(-1, logits.shape[-1]), y.reshape(-1), reduction="sum").item()
         )
         total_tokens += y.numel()
     return total_nll / total_tokens
 
 
-def make_optimizer(
-    model: torch.nn.Module,
-    learning_rate: float,
-) -> torch.optim.Optimizer:
+def make_optimizer(model: torch.nn.Module, learning_rate: float) -> torch.optim.Optimizer:
     if isinstance(model, DenseEngramDecoder):
-        groups = engram_param_groups(
-            model,
-            base_lr=learning_rate,
-            weight_decay=0.0,
-        )
+        groups = engram_param_groups(model, base_lr=learning_rate, weight_decay=0.0)
     else:
         decay = []
         no_decay = []
@@ -298,13 +252,7 @@ def make_optimizer(
             {"params": decay, "weight_decay": 0.0, "lr": learning_rate},
             {"params": no_decay, "weight_decay": 0.0, "lr": learning_rate},
         ]
-    return torch.optim.AdamW(
-        groups,
-        lr=learning_rate,
-        betas=(0.9, 0.95),
-        eps=1e-8,
-        fused=True,
-    )
+    return torch.optim.AdamW(groups, lr=learning_rate, betas=(0.9, 0.95), eps=1e-8, fused=True)
 
 
 def cosine_scale(step: int, steps: int, warmup_steps: int) -> float:
@@ -369,10 +317,7 @@ def train_task(
 
 
 @torch.no_grad()
-def compute_delta(
-    post_model: torch.nn.Module,
-    pre_model: torch.nn.Module,
-) -> tuple[dict[str, torch.Tensor], float]:
+def compute_delta(post_model: torch.nn.Module, pre_model: torch.nn.Module) -> tuple[dict[str, torch.Tensor], float]:
     pre_parameters = dict(pre_model.named_parameters())
     delta: dict[str, torch.Tensor] = {}
     squared_norm = 0.0
@@ -388,11 +333,7 @@ def compute_delta(
 
 
 @torch.no_grad()
-def apply_delta(
-    model: torch.nn.Module,
-    delta: dict[str, torch.Tensor],
-    alpha: float,
-) -> None:
+def apply_delta(model: torch.nn.Module, delta: dict[str, torch.Tensor], alpha: float) -> None:
     seen = 0
     for name, parameter in model.named_parameters():
         value = delta.get(name)
@@ -421,11 +362,7 @@ def loss_recovery(base: float, direct: float, transfer: float) -> float:
 
 def main() -> None:
     args = parse_args()
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(message)s",
-        datefmt="%H:%M:%S",
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S")
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is required.")
     alphas = args.alpha or [0.25, 0.5, 1.0]
@@ -442,16 +379,10 @@ def main() -> None:
     eval_rows = build_rows(EVAL_TEMPLATES, tokenizer, code_token_ids)
     train_dataset = TrainingDataset(train_rows)
     eval_loader = DataLoader(
-        PromptDataset(eval_rows),
-        batch_size=args.batch_size,
-        shuffle=False,
-        collate_fn=collate_prompts,
+        PromptDataset(eval_rows), batch_size=args.batch_size, shuffle=False, collate_fn=collate_prompts
     )
     retention_data = fixed_retention_batches(
-        args.val_bin,
-        args.retention_batches,
-        args.retention_batch_size,
-        args.retention_context,
+        args.val_bin, args.retention_batches, args.retention_batch_size, args.retention_context
     )
 
     LOGGER.info("Source post-training for %s arm", args.arm)
@@ -512,16 +443,9 @@ def main() -> None:
             "task_accuracy": task["accuracy"],
             "task_loss": task["loss"],
             "retention_loss": retention,
-            "accuracy_gain_recovery": gain_recovery(
-                base_task["accuracy"], direct_task["accuracy"], task["accuracy"]
-            ),
-            "loss_reduction_recovery": loss_recovery(
-                base_task["loss"], direct_task["loss"], task["loss"]
-            ),
-            "retention_loss_relative_increase": (
-                retention - base_retention
-            )
-            / base_retention,
+            "accuracy_gain_recovery": gain_recovery(base_task["accuracy"], direct_task["accuracy"], task["accuracy"]),
+            "loss_reduction_recovery": loss_recovery(base_task["loss"], direct_task["loss"], task["loss"]),
+            "retention_loss_relative_increase": (retention - base_retention) / base_retention,
         }
         result["high_fidelity_criterion_passed"] = (
             result["accuracy_gain_recovery"] >= 0.90
@@ -533,10 +457,7 @@ def main() -> None:
         cleanup()
 
     passing = [row for row in transfers if row["high_fidelity_criterion_passed"]]
-    best = max(
-        passing or transfers,
-        key=lambda row: (row["task_accuracy"], -row["task_loss"]),
-    )
+    best = max(passing or transfers, key=lambda row: (row["task_accuracy"], -row["task_loss"]))
     report = {
         "arm": args.arm,
         "source_snapshot": str(args.source),

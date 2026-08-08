@@ -49,7 +49,8 @@ def main() -> None:
     dev = "cuda" if torch.cuda.is_available() else "cpu"
 
     def load():
-        return AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16).to(dev)
+        # stubs read .to(str) as the module overload, hence the ignore
+        return AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16).to(dev)  # ty: ignore[invalid-argument-type]
 
     probe = load()
     mlp = probe.model.layers[0].mlp
@@ -58,20 +59,30 @@ def main() -> None:
 
     def wrap(model, moe: bool):
         if not moe:
-            cfg = LoraConfig(r=args.r, lora_alpha=2 * args.r, task_type="CAUSAL_LM",
-                             target_modules=["q_proj", "k_proj", "v_proj", "o_proj"])
+            cfg = LoraConfig(
+                r=args.r,
+                lora_alpha=2 * args.r,
+                task_type="CAUSAL_LM",
+                target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+            )
         elif fused:
-            cfg = LoraConfig(r=args.r, lora_alpha=2 * args.r, task_type="CAUSAL_LM",
-                             target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-                             target_parameters=["mlp.experts.gate_up_proj", "mlp.experts.down_proj"],
-                             rank_pattern={"experts.gate_up_proj": args.expert_r,
-                                           "experts.down_proj": args.expert_r})
+            cfg = LoraConfig(
+                r=args.r,
+                lora_alpha=2 * args.r,
+                task_type="CAUSAL_LM",
+                target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+                target_parameters=["mlp.experts.gate_up_proj", "mlp.experts.down_proj"],
+                rank_pattern={"experts.gate_up_proj": args.expert_r, "experts.down_proj": args.expert_r},
+            )
         else:
             # 4.x: the experts are real modules, so they are reachable by name. gate_proj/up_proj/
             # down_proj live inside every expert, so this creates one adapter per expert per layer.
-            cfg = LoraConfig(r=args.expert_r, lora_alpha=2 * args.expert_r, task_type="CAUSAL_LM",
-                             target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
-                                             "gate_proj", "up_proj", "down_proj"])
+            cfg = LoraConfig(
+                r=args.expert_r,
+                lora_alpha=2 * args.expert_r,
+                task_type="CAUSAL_LM",
+                target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+            )
         return get_peft_model(model, cfg)
 
     ids = torch.randint(0, 1000, (args.batch, args.seq), device=dev)
@@ -98,8 +109,10 @@ def main() -> None:
         peak = torch.cuda.max_memory_allocated() / 1e9 if dev == "cuda" else 0.0
         med = statistics.median(times)
         results[tag] = med
-        print(f"  {tag:<22} {med * 1000:>8.1f} ms/step   {trainable / 1e6:>7.1f}M trainable   "
-              f"{n_modules:>5} lora modules   peak {peak:>5.1f} GB")
+        print(
+            f"  {tag:<22} {med * 1000:>8.1f} ms/step   {trainable / 1e6:>7.1f}M trainable   "
+            f"{n_modules:>5} lora modules   peak {peak:>5.1f} GB"
+        )
         del model
         if dev == "cuda":
             torch.cuda.empty_cache()

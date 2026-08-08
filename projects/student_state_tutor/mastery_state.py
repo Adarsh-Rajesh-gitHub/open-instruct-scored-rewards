@@ -4,17 +4,11 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Iterable
 
-
-ASSISTANCE_RELIABILITY = {
-    "unaided": 1.0,
-    "hinted": 0.35,
-    "worked": 0.1,
-    "revealed": 0.0,
-}
+ASSISTANCE_RELIABILITY = {"unaided": 1.0, "hinted": 0.35, "worked": 0.1, "revealed": 0.0}
 
 
 @dataclass(frozen=True)
@@ -25,9 +19,7 @@ class EvidenceEvent:
     correct: bool
     assistance: str = "unaided"
     reliability: float = 1.0
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     source: str = "external_grader"
 
     @property
@@ -82,20 +74,9 @@ class ConceptBelief:
 
     def expected_variance_after_one(self) -> float:
         probability_correct = self.mean
-        correct = ConceptBelief(
-            self.concept_id,
-            alpha=self.alpha + 1.0,
-            beta=self.beta,
-        )
-        incorrect = ConceptBelief(
-            self.concept_id,
-            alpha=self.alpha,
-            beta=self.beta + 1.0,
-        )
-        return (
-            probability_correct * correct.variance
-            + (1.0 - probability_correct) * incorrect.variance
-        )
+        correct = ConceptBelief(self.concept_id, alpha=self.alpha + 1.0, beta=self.beta)
+        incorrect = ConceptBelief(self.concept_id, alpha=self.alpha, beta=self.beta + 1.0)
+        return probability_correct * correct.variance + (1.0 - probability_correct) * incorrect.variance
 
     @property
     def information_gain(self) -> float:
@@ -118,11 +99,7 @@ class MasteryGraphState:
     """Sparse per-learner beliefs plus immutable evidence provenance."""
 
     def __init__(
-        self,
-        learner_id: str,
-        concept_ids: Iterable[str] = (),
-        prior_alpha: float = 1.0,
-        prior_beta: float = 1.0,
+        self, learner_id: str, concept_ids: Iterable[str] = (), prior_alpha: float = 1.0, prior_beta: float = 1.0
     ):
         if prior_alpha <= 0 or prior_beta <= 0:
             raise ValueError("Beta priors must be positive")
@@ -130,20 +107,13 @@ class MasteryGraphState:
         self.prior_alpha = prior_alpha
         self.prior_beta = prior_beta
         self.beliefs = {
-            concept_id: ConceptBelief(
-                concept_id, alpha=prior_alpha, beta=prior_beta
-            )
-            for concept_id in concept_ids
+            concept_id: ConceptBelief(concept_id, alpha=prior_alpha, beta=prior_beta) for concept_id in concept_ids
         }
         self.events: list[EvidenceEvent] = []
 
     def belief(self, concept_id: str) -> ConceptBelief:
         if concept_id not in self.beliefs:
-            self.beliefs[concept_id] = ConceptBelief(
-                concept_id,
-                alpha=self.prior_alpha,
-                beta=self.prior_beta,
-            )
+            self.beliefs[concept_id] = ConceptBelief(concept_id, alpha=self.prior_alpha, beta=self.prior_beta)
         return self.beliefs[concept_id]
 
     def observe(self, event: EvidenceEvent) -> None:
@@ -158,11 +128,7 @@ class MasteryGraphState:
             raise ValueError("no eligible concepts")
         return min(
             candidates,
-            key=lambda concept_id: (
-                self.belief(concept_id).mean,
-                -self.belief(concept_id).variance,
-                concept_id,
-            ),
+            key=lambda concept_id: (self.belief(concept_id).mean, -self.belief(concept_id).variance, concept_id),
         )
 
     def most_informative(self, eligible: Iterable[str] | None = None) -> str:
@@ -178,18 +144,10 @@ class MasteryGraphState:
             ),
         )
 
-    def local_view(
-        self,
-        concept_ids: Iterable[str] | None = None,
-        max_nodes: int | None = None,
-    ) -> dict:
+    def local_view(self, concept_ids: Iterable[str] | None = None, max_nodes: int | None = None) -> dict:
         selected = list(concept_ids) if concept_ids is not None else list(self.beliefs)
         selected.sort(
-            key=lambda concept_id: (
-                self.belief(concept_id).mean,
-                -self.belief(concept_id).variance,
-                concept_id,
-            )
+            key=lambda concept_id: (self.belief(concept_id).mean, -self.belief(concept_id).variance, concept_id)
         )
         if max_nodes is not None:
             selected = selected[:max_nodes]
@@ -204,27 +162,21 @@ class MasteryGraphState:
             "learner_id": self.learner_id,
             "prior_alpha": self.prior_alpha,
             "prior_beta": self.prior_beta,
-            "beliefs": {
-                concept_id: asdict(belief)
-                for concept_id, belief in sorted(self.beliefs.items())
-            },
+            "beliefs": {concept_id: asdict(belief) for concept_id, belief in sorted(self.beliefs.items())},
             "events": [asdict(event) for event in self.events],
         }
 
     @classmethod
-    def restore(cls, snapshot: dict) -> "MasteryGraphState":
+    def restore(cls, snapshot: dict) -> MasteryGraphState:
         graph = cls(
             learner_id=snapshot["learner_id"],
             prior_alpha=float(snapshot["prior_alpha"]),
             prior_beta=float(snapshot["prior_beta"]),
         )
         graph.beliefs = {
-            concept_id: ConceptBelief(**belief)
-            for concept_id, belief in snapshot.get("beliefs", {}).items()
+            concept_id: ConceptBelief(**belief) for concept_id, belief in snapshot.get("beliefs", {}).items()
         }
-        graph.events = [
-            EvidenceEvent(**event) for event in snapshot.get("events", [])
-        ]
+        graph.events = [EvidenceEvent(**event) for event in snapshot.get("events", [])]
         return graph
 
     def to_json(self) -> str:

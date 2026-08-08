@@ -26,31 +26,19 @@ from projects.dense_to_moe_upcycling.upcycled_mlp import (
 
 
 class TokenBlockDataset(Dataset):
-    def __init__(
-        self,
-        path: Path,
-        tokenizer,
-        sequence_length: int,
-        max_blocks: int = 0,
-    ):
+    def __init__(self, path: Path, tokenizer, sequence_length: int, max_blocks: int = 0):
         blocks = []
         buffer: list[int] = []
         for line in path.read_text().splitlines():
             if not line.strip():
                 continue
             text = json.loads(line).get("text", "")
-            token_ids = tokenizer(
-                text, add_special_tokens=False
-            ).input_ids
+            token_ids = tokenizer(text, add_special_tokens=False).input_ids
             if tokenizer.eos_token_id is not None:
                 token_ids.append(tokenizer.eos_token_id)
             buffer.extend(token_ids)
             while len(buffer) >= sequence_length:
-                blocks.append(
-                    torch.tensor(
-                        buffer[:sequence_length], dtype=torch.long
-                    )
-                )
+                blocks.append(torch.tensor(buffer[:sequence_length], dtype=torch.long))
                 del buffer[:sequence_length]
                 if max_blocks > 0 and len(blocks) >= max_blocks:
                     self.blocks = blocks
@@ -72,9 +60,7 @@ def evaluate(model, blocks: list[torch.Tensor], device: str) -> float:
     losses = []
     for block in blocks:
         input_ids = block.unsqueeze(0).to(device)
-        losses.append(
-            float(model(input_ids=input_ids, labels=input_ids).loss)
-        )
+        losses.append(float(model(input_ids=input_ids, labels=input_ids).loss))
     model.train()
     return float(sum(losses) / len(losses))
 
@@ -100,9 +86,7 @@ def parameter_grad_norm(parameters) -> float:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--model", default="Qwen/Qwen2.5-3B-Instruct"
-    )
+    parser.add_argument("--model", default="Qwen/Qwen2.5-3B-Instruct")
     parser.add_argument("--data", type=Path, required=True)
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--layers", default="last2")
@@ -121,9 +105,7 @@ def main() -> None:
     parser.add_argument("--router-z-coef", type=float, default=0.001)
     parser.add_argument("--max-grad-norm", type=float, default=1.0)
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument(
-        "--device", default="cuda" if torch.cuda.is_available() else "cpu"
-    )
+    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--gradient-checkpointing", action="store_true")
     args = parser.parse_args()
 
@@ -136,30 +118,16 @@ def main() -> None:
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
-    dataset = TokenBlockDataset(
-        args.data,
-        tokenizer,
-        args.sequence_length,
-        max_blocks=args.max_blocks,
-    )
+    dataset = TokenBlockDataset(args.data, tokenizer, args.sequence_length, max_blocks=args.max_blocks)
     if len(dataset) <= args.eval_blocks:
         raise ValueError("need more token blocks than --eval-blocks")
     train_blocks = dataset.blocks[: -args.eval_blocks]
     eval_blocks = dataset.blocks[-args.eval_blocks :]
     generator = torch.Generator().manual_seed(args.seed)
-    loader = DataLoader(
-        train_blocks,
-        batch_size=args.batch_size,
-        shuffle=True,
-        generator=generator,
-    )
+    loader = DataLoader(train_blocks, batch_size=args.batch_size, shuffle=True, generator=generator)
 
     dtype = torch.bfloat16 if args.device == "cuda" else torch.float32
-    model = AutoModelForCausalLM.from_pretrained(
-        args.model,
-        dtype=dtype,
-        attn_implementation="sdpa",
-    ).to(args.device)
+    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=dtype, attn_implementation="sdpa").to(args.device)
     model.config.use_cache = False
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
@@ -172,15 +140,9 @@ def main() -> None:
         dense_loss = float(dense_output.loss)
         dense_logits = dense_output.logits.float().cpu()
 
-    layer_indices = parse_layer_spec(
-        args.layers, len(model.model.layers)
-    )
+    layer_indices = parse_layer_spec(args.layers, len(model.model.layers))
     manifest = upcycle_qwen_layers(
-        model,
-        layer_indices,
-        num_experts=args.num_experts,
-        top_k=args.top_k,
-        router_std=args.router_std,
+        model, layer_indices, num_experts=args.num_experts, top_k=args.top_k, router_std=args.router_std
     )
     with torch.inference_mode():
         upcycled_output = model(input_ids=probe, labels=probe)
@@ -200,11 +162,7 @@ def main() -> None:
     parameter_counts = set_only_moe_trainable(model)
     routers, experts = split_parameters(model)
     optimizer = torch.optim.AdamW(
-        [
-            {"params": routers, "lr": args.router_lr},
-            {"params": experts, "lr": args.expert_lr},
-        ],
-        weight_decay=0.01,
+        [{"params": routers, "lr": args.router_lr}, {"params": experts, "lr": args.expert_lr}], weight_decay=0.01
     )
     total_optimizer_steps = max(1, args.steps)
     warmup = max(1, int(0.05 * total_optimizer_steps))
@@ -212,9 +170,7 @@ def main() -> None:
     def learning_rate_scale(step: int) -> float:
         if step < warmup:
             return (step + 1) / warmup
-        progress = (step - warmup) / max(
-            1, total_optimizer_steps - warmup
-        )
+        progress = (step - warmup) / max(1, total_optimizer_steps - warmup)
         return 0.5 * (1.0 + math.cos(math.pi * progress))
 
     initial_eval_loss = evaluate(model, eval_blocks, args.device)
@@ -239,11 +195,7 @@ def main() -> None:
             input_ids = batch.to(args.device)
             output = model(input_ids=input_ids, labels=input_ids)
             load_loss, z_loss = combined_router_loss(model)
-            loss = (
-                output.loss
-                + args.load_balance_coef * load_loss
-                + args.router_z_coef * z_loss
-            )
+            loss = output.loss + args.load_balance_coef * load_loss + args.router_z_coef * z_loss
             (loss / args.gradient_accumulation).backward()
             step_loss += float(loss.detach())
             step_lm += float(output.loss.detach())
@@ -251,19 +203,10 @@ def main() -> None:
             step_z += float(z_loss.detach())
         router_grad_norm = parameter_grad_norm(routers)
         total_grad_norm = torch.nn.utils.clip_grad_norm_(
-            [
-                parameter
-                for parameter in model.parameters()
-                if parameter.requires_grad
-            ],
-            args.max_grad_norm,
+            [parameter for parameter in model.parameters() if parameter.requires_grad], args.max_grad_norm
         )
         scale = learning_rate_scale(optimizer_step)
-        for group, base_lr in zip(
-            optimizer.param_groups,
-            (args.router_lr, args.expert_lr),
-            strict=True,
-        ):
+        for group, base_lr in zip(optimizer.param_groups, (args.router_lr, args.expert_lr), strict=True):
             group["lr"] = base_lr * scale
         optimizer.step()
         optimizer.zero_grad(set_to_none=True)
@@ -299,21 +242,14 @@ def main() -> None:
         "routing": routing_report(model),
         "last_train_record": logs[-1] if logs else None,
     }
-    (args.out_dir / "train_log.jsonl").write_text(
-        "".join(json.dumps(row) + "\n" for row in logs)
-    )
-    (args.out_dir / "results.json").write_text(
-        json.dumps(results, indent=2) + "\n"
-    )
+    (args.out_dir / "train_log.jsonl").write_text("".join(json.dumps(row) + "\n" for row in logs))
+    (args.out_dir / "results.json").write_text(json.dumps(results, indent=2) + "\n")
     save_moe_checkpoint(
         model,
         args.out_dir / "moe_checkpoint.pt",
         base_model=args.model,
         manifest=manifest,
-        extra={
-            "results": results,
-            "tokenizer": args.model,
-        },
+        extra={"results": results, "tokenizer": args.model},
     )
     print(json.dumps(results, indent=2), flush=True)
 

@@ -7,14 +7,12 @@ import argparse
 import gc
 import json
 import logging
-import math
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
-
 from scripts.task_vector_transfer import (
     CODE_CANDIDATES,
     EVAL_TEMPLATES,
@@ -37,8 +35,8 @@ from scripts.task_vector_transfer import (
     train_task,
     validate_arm,
 )
+from torch.utils.data import DataLoader
 from train.tokenizer import get_tok
-
 
 LOGGER = logging.getLogger("engram-transfer-sweep")
 
@@ -63,17 +61,12 @@ def parse_args() -> argparse.Namespace:
 
 
 def state_dict_cpu(model: torch.nn.Module) -> dict[str, torch.Tensor]:
-    return {
-        name: parameter.detach().float().cpu().clone()
-        for name, parameter in model.named_parameters()
-    }
+    return {name: parameter.detach().float().cpu().clone() for name, parameter in model.named_parameters()}
 
 
 @torch.no_grad()
 def interpolate_with_posttrained_early(
-    model: torch.nn.Module,
-    posttrained_early: dict[str, torch.Tensor],
-    weight: float,
+    model: torch.nn.Module, posttrained_early: dict[str, torch.Tensor], weight: float
 ) -> None:
     seen = 0
     for name, parameter in model.named_parameters():
@@ -84,18 +77,14 @@ def interpolate_with_posttrained_early(
         parameter.add_(early_parameter.to(parameter.device), alpha=weight)
         seen += 1
     if seen != len(posttrained_early):
-        raise RuntimeError(
-            f"Interpolated {seen} of {len(posttrained_early)} tensors."
-        )
+        raise RuntimeError(f"Interpolated {seen} of {len(posttrained_early)} tensors.")
 
 
 def load_external_benchmarks(path: Path) -> dict[str, Any]:
     payload = torch.load(path, map_location="cpu", weights_only=False)
     return {
         "wikitext_ids": payload["wikitext_ids"].long(),
-        "lambada_contexts": [
-            context.long() for context in payload["lambada_contexts"]
-        ],
+        "lambada_contexts": [context.long() for context in payload["lambada_contexts"]],
         "lambada_targets": payload["lambada_targets"].long(),
         "metadata": payload["metadata"],
     }
@@ -103,11 +92,7 @@ def load_external_benchmarks(path: Path) -> dict[str, Any]:
 
 @torch.inference_mode()
 def evaluate_wikitext(
-    model: torch.nn.Module,
-    token_ids: torch.Tensor,
-    batches: int = 16,
-    batch_size: int = 4,
-    context: int = 256,
+    model: torch.nn.Module, token_ids: torch.Tensor, batches: int = 16, batch_size: int = 4, context: int = 256
 ) -> float:
     model.eval()
     device = next(model.parameters()).device
@@ -126,11 +111,7 @@ def evaluate_wikitext(
         with autocast_context():
             logits, _ = model(x)
         total_nll += float(
-            F.cross_entropy(
-                logits.float().reshape(-1, logits.shape[-1]),
-                y.reshape(-1),
-                reduction="sum",
-            ).item()
+            F.cross_entropy(logits.float().reshape(-1, logits.shape[-1]), y.reshape(-1), reduction="sum").item()
         )
         total_tokens += y.numel()
     return total_nll / total_tokens
@@ -138,10 +119,7 @@ def evaluate_wikitext(
 
 @torch.inference_mode()
 def evaluate_lambada(
-    model: torch.nn.Module,
-    contexts: Sequence[torch.Tensor],
-    targets: torch.Tensor,
-    batch_size: int = 16,
+    model: torch.nn.Module, contexts: Sequence[torch.Tensor], targets: torch.Tensor, batch_size: int = 16
 ) -> dict[str, float]:
     model.eval()
     device = next(model.parameters()).device
@@ -162,29 +140,17 @@ def evaluate_lambada(
         lengths = lengths.to(device)
         with autocast_context():
             logits, _ = model(x)
-        next_logits = logits[
-            torch.arange(len(rows), device=device),
-            lengths - 1,
-        ].float()
+        next_logits = logits[torch.arange(len(rows), device=device), lengths - 1].float()
         total_nll += float(F.cross_entropy(next_logits, y, reduction="sum").item())
         total_correct += int((next_logits.argmax(-1) == y).sum().item())
         total_examples += len(rows)
-    return {
-        "loss": total_nll / total_examples,
-        "accuracy": total_correct / total_examples,
-    }
+    return {"loss": total_nll / total_examples, "accuracy": total_correct / total_examples}
 
 
 def evaluate_general(
-    model: torch.nn.Module,
-    climbmix_batches: Sequence[tuple[torch.Tensor, torch.Tensor]],
-    benchmarks: dict[str, Any],
+    model: torch.nn.Module, climbmix_batches: Sequence[tuple[torch.Tensor, torch.Tensor]], benchmarks: dict[str, Any]
 ) -> dict[str, float]:
-    lambada = evaluate_lambada(
-        model,
-        benchmarks["lambada_contexts"],
-        benchmarks["lambada_targets"],
-    )
+    lambada = evaluate_lambada(model, benchmarks["lambada_contexts"], benchmarks["lambada_targets"])
     return {
         "climbmix_loss": evaluate_retention(model, climbmix_batches),
         "wikitext_loss": evaluate_wikitext(model, benchmarks["wikitext_ids"]),
@@ -208,26 +174,15 @@ def evaluate_variant(
     }
 
 
-def relative_forgetting(
-    baseline: dict[str, float],
-    candidate: dict[str, float],
-) -> dict[str, float]:
+def relative_forgetting(baseline: dict[str, float], candidate: dict[str, float]) -> dict[str, float]:
     return {
-        "climbmix_loss_relative_change": (
-            candidate["climbmix_loss"] - baseline["climbmix_loss"]
-        )
+        "climbmix_loss_relative_change": (candidate["climbmix_loss"] - baseline["climbmix_loss"])
         / baseline["climbmix_loss"],
-        "wikitext_loss_relative_change": (
-            candidate["wikitext_loss"] - baseline["wikitext_loss"]
-        )
+        "wikitext_loss_relative_change": (candidate["wikitext_loss"] - baseline["wikitext_loss"])
         / baseline["wikitext_loss"],
-        "lambada_loss_relative_change": (
-            candidate["lambada_loss"] - baseline["lambada_loss"]
-        )
+        "lambada_loss_relative_change": (candidate["lambada_loss"] - baseline["lambada_loss"])
         / baseline["lambada_loss"],
-        "lambada_accuracy_change": (
-            candidate["lambada_accuracy"] - baseline["lambada_accuracy"]
-        ),
+        "lambada_accuracy_change": (candidate["lambada_accuracy"] - baseline["lambada_accuracy"]),
     }
 
 
@@ -285,32 +240,16 @@ def repair_curve(
     completed = 0
     for checkpoint in checkpoints:
         if checkpoint > completed:
-            iterator = train_steps_with_existing_optimizer(
-                model,
-                optimizer,
-                loader,
-                iterator,
-                checkpoint - completed,
-            )
+            iterator = train_steps_with_existing_optimizer(model, optimizer, loader, iterator, checkpoint - completed)
             completed = checkpoint
-        metrics = evaluate_variant(
-            model,
-            select_loader,
-            test_loader,
-            code_token_ids,
-            climbmix_batches,
-            benchmarks,
-        )
+        metrics = evaluate_variant(model, select_loader, test_loader, code_token_ids, climbmix_batches, benchmarks)
         metrics["repair_steps"] = checkpoint
         result.append(metrics)
     del optimizer
     return result
 
 
-def choose_best(
-    rows: Sequence[dict[str, Any]],
-    coefficient_name: str,
-) -> dict[str, Any]:
+def choose_best(rows: Sequence[dict[str, Any]], coefficient_name: str) -> dict[str, Any]:
     return max(
         rows,
         key=lambda row: (
@@ -323,11 +262,7 @@ def choose_best(
 
 def main() -> None:
     args = parse_args()
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(message)s",
-        datefmt="%H:%M:%S",
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S")
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is required.")
     alphas = args.alpha or [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
@@ -346,23 +281,12 @@ def main() -> None:
     test_rows = build_rows(EVAL_TEMPLATES[4:], tokenizer, code_token_ids)
     train_dataset = TrainingDataset(train_rows)
     select_loader = DataLoader(
-        PromptDataset(selection_rows),
-        batch_size=args.batch_size,
-        shuffle=False,
-        collate_fn=collate_prompts,
+        PromptDataset(selection_rows), batch_size=args.batch_size, shuffle=False, collate_fn=collate_prompts
     )
     test_loader = DataLoader(
-        PromptDataset(test_rows),
-        batch_size=args.batch_size,
-        shuffle=False,
-        collate_fn=collate_prompts,
+        PromptDataset(test_rows), batch_size=args.batch_size, shuffle=False, collate_fn=collate_prompts
     )
-    climbmix_batches = fixed_retention_batches(
-        args.climbmix_val,
-        batches=8,
-        batch_size=4,
-        context=256,
-    )
+    climbmix_batches = fixed_retention_batches(args.climbmix_val, batches=8, batch_size=4, context=256)
     benchmarks = load_external_benchmarks(args.benchmark_file)
 
     LOGGER.info("Fine-tuning source %s for %s", args.source, args.arm)
@@ -371,12 +295,7 @@ def main() -> None:
     validate_arm(pre_source, args.arm)
     validate_arm(post_source, args.arm)
     source_before = evaluate_variant(
-        post_source,
-        select_loader,
-        test_loader,
-        code_token_ids,
-        climbmix_batches,
-        benchmarks,
+        post_source, select_loader, test_loader, code_token_ids, climbmix_batches, benchmarks
     )
     train_task(
         post_source,
@@ -389,12 +308,7 @@ def main() -> None:
         log_every=args.log_every,
     )
     source_after = evaluate_variant(
-        post_source,
-        select_loader,
-        test_loader,
-        code_token_ids,
-        climbmix_batches,
-        benchmarks,
+        post_source, select_loader, test_loader, code_token_ids, climbmix_batches, benchmarks
     )
     delta, delta_norm = compute_delta(post_source, pre_source)
     post_source_state = state_dict_cpu(post_source)
@@ -407,12 +321,7 @@ def main() -> None:
     validate_arm(direct_final, args.arm)
     target_step = int(direct_final.snapshot_step)
     final_before = evaluate_variant(
-        direct_final,
-        select_loader,
-        test_loader,
-        code_token_ids,
-        climbmix_batches,
-        benchmarks,
+        direct_final, select_loader, test_loader, code_token_ids, climbmix_batches, benchmarks
     )
     train_task(
         direct_final,
@@ -425,12 +334,7 @@ def main() -> None:
         log_every=args.log_every,
     )
     final_after = evaluate_variant(
-        direct_final,
-        select_loader,
-        test_loader,
-        code_token_ids,
-        climbmix_batches,
-        benchmarks,
+        direct_final, select_loader, test_loader, code_token_ids, climbmix_batches, benchmarks
     )
     del direct_final
     cleanup()
@@ -441,22 +345,12 @@ def main() -> None:
         model = load_snapshot(args.target, device)
         validate_arm(model, args.arm)
         apply_delta(model, delta, alpha)
-        metrics = evaluate_variant(
-            model,
-            select_loader,
-            test_loader,
-            code_token_ids,
-            climbmix_batches,
-            benchmarks,
-        )
+        metrics = evaluate_variant(model, select_loader, test_loader, code_token_ids, climbmix_batches, benchmarks)
         transfer_rows.append(
             {
                 "alpha": alpha,
                 "metrics": metrics,
-                "forgetting_vs_final": relative_forgetting(
-                    final_before["general"],
-                    metrics["general"],
-                ),
+                "forgetting_vs_final": relative_forgetting(final_before["general"], metrics["general"]),
             }
         )
         del model
@@ -467,38 +361,20 @@ def main() -> None:
         LOGGER.info("Full-weight interpolation lambda %.2f", merge_weight)
         model = load_snapshot(args.target, device)
         validate_arm(model, args.arm)
-        interpolate_with_posttrained_early(
-            model,
-            post_source_state,
-            merge_weight,
-        )
-        metrics = evaluate_variant(
-            model,
-            select_loader,
-            test_loader,
-            code_token_ids,
-            climbmix_batches,
-            benchmarks,
-        )
+        interpolate_with_posttrained_early(model, post_source_state, merge_weight)
+        metrics = evaluate_variant(model, select_loader, test_loader, code_token_ids, climbmix_batches, benchmarks)
         interpolation_rows.append(
             {
                 "lambda": merge_weight,
                 "metrics": metrics,
-                "forgetting_vs_final": relative_forgetting(
-                    final_before["general"],
-                    metrics["general"],
-                ),
+                "forgetting_vs_final": relative_forgetting(final_before["general"], metrics["general"]),
             }
         )
         del model
         cleanup()
 
     best_transfer = choose_best(transfer_rows, "alpha")
-    interior_interpolations = [
-        row
-        for row in interpolation_rows
-        if 0.0 < float(row["lambda"]) < 1.0
-    ]
+    interior_interpolations = [row for row in interpolation_rows if 0.0 < float(row["lambda"]) < 1.0]
     if not interior_interpolations:
         raise RuntimeError("At least one interpolation coefficient must be inside (0, 1).")
     best_interpolation = choose_best(interior_interpolations, "lambda")
@@ -513,11 +389,7 @@ def main() -> None:
         if mode == "task_vector":
             apply_delta(model, delta, float(coefficient))
         else:
-            interpolate_with_posttrained_early(
-                model,
-                post_source_state,
-                float(coefficient),
-            )
+            interpolate_with_posttrained_early(model, post_source_state, float(coefficient))
         curve = repair_curve(
             model,
             train_dataset,
@@ -531,14 +403,8 @@ def main() -> None:
             args.seed,
         )
         for point in curve:
-            point["forgetting_vs_final"] = relative_forgetting(
-                final_before["general"],
-                point["general"],
-            )
-        repair[name] = {
-            "starting_coefficient": coefficient,
-            "curve": curve,
-        }
+            point["forgetting_vs_final"] = relative_forgetting(final_before["general"], point["general"])
+        repair[name] = {"starting_coefficient": coefficient, "curve": curve}
         del model
         cleanup()
 
@@ -573,8 +439,7 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n")
     LOGGER.info(
-        "DONE %s source=%d: early %.3f->%.3f, final %.3f->%.3f, "
-        "best transfer %.3f at alpha %.2f",
+        "DONE %s source=%d: early %.3f->%.3f, final %.3f->%.3f, best transfer %.3f at alpha %.2f",
         args.arm,
         source_step,
         source_before["test_task"]["accuracy"],

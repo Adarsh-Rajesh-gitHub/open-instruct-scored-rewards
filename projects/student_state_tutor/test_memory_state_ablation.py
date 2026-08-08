@@ -20,10 +20,7 @@ def test_load_memory_examples_keeps_longest_unresolved_trace(tmp_path):
     graph_row = {
         "question": "What happens to current?",
         "subject": "science",
-        "graph_actual": {
-            "concept": "electric current",
-            "mistaken_relation": "current is consumed",
-        },
+        "graph_actual": {"concept": "electric current", "mistaken_relation": "current is consumed"},
     }
     graph_path = tmp_path / "graph.jsonl"
     graph_path.write_text(json.dumps(graph_row) + "\n")
@@ -44,9 +41,7 @@ def test_load_memory_examples_keeps_longest_unresolved_trace(tmp_path):
     traces_path = tmp_path / "traces.jsonl"
     traces_path.write_text(json.dumps(short) + "\n" + json.dumps(long) + "\n")
 
-    examples = memory_state_ablation.load_memory_examples(
-        traces_path, graph_path, limit=10
-    )
+    examples = memory_state_ablation.load_memory_examples(traces_path, graph_path, limit=10)
 
     assert len(examples) == 1
     assert examples[0]["history_student_turns"] == 3
