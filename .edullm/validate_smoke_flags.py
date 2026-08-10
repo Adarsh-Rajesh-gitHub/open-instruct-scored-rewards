@@ -135,6 +135,14 @@ def semantic_errors(spec: dict) -> list[str]:
     if 'REFERENCE_LOGPROBS_CACHE_PATH="$OUT/ref_cache"' not in prep:
         errors.append("the reference-logprob cache must be redirected off its AI2 Weka default")
 
+    # The platform shows the last fifty lines only, and torchrun's eight-rank epilogue
+    # fills them by itself, so each launcher's own error has to be replayed after it.
+    for stage_name, stage in (("SFT", sft), ("DPO", dpo)):
+        if "stage " not in stage:
+            errors.append(f"{stage_name} must run under `stage` so its traceback survives torchrun's epilogue")
+    if 'tail -40 "$OUT/$name.log"' not in script:
+        errors.append("the failure path must replay the launcher's own last lines")
+
     if spec.get("suggested_compute") != "gpu-8xa100":
         errors.append("a full fine-tune of 6.9B needs the eight-card A100 node and its 500GiB root disk")
     return errors
