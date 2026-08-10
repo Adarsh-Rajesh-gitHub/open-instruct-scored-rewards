@@ -49,15 +49,18 @@
 # filesystem and as anyone else it raises. Both outcomes are wrong; the env var
 # points it at the run's own scratch directory instead.
 #
-# WHY EACH STAGE IS WRAPPED IN `stage`, WHICH IS THE ONLY REASON A FAILURE HERE IS
-# LEGIBLE. The platform exposes the last fifty lines the container printed, and
-# nothing above them. torchrun's own epilogue for eight ranks is about fifty lines of
-# per-rank exit codes, so a crash reports the ranks that died and buries the traceback
-# that says why. run_019fe413-2212 was lost that way: it ran three minutes, exited 1,
-# and the fifty lines it left were entirely epilogue. `stage` sends each launcher's
-# output to a file and, only on failure, prints the last forty lines of that file --
-# so what lands in the window is the program's own error rather than torchrun's
-# accounting of it.
+# WHY EACH LAUNCHER REDIRECTS TO A FILE AND REPLAYS IT ON FAILURE, WHICH IS THE ONLY
+# REASON A FAILURE HERE IS LEGIBLE. The platform exposes the last fifty lines the
+# container printed and nothing above them. torchrun's own epilogue for eight ranks is
+# about fifty lines of per-rank exit codes, so a crash reports which ranks died and
+# buries the traceback that says why. run_019fe413-2212 was lost exactly that way: it
+# ran three minutes, exited 1, and every one of the fifty lines it left was epilogue.
+#
+# The redirect is written inline rather than behind a shell function on purpose. A
+# function would read better and the platform would refuse it: the launch guard scans
+# the command text for a recognised launcher and the process count it starts, and
+# `stage sft accelerate launch ...` hides both behind the wrapper, which is refused as
+# process_per_device -- one process asked for on an eight-GPU profile.
 #
 # WHY --use_deepspeed IS NOT PASSED ALONGSIDE --config_file. The accelerate config
 # named below already declares distributed_type DEEPSPEED and zero_stage 3. Passing
@@ -120,15 +123,11 @@ command: >-
   bash -lc 'set -x ; export EDULLM_CHECKPOINT_CHECK=waived ;
   export HF_HUB_ENABLE_HF_TRANSFER=1 ; OUT=/tmp/olmoe-smoke ; mkdir -p "$OUT" ;
   export REFERENCE_LOGPROBS_CACHE_PATH="$OUT/ref_cache" ;
-  echo "=== PREP OLMoE tokenizer BOS ===";
+  echo "=== PREP OLMoE tokenizer BOS ===" ;
   python -c "from transformers import AutoTokenizer;
   t=AutoTokenizer.from_pretrained(\"allenai/OLMoE-1B-7B-0125\", use_fast=True);
-  t.bos_token=t.eos_token; t.save_pretrained(\"$OUT/tokenizer\")";
-  echo "=== STAGE 1/2 SFT (full fine-tune, bfloat16, ZeRO-3, 8 ranks) ===";
-  stage() { name="$1"; shift; "$@" > "$OUT/$name.log" 2>&1
-  || { echo "=== $name FAILED; last 40 lines of its own output ==="
-  ; tail -40 "$OUT/$name.log" ; exit 1 ; } ; } ;
-  stage sft
+  t.bos_token=t.eos_token; t.save_pretrained(\"$OUT/tokenizer\")" ;
+  echo "=== STAGE 1/2 SFT (full fine-tune, bfloat16, ZeRO-3, 8 ranks) ===" ;
   accelerate launch --mixed_precision bf16 --num_processes 8
   --config_file configs/ds_configs/deepspeed_zero3.yaml
   open_instruct/finetune.py
@@ -146,8 +145,10 @@ command: >-
   --output_dir "$OUT/sft"
   --push_to_hub false --try_launch_beaker_eval_jobs false
   --try_auto_save_to_beaker false
-  && echo "=== STAGE 2/2 DPO (full fine-tune, bfloat16, ZeRO-3, 8 ranks) ==="
-  && stage dpo
+  > "$OUT/sft.log" 2>&1
+  || { echo "=== SFT FAILED, its own last 40 lines follow ===" ;
+  tail -40 "$OUT/sft.log" ; exit 1 ; } ;
+  echo "=== STAGE 2/2 DPO (full fine-tune, bfloat16, ZeRO-3, 8 ranks) ===" ;
   accelerate launch --mixed_precision bf16 --num_processes 8
   open_instruct/dpo_tune_cache.py
   --model_name_or_path "$OUT/sft"
@@ -165,4 +166,7 @@ command: >-
   --output_dir "$OUT/dpo"
   --push_to_hub false --try_launch_beaker_eval_jobs false
   --try_auto_save_to_beaker false
-  && echo "=== SMOKE TEST PASSED: full SFT+DPO on OLMoE-1B-7B-0125 ==="'
+  > "$OUT/dpo.log" 2>&1
+  || { echo "=== DPO FAILED, its own last 40 lines follow ===" ;
+  tail -40 "$OUT/dpo.log" ; exit 1 ; } ;
+  echo "=== SMOKE TEST PASSED: full SFT+DPO on OLMoE-1B-7B-0125 ==="'

@@ -87,7 +87,7 @@ def semantic_errors(spec: dict) -> list[str]:
     """Check cross-flag invariants that field-name validation cannot prove."""
     script = shlex.split(spec["command"])[-1]
     prep, rest = script.split('echo "=== STAGE 1/2', maxsplit=1)
-    sft, dpo = rest.split('&& echo "=== STAGE 2/2', maxsplit=1)
+    sft, dpo = rest.split('echo "=== STAGE 2/2', maxsplit=1)
 
     no_side_effects = {
         "--push_to_hub false": "must not make an unauthenticated Hugging Face write",
@@ -137,11 +137,27 @@ def semantic_errors(spec: dict) -> list[str]:
 
     # The platform shows the last fifty lines only, and torchrun's eight-rank epilogue
     # fills them by itself, so each launcher's own error has to be replayed after it.
-    for stage_name, stage in (("SFT", sft), ("DPO", dpo)):
-        if "stage " not in stage:
-            errors.append(f"{stage_name} must run under `stage` so its traceback survives torchrun's epilogue")
-    if 'tail -40 "$OUT/$name.log"' not in script:
-        errors.append("the failure path must replay the launcher's own last lines")
+    for stage_name, stage, log in (("SFT", sft, "sft"), ("DPO", dpo, "dpo")):
+        if f'> "$OUT/{log}.log" 2>&1' not in stage:
+            errors.append(f"{stage_name} must capture its own output so a traceback survives torchrun's epilogue")
+        if f'tail -40 "$OUT/{log}.log"' not in stage:
+            errors.append(f"{stage_name} must replay its last lines when it fails")
+
+    # The platform reads the launcher out of the shlex-split command, where `;` only ends a
+    # command when it is its own word. `echo "..."; accelerate launch` folds to one token
+    # ending in `;`, which leaves `accelerate` an argument to echo and the run refused as
+    # process_per_device -- no launcher found, so one process asked for on eight GPUs.
+    words = shlex.split(script)
+    operators = {";", "&&", "||", "|", "&", "(", ")"}
+    launched = [i for i, w in enumerate(words) if w == "accelerate"]
+    if len(launched) != 2:
+        errors.append("expected exactly two accelerate invocations, one per stage")
+    for i in launched:
+        if i != 0 and words[i - 1] not in operators:
+            errors.append(
+                f"`accelerate` at word {i} follows {words[i - 1]!r} rather than an operator, "
+                "so the launch guard cannot see it; put a space before the preceding `;`"
+            )
 
     if spec.get("suggested_compute") != "gpu-8xa100":
         errors.append("a full fine-tune of 6.9B needs the eight-card A100 node and its 500GiB root disk")
